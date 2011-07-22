@@ -170,7 +170,10 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
   std::ostream_iterator< std::string > oIt (outstm, seperator.c_str() );
   std::copy ( deppkgs.deps.begin(), deppkgs.deps.end(), oIt );
   
-  
+  for (StringSet::iterator pos = deppkgs.notfound.begin();pos != deppkgs.notfound.end();++pos )
+    {
+      LogError()<< pkg.getPathName() <<"not found: " << *pos <<"\n" ;
+    }
   
 }
 //--------------------------------------------------------------------------------------------------

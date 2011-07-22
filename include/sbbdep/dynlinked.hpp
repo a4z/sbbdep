@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <string>
 #include "sbbdep/dynlinkedinfo.hpp"
 
+
 class Elf;
 
 namespace sbbdep {

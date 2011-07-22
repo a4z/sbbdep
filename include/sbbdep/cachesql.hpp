@@ -49,6 +49,8 @@ struct CacheSQL
   
   static std::string InsertRequiredSQL();
   
+  static std::string InsertRRunPathSQL();
+  
   static std::string DeletePkgByFullnameSQL();
   
   static std::string MaxPkgTimeStamp();

@@ -93,8 +93,16 @@ struct InsertRequired : public a4sqlt3::SqlParamCommand
   }//-----------------------------------------------------------------------------------------------
 };
 //--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------------------------
+struct InsertRRunPath : public a4sqlt3::SqlParamCommand
+{
+  InsertRRunPath() :
+    a4sqlt3::SqlParamCommand(CacheSQL::InsertRRunPathSQL())
+  {
+  }//-----------------------------------------------------------------------------------------------
+};
+//--------------------------------------------------------------------------------------------------
 
 struct DeletePkgByFullName : public a4sqlt3::SqlParamCommand
 {
@@ -132,13 +140,15 @@ class TmpStore
   
   InsertPkg m_cmdpkg;
   InsertDynLinked m_cmddynlinked;
-  InsertRequired m_cmdrequired; 
+  InsertRequired m_cmdrequired;
+  InsertRRunPath m_cmdrrunpath;
   CacheDB& m_dbref;
 
   // need to call set<paramtype> once, then use of setValue is faster..  
   bool m_cmdpkg_param_init; 
   bool m_cmddynlinked_init;
   bool m_cmdrequired_init;
+  bool m_cmdrrunpath_init;
   
   StoreEntryList m_entrylist;
 
@@ -150,6 +160,7 @@ public:
     m_dbref.CompileCommand(&m_cmdpkg);
     m_dbref.CompileCommand(&m_cmddynlinked);
     m_dbref.CompileCommand(&m_cmdrequired);
+    m_dbref.CompileCommand(&m_cmdrrunpath);
   }//-----------------------------------------------------------------------------------------------
 
   ~TmpStore()
@@ -233,6 +244,13 @@ public:
     m_cmdrequired.Parameters()->Nr(2)->set<a4sqlt3::ParamStringRef>( needed );
     m_cmdrequired_init = true;
   }  
+  void CmdRRRunPathInit(int64_t& fileid, const std::string& rp)
+  {
+    m_cmdrrunpath.Parameters()->Nr(1)->set<a4sqlt3::ParameterInt64>(fileid) ;
+    m_cmdrrunpath.Parameters()->Nr(2)->set<a4sqlt3::ParamStringRef>( rp );
+    m_cmdrrunpath_init = true;
+  }  
+  
   
   void
   Persist( PkgName& pkgname, DynLinkedInfoList& dllist, int64_t& timestamp)
@@ -298,6 +316,20 @@ public:
             m_dbref.Execute(&m_cmdrequired);
             ++needediter;
           }
+        
+        StringList::const_iterator rrunpathiter= pos->RunRPaths.begin();
+        while( rrunpathiter != pos->RunRPaths.end())
+          {
+            if(!m_cmdrrunpath_init) CmdRRRunPathInit(fileid, *rrunpathiter) ;
+            else
+              {
+                m_cmdrrunpath.Parameters()->Nr(1)->setValue(fileid) ;
+                m_cmdrrunpath.Parameters()->Nr(2)->setRefVal( *rrunpathiter );
+              }
+            m_dbref.Execute(&m_cmdrrunpath);
+            ++rrunpathiter;
+          }        
+        
         
       }
     

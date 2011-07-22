@@ -31,7 +31,10 @@ Pkg::Pkg( const PathName& pname )
 : m_pathname ( pname ) 
 , m_floaded(false)
 {
-  
+
+  // this seems to be ok on slackware
+  // if others exist, add them to list
+  // TODO, make this configurabel through store those in the db ?
   m_bindirs.insert( "/sbin" ) ;
   m_bindirs.insert( "/usr/sbin" ) ;
   m_bindirs.insert( "/bin" ) ;

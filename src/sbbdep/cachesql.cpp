@@ -58,6 +58,11 @@ CacheSQL::CreateSchemaSQL()
       "    dynlinked_id INTEGER NOT NULL, "
       "    needed TEXT NOT NULL"
       ");"      
+      "CREATE TABLE rrunpath( "
+      "    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
+      "    dynlinked_id INTEGER NOT NULL,     "
+      "    ldpath TEXT NOT NULL "
+      ");"
       "CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs "
       "  FOR EACH ROW  BEGIN"
       "  DELETE from dynlinked WHERE pkg_id = OLD.id;"
@@ -65,6 +70,7 @@ CacheSQL::CreateSchemaSQL()
       "CREATE TRIGGER on_before_delete_dynlinked BEFORE DELETE ON dynlinked "
       "  FOR EACH ROW  BEGIN"
       "  DELETE from required WHERE dynlinked_id = OLD.id;"
+      "  DELETE from rrunpath WHERE dynlinked_id = OLD.id;"
       "  END;"
       "CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);"
       "INSERT INTO lddirs ( dirname ) VALUES ('/lib') ;"
@@ -72,7 +78,8 @@ CacheSQL::CreateSchemaSQL()
       "INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib') ;"
       "INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib64') ;"
       ;  
-  
+
+    
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -111,6 +118,16 @@ CacheSQL::InsertRequiredSQL()
            " VALUES( ?,? ) ; "
     ;  
 }
+//--------------------------------------------------------------------------------------------------
+
+std::string 
+CacheSQL::InsertRRunPathSQL()
+{
+  return "INSERT INTO rrunpath ( dynlinked_id, ldpath )"
+           " VALUES( ?,? ) ; "
+    ;  
+}
+//--------------------------------------------------------------------------------------------------
 
 std::string 
 CacheSQL::DeletePkgByFullnameSQL()

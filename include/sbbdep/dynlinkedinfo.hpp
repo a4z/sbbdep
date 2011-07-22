@@ -28,6 +28,8 @@ THE SOFTWARE.
 
 
 #include <string>
+#include <utility>
+
 #include "sbbdep/stringlist.hpp"
 #include "sbbdep/pathname.hpp"
 
@@ -39,6 +41,8 @@ struct DynLinkedInfo
   int arch; 
   std::string soName;
   StringList Needed;
+  StringList RunRPaths; 
+  
 };  
 
 

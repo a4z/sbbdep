@@ -23,8 +23,9 @@ THE SOFTWARE.
 
 
 #include "sbbdep/dynlinked.hpp"
+#include "sbbdep/log.hpp"
 
-#include <iostream>
+//#include <iostream>
 
 // with elfuitls instead of lib elf this may fail on other dists,
 // would be.. #include <gelf.h> make this via make, 
@@ -33,10 +34,59 @@ THE SOFTWARE.
 
 #include <fcntl.h>
 
+#include "sbbdep/path.hpp"
+#include <boost/algorithm/string/replace.hpp>
+
 #include "a4z/error.hpp"
 
 namespace sbbdep {
 
+namespace {
+
+
+// leaf this here for later use...
+struct CheckRRunPath
+{
+  const std::string& m_from_file ; 
+  Path m_home; 
+  
+  CheckRRunPath(const std::string from_file)
+  :m_from_file(from_file) , m_home( Path(from_file).getDir() )
+  {
+    
+  }
+  
+  std::string operator()(const std::string& rrunpath )
+    {
+      LogChannelType lc = LogDebug();
+      
+      using boost::algorithm::replace_first_copy; 
+      std::string rpreal=replace_first_copy(rrunpath,"$ORIGIN/..",m_home.getDir()) ;
+      rpreal=replace_first_copy(rpreal ,"$ORIGIN", m_home.getURL()) ;
+  
+      
+      Path pathreal = rpreal;
+      if (!pathreal.isValid() || !pathreal.isFolder())
+        {
+          lc << "rpath does not exist:\n"
+             << " from file: " << m_from_file <<"\n"  
+             <<  rrunpath << " => " << pathreal <<"\n" ;
+          
+          return  "" ;
+        }
+      else 
+        {
+          if (pathreal.isLink())
+            {
+              if (!pathreal.makeRealPath()) return "";
+            }
+        }
+      
+        return pathreal; 
+      }
+}
+;
+}
 
 
 DynLinked::DynLinked() :
@@ -143,6 +193,9 @@ DynLinked::getInfos( DynLinkedInfo& info )
   info.filename = m_filename; 
   info.arch = m_arch; 
   
+  CheckRRunPath runrpathcheck (m_filename);
+
+  
   Elf_Scn* scn = 0;
   GElf_Shdr shdr;
   while ((scn = elf_nextscn(m_elf, scn)))
@@ -170,13 +223,40 @@ DynLinked::getInfos( DynLinkedInfo& info )
                   char* val = elf_strptr(m_elf, shdr.sh_link, sym.d_un.d_val);
                   info.soName = val;
                 }
-              /* not nedded for dynlink
-              else if (sym.d_tag == DT_RPATH)
-                {
-                  char* val = elf_strptr(m_elf, shdr.sh_link, sym.d_un.d_val);
-                  info.RPath = val;
+              else if (sym.d_tag == DT_RPATH )
+                { //lot stuff uses rpath or runpath, to have this info available, lets grep it here 
+                  //char* val = elf_strptr(m_elf, shdr.sh_link, sym.d_un.d_val);
+                  std::string pathes=elf_strptr(m_elf, shdr.sh_link, sym.d_un.d_val);
+                 
+                  for ( std::size_t spos = 0, epos = pathes.find(":", spos);
+                   spos!=epos && spos!=pathes.size(); epos = pathes.find(":", spos))
+                    {
+                      std::string rpath = pathes.substr(spos, epos - spos) ;
+                      info.RunRPaths.push_back(  rpath ) ;
+                      spos = epos == std::string::npos ? std::string::npos : epos + 1;      
+                    }                  
+                  
                 }
-              */
+              else if (sym.d_tag ==  DT_RUNPATH)
+                { // assume that runpath is always after rpath
+                  // man ld  6.  For a native ELF linker, 
+                  // the directories in "DT_RUNPATH" or "DT_RPATH" 
+                  // of a shared library are searched for shared libraries needed by it. 
+                  // The "DT_RPATH" entries are ignored if "DT_RUNPATH" entries exist.  
+                  info.RunRPaths.clear();
+                  
+                  //char* val = elf_strptr(m_elf, shdr.sh_link, sym.d_un.d_val);
+                  std::string pathes=elf_strptr(m_elf, shdr.sh_link, sym.d_un.d_val);
+                  
+                  for ( std::size_t spos = 0, epos = pathes.find(":", spos);
+                   spos!=epos && spos!=pathes.size(); epos = pathes.find(":", spos))
+                    {
+                      std::string rpath = pathes.substr(spos, epos - spos) ;
+                      info.RunRPaths.push_back( rpath ) ;
+                      spos = epos == std::string::npos ? std::string::npos : epos + 1;      
+                    }                                    
+                  
+                }
             }
           return true; 
         }

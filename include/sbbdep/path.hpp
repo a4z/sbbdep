@@ -72,7 +72,7 @@ public:
   { return getURL() < other.getURL() ; }  
   
   /// d'tor
-  ~Path();
+  virtual ~Path();
   
   /// returns if path exists
   bool isValid() const { return m_type ; } 
