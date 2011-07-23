@@ -33,6 +33,7 @@ namespace sbbdep {
 
 AppArgs::AppArgs() :
   m_help(false), m_dbname(), m_query(), m_outfile(), m_append_versions(true), m_nosync(false)
+,m_requiredby(false)
 {
   
 }
@@ -126,6 +127,12 @@ AppArgs::PrintHelp()
   write.newline();
   write.newline();  
   
+  write.option("--requiredby") .description("prints packages that depend on arg") ;
+  write.descriptionline("instead of printing the requirements of the given arg") ;
+  write.descriptionline("packages that depend on the given arg are written to std::out") ;
+  write.newline();
+  write.newline();  
+  
   write.option("-h,  --help") .description("display this text") ;
   write.newline();
   write.newline();  
@@ -150,6 +157,7 @@ AppArgs::Parse( int argc, char** argv )
       { "cache", required_argument, 0, 'c' },
       { "short", required_argument, 0, 's' },
       { "nosync", no_argument, 0, 1 },
+      { "requiredby", no_argument, 0, 1 },
       { 0, 0, 0, 0 } // Required end   
     };
   
@@ -166,6 +174,7 @@ AppArgs::Parse( int argc, char** argv )
         case 1:
           optionName = long_options[optionIdx].name;
           if (optionName == "nosync") m_nosync = true;
+          else if(optionName == "requiredby") m_requiredby = true;
           break;
           
         case 'c':

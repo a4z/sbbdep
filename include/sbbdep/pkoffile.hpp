@@ -26,17 +26,20 @@ THE SOFTWARE.
 #define SBBDEP_PKOFFILE_HPP_
 
 #include "sbbdep/stringlist.hpp"
+#include <boost/noncopyable.hpp>
 
 namespace sbbdep {
 
  
 
 
-class PkOfFile
+class PkOfFile : boost::noncopyable
 {
   
   class Cmd;
   class CmdRH;
+  
+  class CmdRequiredBy;
   
 public:
   PkOfFile();
@@ -45,12 +48,14 @@ public:
   
   void search( const std::string& soname, int arch , StringList& resultlist ) ;
   
-
-  PkOfFile(const PkOfFile&); // required for copy into thread
+  void searchRequiredBy( const std::string& soname, int arch , StringList& resultlist ) ;
+  
+  
 private:  
-  const PkOfFile& operator=(const PkOfFile&);
+  
   
   Cmd* m_cmd;
+  CmdRequiredBy* m_cmdreqiredby;
   
 };
 

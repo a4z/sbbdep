@@ -48,6 +48,9 @@ public:
   void generate(const Pkg& pkg, std::ostream& outstm);
   void generate_log(const Pkg& pkg, Log::ChannelType& lc);
   
+  
+  void who_requires(const Pkg& pkg, std::ostream& outstm);
+  
 };
 
 }

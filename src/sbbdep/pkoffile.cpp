@@ -43,7 +43,7 @@ THE SOFTWARE.
 //#include <iterator>
 
 namespace sbbdep {
-// TODO this name is obsolete, just for compile, make pkfofsoname
+// pkfofsoname would be the better name ... ore create these commands as stored command on db...
 class PkOfFile::Cmd : public a4sqlt3::SqlParamCommand
 {
   
@@ -81,6 +81,44 @@ public:
 //--------------------------------------------------------------------------------------------------
 
 
+class PkOfFile::CmdRequiredBy : public a4sqlt3::SqlParamCommand
+{
+  
+public:
+  CmdRequiredBy() :
+    a4sqlt3::SqlParamCommand(CacheSQL::SearchRequiredByLib())
+  {
+  }//-----------------------------------------------------------------------------------------------
+
+  void
+  setSerachVal( const std::string& soname, int arch  )
+  {
+    // after init paras will be Null so type mix, 
+    try
+      {
+        Parameters()->Nr(1)->setRefVal(soname);
+      }
+    catch ( const a4sqlt3::ErrTypeMisMatch& e )
+      {
+        Parameters()->Nr(1)->set<a4sqlt3::ParamStringRef>(soname);
+      }
+    
+    try
+      {
+        Parameters()->Nr(2)->setValue(arch);     
+      }
+    catch ( const a4sqlt3::ErrTypeMisMatch& e )
+      {
+        Parameters()->Nr(2)->set<a4sqlt3::ParameterInt>(arch);
+      }    
+            
+  }//-----------------------------------------------------------------------------------------------
+
+};
+//--------------------------------------------------------------------------------------------------
+
+
+
 //--------------------------------------------------------------------------------------------------
 struct PkOfFile::CmdRH : public a4sqlt3::RowHandler
 {
@@ -110,7 +148,7 @@ struct PkOfFile::CmdRH : public a4sqlt3::RowHandler
 
 
 PkOfFile::PkOfFile() :
-  m_cmd(0)
+  m_cmd(0), m_cmdreqiredby(0)
 {
   
   Cmd* cm = new Cmd();
@@ -123,37 +161,29 @@ PkOfFile::PkOfFile() :
       delete cm; cm = 0 ; 
       throw; 
     }
+  m_cmd = cm; 
   
-  m_cmd = cm;
-  
-}
-//--------------------------------------------------------------------------------------------------
-
-PkOfFile::PkOfFile(const PkOfFile& other)
-: m_cmd(0)
-{
-
-  Cmd* cm = new Cmd();
+  CmdRequiredBy* cmdreqiredby = new CmdRequiredBy();
   try
     {
-      Cache::get()->DB().CompileCommand(cm);
+      Cache::get()->DB().CompileCommand(cmdreqiredby);
     }
   catch ( ... )
     {
-      delete cm; cm = 0 ; 
+      delete cmdreqiredby; cmdreqiredby = 0 ; 
       throw; 
-    }
+    }  
   
-  m_cmd = cm;
+  m_cmdreqiredby = cmdreqiredby;
   
 }
-
-
 //--------------------------------------------------------------------------------------------------
+
 
 PkOfFile::~PkOfFile()
 {
   if (m_cmd) delete m_cmd;
+  if (m_cmdreqiredby) delete m_cmdreqiredby;
 }
 //--------------------------------------------------------------------------------------------------
 
@@ -177,5 +207,36 @@ PkOfFile::search( const std::string& soname, int arch , StringList& resultlist )
 
 //--------------------------------------------------------------------------------------------------
 
+void 
+PkOfFile::searchRequiredBy( const std::string& soname, int arch , StringList& resultlist ) 
+{
+  
+  struct RH : public a4sqlt3::RowHandler
+  {
+    StringList ResultList; //----------------------------------------
+
+    bool OnHandleRow( a4sqlt3::Columns& rowcols, sqlite3_stmt* stmt )
+    {
+      ResultList.push_back(rowcols[0].get<std::string>());
+      return true;
+    }//---------------------------------------------------------------  
+    void Reset()
+    {
+      ResultList.clear();
+      a4sqlt3::RowHandler::Reset();
+    }//---------------------------------------------------------------
+  };
+
+  RH rh;
+  
+  m_cmdreqiredby->setSerachVal(soname , arch);
+  
+  m_cmdreqiredby->Run(&rh);
+  
+  resultlist.insert(resultlist.end(), rh.ResultList.begin(), rh.ResultList.end());
+  
+}  
 //--------------------------------------------------------------------------------------------------
+
+
 }

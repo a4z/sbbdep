@@ -170,6 +170,41 @@ CacheSQL::SearchPgkOfSoNameSQL()
 }
 //--------------------------------------------------------------------------------------------------
 
+std::string 
+CacheSQL::SearchRequiredByLib()
+{
+
+  return
+  "SELECT "
+  " pkgs.fullname AS pkgname," 
+  " pkgs.name AS pkg, "
+  " dynlinked.filename AS dynlinked," 
+  " required.needed ,"
+  " dl2.filename AS filename"  
+  " FROM pkgs "
+  " INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id "
+  " INNER JOIN required ON dynlinked.id =  required.dynlinked_id"
+  " INNER JOIN dynlinked dl2 ON dl2.soname =  required.needed AND dl2.arch = dynlinked.arch" 
+  " WHERE dl2.dirname IN( "
+  " SELECT dirname FROM lddirs  UNION " 
+  " SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
+  " INNER JOIN dynlinked ON dynlinked.id = rrunpath.dynlinked_id"
+  " WHERE dynlinked.soname=?1"
+  " ) "
+  " AND required.needed =?1" 
+  " AND dynlinked.arch=?2"    
+  /*" AND pkgs.name NOT IN ("
+  " SELECT name from pkgs "
+  " INNER JOIN dynlinked ON dynlinked.pkg_id = pkgs.id"
+  " WHERE dynlinked.soname = ?1"
+  ")"*/  
+  " ORDER BY  pkg , dynlinked.filename , needed"
+  ";"
+   ;
+  // do the fileter of pkg within result, cause query a lib may return the pkg it is memeber of...
+}
+
+
 
 
 

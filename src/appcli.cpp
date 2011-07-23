@@ -150,21 +150,25 @@ AppCli::Run(const AppArgs& appargs)
     
     DepFileWriter dfw(  appargs.getAppendVersions());
     
-    if( appargs.getOutFile().size() )
+    if (!appargs.getRequiredBy() )
       {
-        std::ofstream outfile;
-        outfile.open (appargs.getOutFile().c_str() , std::ofstream::out | std::ofstream::trunc) ;
-        // TODO, check file.... or think what happens in case of error
-        dfw.generate(*pkg , outfile ) ;
+      if( appargs.getOutFile().size() )
+        {
+          std::ofstream outfile;
+          outfile.open (appargs.getOutFile().c_str() , std::ofstream::out | std::ofstream::trunc) ;
+          // TODO, check file.... or think what happens in case of error
+          dfw.generate(*pkg , outfile ) ;
+        }
+      else
+        {
+          dfw.generate(*pkg , std::cout ) ;
+          std::cout << "\n--------"<< std::endl;
+        }
       }
     else
       {
-        dfw.generate(*pkg , std::cout ) ;
-        std::cout << "\n--------"<< std::endl;
+        dfw.who_requires(*pkg , std::cout ) ;    
       }
-    
-    
-    
   
 
     return 0; 

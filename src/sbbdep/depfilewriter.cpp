@@ -116,7 +116,7 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
       
       if ( !arch ) arch = cIter->arch ;
       else
-        { // will this ever happen ? 
+        { // will this ever happen ? could be that in multilib packages this is the case, TODO
           if( arch != cIter->arch ) 
             throw a4z::ErrorNeverReach(" multiple arch dedected in " + pkg.getPathName().Str() ) ; 
         }
@@ -186,5 +186,33 @@ DepFileWriter::generate_log(const Pkg& pkg, Log::ChannelType& lc)
 }
 
 //--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+
+void 
+DepFileWriter::who_requires(const Pkg& pkg, std::ostream& outstm)
+{
+
+  StringSet requiredby ;  
+  
+  PkOfFile searcher;
+  
+  DynLinkedInfoList::const_iterator dliIter = pkg.getDynLinkedInfos().begin();
+  for( ; dliIter != pkg.getDynLinkedInfos().end(); ++dliIter)
+    {  
+      StringList result;
+      searcher.searchRequiredBy( dliIter->soName, dliIter->arch , result) ;
+      requiredby.insert(result.begin(), result.end());
+    }
+  
+  requiredby.erase( pkg.getPathName().getBase() ) ;
+  
+  for(StringSet::iterator pos = requiredby.begin(); pos != requiredby.end(); ++pos)
+    {
+      outstm << *pos << "\n";
+    }
+  outstm << std::flush; 
+      
+}
+
 //--------------------------------------------------------------------------------------------------
 }

@@ -60,6 +60,7 @@ struct CacheSQL
   //depfinder
   static std::string SearchPgkOfSoNameSQL();
   
+  static std::string SearchRequiredByLib() ; // 1 soname, 2 arch
 
   static void register_replaceOrigin_function(sqlite3* db);
   
