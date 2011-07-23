@@ -23,13 +23,15 @@ THE SOFTWARE.
 
 
 #include "sbbdep/cachedb.hpp"
-
+#include "sbbdep/cachesql.hpp"
 
 #include <cstdlib>
-
 #include <sqlite3.h>
 
+
 namespace sbbdep {
+
+
 
 CacheDB::CacheDB()
 : a4sqlt3::Database(std::string(std::getenv("HOME")) + std::string("/sbbdep.cache")) //TODO wenn test vorbei nach .config/.. oder sonst wo
@@ -58,12 +60,13 @@ CacheDB::~CacheDB()
 bool
 CacheDB::Open()
 {
+
+  int flags = SQLITE_OPEN_READWRITE ; // thread will be handled outside only  
+  bool retval = a4sqlt3::Database::Open(flags );
   
+  CacheSQL::register_replaceOrigin_function(m_sql3db);
   
-  int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX  | SQLITE_OPEN_SHAREDCACHE; 
-  //int flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX  ;
-  return a4sqlt3::Database::Open(flags );
-  
+  return retval;
 }
 //--------------------------------------------------------------------------------------------------
 

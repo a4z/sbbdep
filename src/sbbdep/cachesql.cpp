@@ -24,6 +24,11 @@ THE SOFTWARE.
 
 #include "sbbdep/cachesql.hpp"
 
+#include "sbbdep/pathname.hpp"
+#include <boost/algorithm/string/replace.hpp>
+
+#include <sqlite3.h>
+
 namespace sbbdep {
 
 
@@ -150,14 +155,68 @@ CacheSQL::MaxPkgTimeStamp()
 std::string 
 CacheSQL::SearchPgkOfSoNameSQL()
 {
+ 
   
   return 
   "SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
   " WHERE dynlinked.soname=? AND dynlinked.arch=? "
-  " AND dirname IN (SELECT dirname FROM lddirs);"
+  " AND dirname IN (SELECT dirname FROM lddirs "
+  " UNION SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
+  " WHERE  dynlinked_id =  dynlinked.id)"
+  ";"
   ;
+  
+  
 }
 //--------------------------------------------------------------------------------------------------
+
+
+
+
+namespace
+{
+
+  // replaceOrigin( ld_elf_filepath, ld_homedir  )
+  static void replace_origin_func(sqlite3_context *context, int argc, sqlite3_value **argv)
+  {
+    if (argc != 2)
+      {
+        static const std::string errmsg = "incorrect count of arguments, should be 2";
+        sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
+      }
+    
+    std::string filepath = (const char*)sqlite3_value_text(argv[0]);
+    std::string homepath = (const char*)sqlite3_value_text(argv[1]);
+    
+    
+    
+    
+    sbbdep::PathName home = homepath; 
+    
+    using boost::algorithm::replace_first_copy; 
+    std::string result=replace_first_copy(filepath,"$ORIGIN/..",home.getDir()) ;
+    result=replace_first_copy(result ,"$ORIGIN", home.getURL()) ;    
+    
+    //void sqlite3_result_text(sqlite3_context*, const char*, int, void(*)(void*));
+    sqlite3_result_text(context, result.c_str(), -1, SQLITE_TRANSIENT);
+    
+  }
+}
+
+void 
+CacheSQL::register_replaceOrigin_function(sqlite3* db)
+{
+  sqlite3_create_function(db, "replaceOrigin", 2, 0,0, &replace_origin_func , 0 , 0 );
+}
+
+
+
+
+
+
+
+
+
 
 
 

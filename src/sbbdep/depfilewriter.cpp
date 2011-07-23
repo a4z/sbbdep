@@ -134,12 +134,12 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
     StringSet deps; 
     StringSet notfound;
     void collect(StringSet& d , StringSet& nf)
-    {
-#pragma omp critical (DepFileWriterCollect)
-      {
+    { // since using the db in single thread mode, sync may last longer than rest
+//#pragma omp critical (DepFileWriterCollect)
+ //     {
         deps.insert(d.begin(), d.end());
         notfound.insert(nf.begin(), nf.end());
-      }
+ //     }
     }
   };
   struct Collect{
@@ -151,13 +151,12 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
   };
   
   Collector deppkgs;
-  //Collect collect(deppkgs);  // for going parallel
 
   PkOfFile searcher;
   
   for( StringSet::iterator pos = requires.begin(); pos!= requires.end(); ++pos )
     {
-      Collect collect(deppkgs);  // fake first private..
+      Collect collect(deppkgs);  
       StringList pkgsrequired;
       searcher.search(*pos , arch, pkgsrequired) ;
       if( pkgsrequired.size()== 0 ) collect.notfound.insert(*pos);
@@ -172,7 +171,7 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
   
   for (StringSet::iterator pos = deppkgs.notfound.begin();pos != deppkgs.notfound.end();++pos )
     {
-      LogError()<< pkg.getPathName() <<"not found: " << *pos <<"\n" ;
+      LogError()<< pkg.getPathName() <<" ! not found: " << *pos <<"\n" ;
     }
   
 }

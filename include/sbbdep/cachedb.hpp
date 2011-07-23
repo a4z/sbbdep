@@ -43,7 +43,7 @@ public:
   
   ~CacheDB();
   
-  // open full_mutex for sq3
+  // don't forget , SQLITE_OPEN_READWRITE no mtx
   bool Open() ;
   
   

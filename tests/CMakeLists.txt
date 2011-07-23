@@ -18,11 +18,13 @@ main.cpp
 findbinpath.cpp
 pathtest.cpp
 pknametest.cpp
+replorig.cpp
 )
 
 
 ADD_EXECUTABLE( sbbtest ${sbbtest_SRC} )
-TARGET_LINK_LIBRARIES( sbbtest ${SBBDEP_REQURIED_LIBS} ${Boost_LIBRARIES} )
+# if a4sqlt3 build is mt, pthread requried ... 
+TARGET_LINK_LIBRARIES( sbbtest pthread ${SBBDEP_REQURIED_LIBS} ${Boost_LIBRARIES} )
 
 
 

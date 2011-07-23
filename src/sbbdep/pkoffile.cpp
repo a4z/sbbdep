@@ -43,7 +43,7 @@ THE SOFTWARE.
 //#include <iterator>
 
 namespace sbbdep {
-// FIXME this is obsolete, just for compile, make pkfofsoname
+// TODO this name is obsolete, just for compile, make pkfofsoname
 class PkOfFile::Cmd : public a4sqlt3::SqlParamCommand
 {
   

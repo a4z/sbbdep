@@ -30,6 +30,8 @@ THE SOFTWARE.
 
 //mal alles was mit db zu tun hat hier sammeln, wegen uebersicht,
 
+struct sqlite3;
+
 namespace sbbdep {
 
 struct CacheSQL
@@ -59,6 +61,7 @@ struct CacheSQL
   static std::string SearchPgkOfSoNameSQL();
   
 
+  static void register_replaceOrigin_function(sqlite3* db);
   
 };
 
