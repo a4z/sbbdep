@@ -150,7 +150,7 @@ AppCli::Run(const AppArgs& appargs)
     
     DepFileWriter dfw(  appargs.getAppendVersions());
     
-    if (!appargs.getRequiredBy() )
+    if (!appargs.getWhoNeeds() )
       {
       if( appargs.getOutFile().size() )
         {

@@ -38,7 +38,7 @@ class AppArgs
   std::string m_outfile ;
   bool m_append_versions;
   bool m_nosync;
-  bool m_requiredby;
+  bool m_whoneeds;
   
 public:
   AppArgs();
@@ -52,7 +52,7 @@ public:
   const std::string& getOutFile() const { return m_outfile ; }
   bool getAppendVersions() const { return m_append_versions ;}
   bool getNoSync() const { return m_nosync ; }
-  bool getRequiredBy() const { return m_requiredby ; }
+  bool getWhoNeeds() const { return m_whoneeds ; }
   
   
   void PrintHelp();
