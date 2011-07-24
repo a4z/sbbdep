@@ -167,9 +167,9 @@ include( a4cmk/myTestSetup.cmake )
 
 #optional enable personal test/trial dir
 include(CMakeLocalOpts.cmake OPTIONAL)
-if(a4qlt3_LOCAL_TRIALS)
+if(sbbdep_LOCAL_TRIALS)
     add_subdirectory(trials)  
-endif(a4qlt3_LOCAL_TRIALS)
+endif(sbbdep_LOCAL_TRIALS)
 
 
 
