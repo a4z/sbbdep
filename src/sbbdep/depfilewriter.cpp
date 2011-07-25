@@ -39,8 +39,7 @@ THE SOFTWARE.
 #include <vector>
 #include <algorithm>
 #include <iterator>
-#include <functional>
-#include <sstream>
+#include <utility>
 
 
 
@@ -98,78 +97,65 @@ DepFileWriter::~DepFileWriter()
 }
 //--------------------------------------------------------------------------------------------------
 
+namespace
+{
+  typedef std::pair<std::string, int> LibInfoType;
+  
+  struct LibInfoCompair {
+    bool operator() (const LibInfoType& lhs, const LibInfoType& rhs) const
+      {
+        int cmp = lhs.first.compare( rhs.first ) ;
+        if (cmp < 0 ) return true;
+        else if ( cmp > 0 ) return false;   
+        else return lhs.second < rhs.second ;
+      }
+  };
+  
+  typedef std::set<LibInfoType, LibInfoCompair> LibInfoSet;
 
+}
 
 void 
 DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
 {
   
-  StringSet requires , provides;  
-  
-  int arch = 0;
+  LibInfoSet requiresInfo , providesInfo ;
   
   DynLinkedInfoList::const_iterator cIter = pkg.getDynLinkedInfos().begin();
   for( ; cIter != pkg.getDynLinkedInfos().end(); ++cIter)
     {
-      requires.insert( cIter->Needed.begin(), cIter->Needed.end()  ) ;
-      if ( cIter->soName.size() ) provides.insert(cIter->soName) ;
-      
-      if ( !arch ) arch = cIter->arch ;
-      else
-        { // will this ever happen ? could be that in multilib packages this is the case, TODO
-          if( arch != cIter->arch ) 
-            throw a4z::ErrorNeverReach(" multiple arch dedected in " + pkg.getPathName().Str() ) ; 
+      for(StringList::const_iterator pos = cIter->Needed.begin(); pos != cIter->Needed.end(); ++pos)
+        {
+          requiresInfo.insert(std::make_pair(*pos,cIter->arch)) ;
         }
       
+      if ( cIter->soName.size() ) providesInfo.insert(std::make_pair(cIter->soName,cIter->arch)) ;
     }
+  
   // remove libs that are within this pkg
-  for( StringSet::iterator pos = provides.begin(); pos!= provides.end(); ++pos )
+  for (LibInfoSet::iterator pos = providesInfo.begin(); pos != providesInfo.end(); ++pos)
     {
-      requires.erase(*pos) ;
+      requiresInfo.erase(*pos) ;
     }
   
   
-  
-  struct Collector{
-    StringSet deps; 
-    StringSet notfound;
-    void collect(StringSet& d , StringSet& nf)
-    { // since using the db in single thread mode, sync may last longer than rest
-//#pragma omp critical (DepFileWriterCollect)
- //     {
-        deps.insert(d.begin(), d.end());
-        notfound.insert(nf.begin(), nf.end());
- //     }
-    }
-  };
-  struct Collect{
-    StringSet deps;
-    StringSet notfound;
-    Collector& collector; 
-    Collect(Collector& collector_):collector(collector_){}
-    ~Collect(){ collector.collect(deps, notfound) ;} 
-  };
-  
-  Collector deppkgs;
-
+  StringSet deps;
+  StringSet notfound;
   PkOfFile searcher;
-  
-  for( StringSet::iterator pos = requires.begin(); pos!= requires.end(); ++pos )
+
+  for( LibInfoSet::iterator pos = requiresInfo.begin(); pos!= requiresInfo.end(); ++pos )
     {
-      Collect collect(deppkgs);  
       StringList pkgsrequired;
-      searcher.search(*pos , arch, pkgsrequired) ;
-      if( pkgsrequired.size()== 0 ) collect.notfound.insert(*pos);
-      else collect.deps.insert(  joindep2string(pkgsrequired, m_addVersion) ) ;
-      //else collect.deps.insert(pkgsrequired.begin(), pkgsrequired.end());
-      
+      searcher.search(pos->first , pos->second, pkgsrequired) ;
+      if( pkgsrequired.size()== 0 ) notfound.insert(pos->first);
+      else deps.insert(  joindep2string(pkgsrequired, m_addVersion) ) ;      
     }  
   
   std::string seperator = m_addVersion ? "\n" : ", "; 
   std::ostream_iterator< std::string > oIt (outstm, seperator.c_str() );
-  std::copy ( deppkgs.deps.begin(), deppkgs.deps.end(), oIt );
+  std::copy ( deps.begin(), deps.end(), oIt );
   
-  for (StringSet::iterator pos = deppkgs.notfound.begin();pos != deppkgs.notfound.end();++pos )
+  for (StringSet::iterator pos = notfound.begin();pos != notfound.end();++pos )
     {
       LogError()<< pkg.getPathName() <<" ! not found: " << *pos <<"\n" ;
     }
