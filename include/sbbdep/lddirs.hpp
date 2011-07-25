@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2011 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2011-2011 H a r a l d  A c h i t z---------------
 -----------------< a g e dot a 4 z at g m a i l dot c o m >------------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,54 +22,37 @@ THE SOFTWARE.
 */
 
 
-#ifndef SBBDEP_CACHESQL_HPP_
-#define SBBDEP_CACHESQL_HPP_
+#ifndef SBBDEP_LDDIRS_HPP_
+#define SBBDEP_LDDIRS_HPP_
 
+#include "sbbdep/stringset.hpp"
 
-#include <string>
-
-//mal alles was mit db zu tun hat hier sammeln, wegen uebersicht,
-
-struct sqlite3;
-
-namespace sbbdep {
-
-struct CacheSQL
+namespace sbbdep
+{
+// get dir names from /etc/ld.so.conf
+class LDDirs
 {
   
+public:
+  LDDirs();
+  ~LDDirs();
   
-  // cache stuff 
-  static std::string CreateSchemaSQL();
+  const StringSet& getLdDirs() const { return m_lddirs;} 
+  const StringSet& getLdLnkDirs() const { return m_ldlnkdirs;}
   
+  const StringSet& readLdDirs();
+  const StringSet& readLdLinkDirs();
   
-  // create indexes...
-  static std::string CreateIndexes();
-  
-  static std::string InsertPkgSQL();
-  
-  static std::string InsertDynLinkedSQL();
-  
-  static std::string InsertRequiredSQL();
-  
-  static std::string InsertRRunPathSQL();
-  
-  static std::string InsertLdDirSQL();
-  
-  static std::string InsertLdLnkDirSQL();
-  
-  static std::string DeletePkgByFullnameSQL();
-  
-  static std::string MaxPkgTimeStamp();
-  
-  //depfinder
-  static std::string SearchPgkOfSoNameSQL();
-  
-  static std::string SearchRequiredByLib() ; // 1 soname, 2 arch
-
-  static void register_replaceOrigin_function(sqlite3* db);
-  
+private:
+  StringSet m_lddirs;
+  StringSet m_ldlnkdirs;
 };
+
 
 }
 
-#endif /* CACHESQL_HPP_ */
+
+#endif /* LDDIRS_HPP_ */
+
+
+

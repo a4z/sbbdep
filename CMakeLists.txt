@@ -86,6 +86,7 @@ include/sbbdep/dynlinkedinfolist.hpp
 include/sbbdep/error.hpp
 include/sbbdep/filemagic.hpp
 include/sbbdep/log.hpp
+include/sbbdep/lddirs.hpp
 include/sbbdep/path.hpp
 include/sbbdep/pathname.hpp
 include/sbbdep/pathnamelist.hpp
@@ -114,6 +115,7 @@ src/sbbdep/depwriter.cpp
 src/sbbdep/dircontent.cpp
 src/sbbdep/dynlinked.cpp
 src/sbbdep/filemagic.cpp
+src/sbbdep/lddirs.cpp
 src/sbbdep/log.cpp
 src/sbbdep/path.cpp
 src/sbbdep/pathname.cpp

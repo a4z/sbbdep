@@ -78,10 +78,12 @@ CacheSQL::CreateSchemaSQL()
       "  DELETE from rrunpath WHERE dynlinked_id = OLD.id;"
       "  END;"
       "CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);"
-      "INSERT INTO lddirs ( dirname ) VALUES ('/lib') ;"
+/*      "INSERT INTO lddirs ( dirname ) VALUES ('/lib') ;"          // moved to lddirs
       "INSERT INTO lddirs ( dirname ) VALUES ('/lib64') ;"
       "INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib') ;"
-      "INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib64') ;"
+      "INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib64') ;"  */
+      "CREATE TABLE ldlnkdirs (dirname TEXT PRIMARY KEY NOT NULL);"      
+      "CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL);" // if usr what to add special places ....
       ;  
 
     
@@ -135,6 +137,20 @@ CacheSQL::InsertRRunPathSQL()
 //--------------------------------------------------------------------------------------------------
 
 std::string 
+CacheSQL::InsertLdDirSQL()
+{
+  return "INSERT INTO lddirs ( dirname ) VALUES(?)" ;
+}
+//--------------------------------------------------------------------------------------------------
+
+std::string 
+CacheSQL::InsertLdLnkDirSQL()
+{
+  return "INSERT INTO ldlnkdirs ( dirname ) VALUES(?)" ;
+}
+//--------------------------------------------------------------------------------------------------
+
+std::string 
 CacheSQL::DeletePkgByFullnameSQL()
 {
   return "DELETE from pkgs WHERE fullname=?" ;
@@ -144,7 +160,6 @@ CacheSQL::DeletePkgByFullnameSQL()
 std::string 
 CacheSQL::MaxPkgTimeStamp()
 {
-  
   return "SELECT MAX(timestamp) FROM pkgs;"
   ;
 }
@@ -161,6 +176,7 @@ CacheSQL::SearchPgkOfSoNameSQL()
   "SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
   " WHERE dynlinked.soname=? AND dynlinked.arch=? "
   " AND dirname IN (SELECT dirname FROM lddirs "
+  " UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs"
   " UNION SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
   " WHERE  dynlinked_id =  dynlinked.id)"
   ";"
@@ -186,8 +202,9 @@ CacheSQL::SearchRequiredByLib()
   " INNER JOIN required ON dynlinked.id =  required.dynlinked_id"
   " INNER JOIN dynlinked dl2 ON dl2.soname =  required.needed AND dl2.arch = dynlinked.arch" 
   " WHERE dl2.dirname IN( "
-  " SELECT dirname FROM lddirs  UNION " 
-  " SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
+  " SELECT dirname FROM lddirs " 
+  " UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs"      
+  " UNION SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
   " INNER JOIN dynlinked ON dynlinked.id = rrunpath.dynlinked_id"
   " WHERE dynlinked.soname=?1"
   " ) "
@@ -198,10 +215,11 @@ CacheSQL::SearchRequiredByLib()
   " INNER JOIN dynlinked ON dynlinked.pkg_id = pkgs.id"
   " WHERE dynlinked.soname = ?1"
   ")"*/  
-  " ORDER BY  pkg , dynlinked.filename , needed"
+/*  " ORDER BY  pkg , dynlinked.filename , needed" */
   ";"
    ;
   // do the fileter of pkg within result, cause query a lib may return the pkg it is memeber of...
+  // order by so fare senesless by may be reactevated again if required to spare an onw sort part of result
 }
 
 
@@ -222,9 +240,6 @@ namespace
     
     std::string filepath = (const char*)sqlite3_value_text(argv[0]);
     std::string homepath = (const char*)sqlite3_value_text(argv[1]);
-    
-    
-    
     
     sbbdep::PathName home = homepath; 
     

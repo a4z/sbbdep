@@ -28,6 +28,7 @@ THE SOFTWARE.
 
 
 #include "sbbdep/cachedb.hpp"
+#include "sbbdep/stringlist.hpp"
 #include "a4z/single.hpp"
 
 #include <vector>
@@ -56,7 +57,7 @@ public:
   CacheDB& DB() { return m_db ;}
   
   //as long as also required for testing make this here
-  void PersistPgks( const StringVec& pkgfiles);
+  
 
 private:
   void CreateSchema();
@@ -65,6 +66,11 @@ private:
   void CreateData();
   
   void SyncData();
+  //needs full path name /var/adm/packages/....
+  void PersistPgks( const StringVec& pkgfiles, bool owntransaction= true);
+  //needs full  name pkgname-verions-arch-build...
+  void DeletePgks( const StringList& pkgfiles, bool owntransaction= true);
+  void UpdateLdDirs(bool owntransaction= true); 
   
   CacheDB m_db;
   bool m_isnew; 
