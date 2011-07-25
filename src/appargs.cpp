@@ -32,8 +32,8 @@ THE SOFTWARE.
 namespace sbbdep {
 
 AppArgs::AppArgs() :
-  m_help(false), m_dbname(), m_query(), m_outfile(), m_append_versions(true), m_nosync(false)
-,m_whoneeds(false)
+  m_help(false), m_dbname(), m_query(), m_outfile(), m_append_versions(true), 
+  m_sbbdep_version(false), m_nosync(false),m_whoneeds(false)
 {
   
 }
@@ -133,6 +133,10 @@ AppArgs::PrintHelp()
   write.newline();
   write.newline();  
   
+  write.option("-v,  --version") .description("display sbbdep version") ;
+  write.newline();
+  write.newline();  
+  
   write.option("-h,  --help") .description("display this text") ;
   write.newline();
   write.newline();  
@@ -148,7 +152,7 @@ AppArgs::Parse( int argc, char** argv )
 
   if (argc == 1) return true; //sync only
 
-  const char* const short_options = "hf:c:s";
+  const char* const short_options = "hf:c:sv";
   
   const struct option long_options[] =
     {
@@ -156,6 +160,7 @@ AppArgs::Parse( int argc, char** argv )
       { "file", required_argument, 0, 'f' },
       { "cache", required_argument, 0, 'c' },
       { "short", required_argument, 0, 's' },
+      { "version", no_argument, 0, 'v' },         
       { "nosync", no_argument, 0, 1 },
       { "whoneeds", no_argument, 0, 1 },
       { 0, 0, 0, 0 } // Required end   
@@ -195,6 +200,11 @@ AppArgs::Parse( int argc, char** argv )
           m_append_versions = false;
           break;
           
+        case 'v':
+          optionVal = -1;
+          m_sbbdep_version=true;
+          break;          
+          
         case '?': //unknown param
         case ':': //missing arg
           std::cout << "\n   commandline parsing failed, execution stopped\n" << std::endl;
@@ -210,7 +220,7 @@ AppArgs::Parse( int argc, char** argv )
     }
 
   // if help was submitted, ignore following cause only helptext is to show
-  if (!m_help)
+  if (!m_help && !m_sbbdep_version)
     { // use extern optind to find out if one additional argument was given use as file?    
       if (argc - optind != 1)
         {

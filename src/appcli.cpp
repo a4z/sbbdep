@@ -69,6 +69,12 @@ int
 AppCli::Run(const AppArgs& appargs)
 {
 
+  if (appargs.getPrintVersions())
+    { //FIXME , use cmake cnofig header for this...
+      std::cout << "sbbdep version 0.0.3\n" << std::endl;
+      return 0;
+    }
+  
   // create the cache  
   try
     {

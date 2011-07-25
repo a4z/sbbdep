@@ -37,6 +37,7 @@ class AppArgs
   std::string m_query;
   std::string m_outfile ;
   bool m_append_versions;
+  bool m_sbbdep_version;
   bool m_nosync;
   bool m_whoneeds;
   
@@ -51,6 +52,7 @@ public:
   const std::string& getQuery() const { return m_query; }
   const std::string& getOutFile() const { return m_outfile ; }
   bool getAppendVersions() const { return m_append_versions ;}
+  bool getPrintVersions() const { return m_sbbdep_version ;}
   bool getNoSync() const { return m_nosync ; }
   bool getWhoNeeds() const { return m_whoneeds ; }
   

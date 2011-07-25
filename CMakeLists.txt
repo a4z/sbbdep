@@ -6,7 +6,9 @@ include( a4cmk/myMacros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 0)
-set(sbbdep_PATCH_VERSION 2)
+set(sbbdep_PATCH_VERSION 3)
+
+#TODO, implement config header so that appcli use this version and in fo is on one place
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
