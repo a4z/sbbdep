@@ -176,13 +176,14 @@ if(sbbdep_LOCAL_TRIALS)
 endif(sbbdep_LOCAL_TRIALS)
 
 
-
-INSTALL(FILES ${sbbdep_HDR} DESTINATION include/sbbdep)
-INSTALL(TARGETS ${sbbdep_install_targets} 
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib${LIB_SUFFIX}
-  ARCHIVE DESTINATION lib${LIB_SUFFIX}
-)
-
+#only add install target if this is the top level project
+if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    INSTALL(FILES ${sbbdep_HDR} DESTINATION include/sbbdep)
+    INSTALL(TARGETS ${sbbdep_install_targets} 
+      RUNTIME DESTINATION bin
+      LIBRARY DESTINATION lib${LIB_SUFFIX}
+      ARCHIVE DESTINATION lib${LIB_SUFFIX}
+    )
+endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
