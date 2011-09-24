@@ -33,7 +33,7 @@ THE SOFTWARE.
 
 #include "a4sqlt3/sqlparamcommand.hpp"
 #include "a4sqlt3/parameters.hpp"
-#include "a4sqlt3/parametertypes.hpp"
+
 #include "a4sqlt3/rowhandler.hpp"
 #include "a4sqlt3/columns.hpp"
 #include "a4sqlt3/error.hpp"
@@ -59,11 +59,11 @@ public:
     // after init paras will be Null so type mix, 
     try
       {
-        Parameters()->Nr(1)->setRefVal(soname);
+        Parameters()->Nr(1)->setValue(soname);
       }
     catch ( const a4sqlt3::ErrTypeMisMatch& e )
       {
-        Parameters()->Nr(1)->set<a4sqlt3::ParamStringRef>(soname);
+        Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(soname);
       }
     
     try
@@ -72,7 +72,7 @@ public:
       }
     catch ( const a4sqlt3::ErrTypeMisMatch& e )
       {
-        Parameters()->Nr(2)->set<a4sqlt3::ParameterInt>(arch);
+        Parameters()->Nr(2)->setType<a4sqlt3::ParameterInt>(arch);
       }    
             
   }//-----------------------------------------------------------------------------------------------
@@ -96,11 +96,11 @@ public:
     // after init paras will be Null so type mix, 
     try
       {
-        Parameters()->Nr(1)->setRefVal(soname);
+        Parameters()->Nr(1)->setValue(soname);
       }
     catch ( const a4sqlt3::ErrTypeMisMatch& e )
       {
-        Parameters()->Nr(1)->set<a4sqlt3::ParamStringRef>(soname);
+        Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(soname);
       }
     
     try
@@ -109,7 +109,7 @@ public:
       }
     catch ( const a4sqlt3::ErrTypeMisMatch& e )
       {
-        Parameters()->Nr(2)->set<a4sqlt3::ParameterInt>(arch);
+        Parameters()->Nr(2)->setType<a4sqlt3::ParameterInt>(arch);
       }    
             
   }//-----------------------------------------------------------------------------------------------

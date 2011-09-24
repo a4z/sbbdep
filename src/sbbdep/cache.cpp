@@ -78,13 +78,14 @@ public:
   void Compile()
   {
     a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->set<a4sqlt3::ParamStringRef>( dummystr ) ; // pkgname.FullName()
-    Parameters()->Nr(2)->set<a4sqlt3::ParamStringRef>( dummystr ) ; // pkgname.Name()
-    Parameters()->Nr(3)->set<a4sqlt3::ParamStringRef>( dummystr ) ; // pkgname.Version()
-    Parameters()->Nr(4)->set<a4sqlt3::ParamStringRef>( dummystr ) ; // pkgname.Arch()
-    Parameters()->Nr(5)->set<a4sqlt3::ParameterInt>( 0 ) ; //pkgname.Build().Num()
-    Parameters()->Nr(6)->set<a4sqlt3::ParamStringRef>( dummystr ) ; // pkgname.Build().Tag()
-    Parameters()->Nr(7)->set<a4sqlt3::ParameterInt64>( 0 ) ; // timestamp
+    using namespace a4sqlt3;
+    Parameters()->Nr(1)->setType<ParameterStringRef>( dummystr ) ; // pkgname.FullName()
+    Parameters()->Nr(2)->setType<ParameterStringRef>( dummystr ) ; // pkgname.Name()
+    Parameters()->Nr(3)->setType<ParameterStringRef>( dummystr ) ; // pkgname.Version()
+    Parameters()->Nr(4)->setType<ParameterStringRef>( dummystr ) ; // pkgname.Arch()
+    Parameters()->Nr(5)->setType<ParameterInt>( 0 ) ; //pkgname.Build().Num()
+    Parameters()->Nr(6)->setType<ParameterStringRef>( dummystr ) ; // pkgname.Build().Tag()
+    Parameters()->Nr(7)->setType<ParameterInt64>( 0 ) ; // timestamp
   }  
 };
 //--------------------------------------------------------------------------------------------------
@@ -102,12 +103,12 @@ public:
   void Compile()
   {
     a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->set<a4sqlt3::ParameterInt64>( 0 ); // pkgid
-    Parameters()->Nr(2)->set<a4sqlt3::ParamStringRef>( dummystr ); //dli.filename
-    Parameters()->Nr(3)->set<a4sqlt3::ParameterString>( dummystr ); // dli.filename.getDir()
-    Parameters()->Nr(4)->set<a4sqlt3::ParameterString>( dummystr ); // dli.filename.getBase()
+    Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>( 0 ); // pkgid
+    Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( dummystr ); //dli.filename
+    Parameters()->Nr(3)->setType<a4sqlt3::ParameterString>( dummystr ); // dli.filename.getDir()
+    Parameters()->Nr(4)->setType<a4sqlt3::ParameterString>( dummystr ); // dli.filename.getBase()
     // 5 setNull (default), soname
-    Parameters()->Nr(6)->set<a4sqlt3::ParameterInt>( 0 ); // dli.arch    
+    Parameters()->Nr(6)->setType<a4sqlt3::ParameterInt>( 0 ); // dli.arch    
     
   }
 };
@@ -127,8 +128,8 @@ public:
   void Compile()
   {
     a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->set<a4sqlt3::ParameterInt64>(0); // file id
-    Parameters()->Nr(2)->set<a4sqlt3::ParamStringRef>( dummystr ); // needed
+    Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>(0); // file id
+    Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( dummystr ); // needed
   }  
 
 };
@@ -146,8 +147,8 @@ public:
   void Compile()
   {
     a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->set<a4sqlt3::ParameterInt64>(0); // file id
-    Parameters()->Nr(2)->set<a4sqlt3::ParamStringRef>( dummystr ); // runpath
+    Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>(0); // file id
+    Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( dummystr ); // runpath
   }
 };
 //--------------------------------------------------------------------------------------------------
@@ -164,7 +165,7 @@ public:
   void Compile()
   {
     a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->set<a4sqlt3::ParamStringRef>(dummy);
+    Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(dummy);
   }
   
 };
@@ -180,7 +181,7 @@ public:
   void Compile()
   {
     a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->set<a4sqlt3::ParamStringRef>(dummy);
+    Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(dummy);
   }  
 };
 //--------------------------------------------------------------------------------------------------
@@ -294,12 +295,12 @@ public:
   Persist( PkgName& pkgname, DynLinkedInfoList& dllist, int64_t& timestamp)
   {
 
-    m_cmdpkg.Parameters()->Nr(1)->setRefVal( pkgname.FullName() ) ;
-    m_cmdpkg.Parameters()->Nr(2)->setRefVal( pkgname.Name() ) ;
-    m_cmdpkg.Parameters()->Nr(3)->setRefVal( pkgname.Version() ) ;
-    m_cmdpkg.Parameters()->Nr(4)->setRefVal( pkgname.Arch() ) ;
+    m_cmdpkg.Parameters()->Nr(1)->setValue( pkgname.FullName() ) ;
+    m_cmdpkg.Parameters()->Nr(2)->setValue( pkgname.Name() ) ;
+    m_cmdpkg.Parameters()->Nr(3)->setValue( pkgname.Version() ) ;
+    m_cmdpkg.Parameters()->Nr(4)->setValue( pkgname.Arch() ) ;
     m_cmdpkg.Parameters()->Nr(5)->setValue( pkgname.Build().Num() ) ;
-    m_cmdpkg.Parameters()->Nr(6)->setRefVal( pkgname.Build().Tag() ) ;
+    m_cmdpkg.Parameters()->Nr(6)->setValue( pkgname.Build().Tag() ) ;
     m_cmdpkg.Parameters()->Nr(7)->setValue( timestamp ) ;
 
     m_dbref.Execute(&m_cmdpkg);
@@ -310,12 +311,12 @@ public:
       {
 
         m_cmddynlinked.Parameters()->Nr(1)->setValue( pkgid );
-        m_cmddynlinked.Parameters()->Nr(2)->setRefVal( pos->filename.Str() );
+        m_cmddynlinked.Parameters()->Nr(2)->setValue( pos->filename.Str() );
         m_cmddynlinked.Parameters()->Nr(3)->setValue( pos->filename.getDir() );
         m_cmddynlinked.Parameters()->Nr(4)->setValue( pos->filename.getBase() );
         
         if( pos->soName.size()>0 )
-          m_cmddynlinked.Parameters()->Nr(5)->set<a4sqlt3::ParamStringRef>( pos->soName );
+          m_cmddynlinked.Parameters()->Nr(5)->setType<a4sqlt3::ParameterStringRef>( pos->soName );
         else
           m_cmddynlinked.Parameters()->Nr(5)->setNull() ;
         
@@ -328,7 +329,7 @@ public:
         for( ; needediter != pos->Needed.end(); ++needediter)
           {
             m_cmdrequired.Parameters()->Nr(1)->setValue(fileid) ;
-            m_cmdrequired.Parameters()->Nr(2)->setRefVal( *needediter );
+            m_cmdrequired.Parameters()->Nr(2)->setValue( *needediter );
             m_dbref.Execute(&m_cmdrequired);
           }
 
@@ -337,7 +338,7 @@ public:
         for( ;rrunpathiter != pos->RunRPaths.end(); ++rrunpathiter)
           {
             m_cmdrrunpath.Parameters()->Nr(1)->setValue(fileid) ;
-            m_cmdrrunpath.Parameters()->Nr(2)->setRefVal( *rrunpathiter );
+            m_cmdrrunpath.Parameters()->Nr(2)->setValue( *rrunpathiter );
             m_dbref.Execute(&m_cmdrrunpath);
           }        
         
@@ -766,13 +767,13 @@ Cache::DeletePgks( const StringList& pkgnames, bool owntransaction)
   DeletePkgByFullName delcmd;
   m_db.CompileCommand(&delcmd);
   std::string dummystr; 
-  delcmd.Parameters()->Nr(1)->set<a4sqlt3::ParamStringRef>(dummystr) ;
+  delcmd.Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(dummystr) ;
   
   if( owntransaction ) m_db.Execute("BEGIN TRANSACTION;");
   
   for (StringList::const_iterator pos = pkgnames.begin(); pos != pkgnames.end(); ++pos)
     {
-       delcmd.Parameters()->Nr(1)->setRefVal(*pos) ;
+       delcmd.Parameters()->Nr(1)->setValue(*pos) ;
        m_db.Execute(&delcmd);
     }
   
@@ -810,14 +811,14 @@ Cache::UpdateLdDirs(bool owntransaction )
   StringSet::const_iterator iterpos= lddirs.getLdDirs().begin() ;
   for(;iterpos!=lddirs.getLdDirs().end(); ++iterpos)
     {
-      cmdlddir.Parameters()->Nr(1)->setRefVal(*iterpos);
+      cmdlddir.Parameters()->Nr(1)->setValue(*iterpos);
       m_db.Execute(&cmdlddir);    
     }
   
   iterpos= ldlnknames.begin() ;
   for(;iterpos!=ldlnknames.end(); ++iterpos)
     {
-      cmdldlnkdir.Parameters()->Nr(1)->setRefVal(*iterpos);
+      cmdldlnkdir.Parameters()->Nr(1)->setValue(*iterpos);
       m_db.Execute(&cmdldlnkdir);
     }  
   
