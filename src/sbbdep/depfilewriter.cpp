@@ -153,8 +153,10 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
   
   std::string seperator = m_addVersion ? "\n" : ", "; 
   std::ostream_iterator< std::string > oIt (outstm, seperator.c_str() );
-  std::copy ( deps.begin(), deps.end(), oIt );
-  
+  // avoid tailing seperator
+  StringSet::iterator last = --(deps.end());
+  std::copy ( deps.begin(), last, oIt );
+  outstm << *last ;
   for (StringSet::iterator pos = notfound.begin();pos != notfound.end();++pos )
     {
       LogError()<< pkg.getPathName() <<" ! not found: " << *pos <<"\n" ;
