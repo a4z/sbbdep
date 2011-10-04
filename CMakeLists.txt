@@ -6,11 +6,12 @@ include( a4cmk/myMacros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 0)
-set(sbbdep_PATCH_VERSION 3)
-
-#TODO, implement config header so that appcli use this version and in fo is on one place
+set(sbbdep_PATCH_VERSION 9)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
+
+set(sbbdep_CONFIG_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/sbbdep/config.hpp")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config.in" "${sbbdep_CONFIG_HEADER}")
 
 
 if(NOT CMAKE_BUILD_TYPE)
