@@ -249,6 +249,7 @@ public:
       }
   }//-----------------------------------------------------------------------------------------------
 
+/*  
   void
   addEntry( StoreEntry* const & entry ) // for the code analyser to ger rid of the semantic error ...
   {
@@ -257,7 +258,8 @@ public:
         m_entrylist.push_back(entry);
       }
   }//-----------------------------------------------------------------------------------------------
-
+*/
+  
   void
   addEntries( StoreEntryList& entries ) // for my collector pattern, lock it here...
   {
