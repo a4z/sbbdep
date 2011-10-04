@@ -30,6 +30,8 @@ THE SOFTWARE.
 #include <iostream>
 #include <fstream>
 
+#include "sbbdep/config.hpp" // generated in build dir....
+
 #include "sbbdep/singles.hpp"
 //#include "sbbdep/filemagic.hpp"
 //#include "sbbdep/cache.hpp"
@@ -71,7 +73,10 @@ AppCli::Run(const AppArgs& appargs)
 
   if (appargs.getPrintVersions())
     { //FIXME , use cmake cnofig header for this...
-      std::cout << "sbbdep version 0.0.3\n" << std::endl;
+      std::cout << "sbbdep version " 
+          << sbbdep::MAJOR_VERSION << "."
+          << sbbdep::MINOR_VERSION << "."
+          << sbbdep::PATCH_VERSION << std::endl;
       return 0;
     }
   
