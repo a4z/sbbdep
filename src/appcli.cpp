@@ -30,17 +30,13 @@ THE SOFTWARE.
 #include <iostream>
 #include <fstream>
 
-#include "sbbdep/config.hpp" // generated in build dir....
+#include "sbbdep/config.hpp" // generated 
 
 #include "sbbdep/singles.hpp"
-//#include "sbbdep/filemagic.hpp"
-//#include "sbbdep/cache.hpp"
-//#include "sbbdep/pkfab.hpp"
-//#include "a4z/singlecollector.hpp"
 #include "sbbdep/path.hpp"
 #include "sbbdep/depfilewriter.hpp"
 #include "sbbdep/pkg.hpp"
-//#include "sbbdep/error.hpp"
+
 #include "a4z/err.hpp"
 
 
@@ -72,7 +68,7 @@ AppCli::Run(const AppArgs& appargs)
 {
 
   if (appargs.getPrintVersions())
-    { //FIXME , use cmake cnofig header for this...
+    { //FIXME , use cmake config header for this...
       std::cout << "sbbdep version " 
           << sbbdep::MAJOR_VERSION << "."
           << sbbdep::MINOR_VERSION << "."
@@ -129,8 +125,10 @@ AppCli::Run(const AppArgs& appargs)
   
 
    Path pn( appargs.getQuery() ) ;
-      
-    // TODO, could be to early here, /var/log/packages = /var/amd/packages,...
+   
+   if ( pn.isEmpty() ) return 0; // was a sync only call ....
+
+   // TODO, could be to early here, /var/log/packages = /var/amd/packages,...
      // also think about some validation... and exit stuff....
     pn.makeAbsolute();
     pn.makeRealPath();
@@ -156,24 +154,21 @@ AppCli::Run(const AppArgs& appargs)
         return -4 ; 
       }    
       
-  
-    // TODO remove indirect from appargs
     
     DepFileWriter dfw(  appargs.getAppendVersions());
-    
+    // TODO think about exception handling for this part
     if (!appargs.getWhoNeeds() )
       {
       if( appargs.getOutFile().size() )
         {
           std::ofstream outfile;
           outfile.open (appargs.getOutFile().c_str() , std::ofstream::out | std::ofstream::trunc) ;
-          // TODO, check file.... or think what happens in case of error
           dfw.generate(*pkg , outfile ) ;
         }
       else
         {
           dfw.generate(*pkg , std::cout ) ;
-          std::cout << "\n--------"<< std::endl;
+          std::cout << "\n"<< std::endl;
         }
       }
     else
