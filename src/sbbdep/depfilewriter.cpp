@@ -154,8 +154,11 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
   std::string seperator = m_addVersion ? "\n" : ", "; 
   std::ostream_iterator< std::string > oIt (outstm, seperator.c_str() );
   
-  // TODO , if list is empty this will crash, should never happen but add some code therefore
-  StringSet::iterator last = --(deps.end()); // avoid tailing seperator  
+
+  // since packages like glibc have no external dependencies, just return ( TODO , do soemthing else? )
+  if(deps.size()==0) return ;
+
+  StringSet::iterator last = --(deps.end()); // avoid tailing separator
   std::copy ( deps.begin(), last, oIt );
   outstm << *last << std::endl;
   for (StringSet::iterator pos = notfound.begin();pos != notfound.end();++pos )
