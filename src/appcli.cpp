@@ -1,6 +1,6 @@
 /*
---------------Copyright (c) 2010-2011 H a r a l d  A c h i t z---------------
------------------< a g e dot a 4 z at g m a i l dot c o m >------------------
+--------------Copyright (c) 2010-2012 H a r a l d  A c h i t z---------------
+-----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -101,7 +101,7 @@ AppCli::Run(const AppArgs& appargs)
     {
       if ( nosync ) 
         {
-          std::cerr << "Cache is new, overrule nosync\n" ;
+          std::cerr << "Cache is new, overrule nosync\n" ; // TODO, use log for all outgonig messages
           nosync = false;
         }
       std::cerr << "create cache " << Cache::get()->DB().Name() << "\n";
