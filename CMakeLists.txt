@@ -76,6 +76,7 @@ include
 
 SET ( libsbbdep_HDR
 include/sbbdep/cache.hpp
+include/sbbdep/cachecmds.hpp
 include/sbbdep/cachedb.hpp
 include/sbbdep/cachesql.hpp
 include/sbbdep/depfilewriter.hpp
@@ -109,6 +110,7 @@ SET ( libsbbdep_SRCHDR
 #-----------------------------------------------------------------------------------------
 SET ( libsbbdep_SRC
 src/sbbdep/cache.cpp
+src/sbbdep/cachecmds.cpp
 src/sbbdep/cachedb.cpp
 src/sbbdep/cachesql.cpp
 src/sbbdep/depfilewriter.cpp

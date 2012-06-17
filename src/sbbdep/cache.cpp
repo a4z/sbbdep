@@ -22,31 +22,37 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/cache.hpp"
+#include <sbbdep/cache.hpp>
 
-#include "sbbdep/cachesql.hpp"
+#include <sbbdep/cachesql.hpp>
 
-#include "sbbdep/dircontent.hpp"
-#include "sbbdep/path.hpp"
-#include "sbbdep/pathname.hpp"
-#include "sbbdep/pkgname.hpp"
-#include "sbbdep/pkgfile.hpp" 
-#include "sbbdep/error.hpp"
-#include "sbbdep/stringlist.hpp"
-#include "sbbdep/dynlinkedinfolist.hpp"
-#include "sbbdep/lddirs.hpp"
+#include <sbbdep/dircontent.hpp>
+#include <sbbdep/path.hpp>
+#include <sbbdep/pathname.hpp>
+#include <sbbdep/pkgname.hpp>
+#include <sbbdep/pkgfile.hpp>
+#include <sbbdep/error.hpp>
+#include <sbbdep/stringlist.hpp>
+#include <sbbdep/dynlinkedinfolist.hpp>
+#include <sbbdep/lddirs.hpp>
 
-#include "sbbdep/log.hpp"
+#include <sbbdep/cachecmds.hpp>
 
-#include "a4sqlt3/sqlparamcommand.hpp"
-#include "a4sqlt3/parameters.hpp"
 
-#include "a4sqlt3/error.hpp"
-#include "a4sqlt3/rowhandler.hpp"
-#include "a4sqlt3/columns.hpp"
-#include "a4sqlt3/onevalresult.hpp"
+#include <sbbdep/log.hpp>
 
-#include "a4z/errtrace.hpp"
+
+#include <a4sqlt3/sqlparamcommand.hpp>
+#include <a4sqlt3/parameters.hpp>
+
+
+
+#include <a4sqlt3/error.hpp>
+#include <a4sqlt3/rowhandler.hpp>
+#include <a4sqlt3/columns.hpp>
+#include <a4sqlt3/onevalresult.hpp>
+
+#include <a4z/errtrace.hpp>
 
 #include <list>
 #include <vector>
@@ -66,136 +72,6 @@ namespace {
 
 using namespace sbbdep;
 
-class InsertPkg : public a4sqlt3::SqlParamCommand
-{
-  std::string dummystr;
-public:  
-  InsertPkg() :
-    a4sqlt3::SqlParamCommand(CacheSQL::InsertPkgSQL())
-  , dummystr("")
-  {
-  }//-----------------------------------------------------------------------------------------------
-  void Compile()
-  {
-    a4sqlt3::SqlParamCommand::Compile();
-    using namespace a4sqlt3;
-    Parameters()->Nr(1)->setType<ParameterStringRef>( dummystr ) ; // pkgname.FullName()
-    Parameters()->Nr(2)->setType<ParameterStringRef>( dummystr ) ; // pkgname.Name()
-    Parameters()->Nr(3)->setType<ParameterStringRef>( dummystr ) ; // pkgname.Version()
-    Parameters()->Nr(4)->setType<ParameterStringRef>( dummystr ) ; // pkgname.Arch()
-    Parameters()->Nr(5)->setType<ParameterInt>( 0 ) ; //pkgname.Build().Num()
-    Parameters()->Nr(6)->setType<ParameterStringRef>( dummystr ) ; // pkgname.Build().Tag()
-    Parameters()->Nr(7)->setType<ParameterInt64>( 0 ) ; // timestamp
-  }  
-};
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-
-class InsertDynLinked : public a4sqlt3::SqlParamCommand
-{
-  std::string dummystr;
-public:  
-  InsertDynLinked() :
-    a4sqlt3::SqlParamCommand(CacheSQL::InsertDynLinkedSQL())
-  , dummystr("")
-  {
-  }//-----------------------------------------------------------------------------------------------
-  void Compile()
-  {
-    a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>( 0 ); // pkgid
-    Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( dummystr ); //dli.filename
-    Parameters()->Nr(3)->setType<a4sqlt3::ParameterString>( dummystr ); // dli.filename.getDir()
-    Parameters()->Nr(4)->setType<a4sqlt3::ParameterString>( dummystr ); // dli.filename.getBase()
-    // 5 setNull (default), soname
-    Parameters()->Nr(6)->setType<a4sqlt3::ParameterInt>( 0 ); // dli.arch    
-    
-  }
-};
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-
-class InsertRequired : public a4sqlt3::SqlParamCommand
-{ 
-  std::string dummystr;
-public:
-  InsertRequired() :
-    a4sqlt3::SqlParamCommand(CacheSQL::InsertRequiredSQL())
-    , dummystr("")
-  {
-  }//-----------------------------------------------------------------------------------------------
-
-  void Compile()
-  {
-    a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>(0); // file id
-    Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( dummystr ); // needed
-  }  
-
-};
-//--------------------------------------------------------------------------------------------------
-
-//--------------------------------------------------------------------------------------------------
-class InsertRRunPath : public a4sqlt3::SqlParamCommand
-{
-  std::string dummystr;
-public:  
-  InsertRRunPath() :
-    a4sqlt3::SqlParamCommand(CacheSQL::InsertRRunPathSQL())
-  {
-  }//-----------------------------------------------------------------------------------------------
-  void Compile()
-  {
-    a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>(0); // file id
-    Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( dummystr ); // runpath
-  }
-};
-//--------------------------------------------------------------------------------------------------
-
-class InsertLdDir : public a4sqlt3::SqlParamCommand
-{
-  std::string dummy;
-public:
-  InsertLdDir() :
-    a4sqlt3::SqlParamCommand(CacheSQL::InsertLdDirSQL()), dummy("")
-  {
-  }//-----------------------------------------------------------------------------------------------
-  
-  void Compile()
-  {
-    a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(dummy);
-  }
-  
-};
-//--------------------------------------------------------------------------------------------------
-class InsertLdLnkDir : public a4sqlt3::SqlParamCommand
-{
-  std::string dummy;
-public:  
-  InsertLdLnkDir() :
-    a4sqlt3::SqlParamCommand(CacheSQL::InsertLdLnkDirSQL()), dummy("")
-  {
-  }//-----------------------------------------------------------------------------------------------
-  void Compile()
-  {
-    a4sqlt3::SqlParamCommand::Compile();
-    Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(dummy);
-  }  
-};
-//--------------------------------------------------------------------------------------------------
-
-struct DeletePkgByFullName : public a4sqlt3::SqlParamCommand
-{
-  DeletePkgByFullName() :
-    a4sqlt3::SqlParamCommand(CacheSQL::DeletePkgByFullnameSQL())
-  {
-  }//-----------------------------------------------------------------------------------------------
-
-};
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
 
 struct StoreEntry
 {
@@ -644,7 +520,7 @@ Cache::SyncData()
           
           std::set_difference(fpkgs.begin(), fpkgs.end(), dbpkgs.begin(), dbpkgs.end(),
               std::inserter(toinsertList, toinsertList.begin()));
-          
+
           std::set_difference(newpkgs.begin(), newpkgs.end(), toinsertList.begin(),
               toinsertList.end(), std::inserter(reinstalledList, reinstalledList.begin()));
           
@@ -668,11 +544,16 @@ Cache::SyncData()
       ++allinIter;
     }  
   
-  if(allinIter != allinserts.end()) throw a4z::ErrorNeverReach("valptr transfair to vector failed");
+  if(allinIter != allinserts.end())
+    throw a4z::ErrorNeverReach("valptr transfair to vector failed");
   
   // TODO handle transaction flags for these calls, do transaction maybe arround   
-  if(toremoveList.size()> 0) DeletePgks(toremoveList) ;
-  if(allinserts.size() > 0 ) PersistPgks(allinserts) ; 
+  if(toremoveList.size()> 0)
+    DeletePgks(toremoveList) ;
+
+  if(allinserts.size() > 0 )
+    PersistPgks(allinserts) ;
+
   UpdateLdDirs();
   
 
@@ -766,17 +647,16 @@ void
 Cache::DeletePgks( const StringList& pkgnames, bool owntransaction)
 {
 
-  DeletePkgByFullName delcmd;
-  m_db.CompileCommand(&delcmd);
-  std::string dummystr; 
-  delcmd.Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(dummystr) ;
+  DeletePkgByFullName cmd_delpkg;
+  m_db.CompileCommand(&cmd_delpkg);
   
   if( owntransaction ) m_db.Execute("BEGIN TRANSACTION;");
   
   for (StringList::const_iterator pos = pkgnames.begin(); pos != pkgnames.end(); ++pos)
     {
-       delcmd.Parameters()->Nr(1)->setValue(*pos) ;
-       m_db.Execute(&delcmd);
+      cmd_delpkg.setFullName(*pos) ;
+      cmd_delpkg.Run();
+     // m_db.Execute(&cmd_delpkg);
     }
   
   if( owntransaction ) m_db.Execute("COMMIT;"); // TODO , was machen bei fehler?? 
