@@ -1,0 +1,23 @@
+
+cache, 
+    splitt functions, 
+    maybe open and initialise stuff extra
+
+    whole sync db actions into one transaction
+  
+    review all the commands, 
+    can they be simpyfied? maybe extract them to a different location
+
+    document the workflow of create and sync
+
+
+general documentation is required
+codereview and doc !
+
+
+Log, 
+    must be improved, debug and logleven scale better what goes into a file , console
+    usr should not see what s/he does not want to see
+
+
+
