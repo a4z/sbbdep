@@ -43,7 +43,7 @@ public:
   
   ~DirContent();
    
-  bool getNext_omp(std::string& outname) ; 
+
   
   bool getNext(std::string& outname) ;
 

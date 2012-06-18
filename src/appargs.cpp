@@ -93,7 +93,7 @@ AppArgs::PrintHelp()
   write.text(" QUERY can be a single binary/library file");
   write.text("              a file from /var/adm/packages");
   write.text("              a package DESTDIR of a slackbuild");
-  write.text(" if QUERY is omitted runs only chache synchronise");
+  write.text(" if QUERY is omitted runs only cache synchronise");
   write.newline();
   write.text(" if OPTION -c/--cache is omitted, ~/sbbdep.cache will be used").newline() ;
   write.newline();
@@ -103,7 +103,7 @@ AppArgs::PrintHelp()
   write.option("-c,  --cache") .description("cache file to use") ; 
   write.descriptionline("if this option is omitted ") ;
   write.descriptionline("$HOME/sbbdep.cache is used") ;
-  write.descriptionline("cache must be read/writeable") ;
+  write.descriptionline("cache must be read/writable") ;
   write.newline();
   write.newline();  
   

@@ -62,7 +62,9 @@ DirContent::Open()
 {
   
   m_dirstm = opendir(m_name.c_str());
-  if( !m_dirstm ) throw ErrDirContent ("opendir(" + m_name + ") faild");
+
+  if( !m_dirstm )
+    throw ErrDirContent ("opendir(" + m_name + ") faild");
 
 }
 //--------------------------------------------------------------------------------------------------
@@ -71,14 +73,13 @@ void
 DirContent::Close()
 {
   if ( isOpen() )
-    {
       closedir(m_dirstm);
-    }
+
   m_dirstm = 0; 
 }
 //--------------------------------------------------------------------------------------------------
 
-//TODO, test was passiert wenn ich das ohne open aufrufe
+// TODO, add test what happens if dir was not opened ...
 bool 
 DirContent::getNext(std::string& outname)
 {
@@ -96,25 +97,6 @@ DirContent::getNext(std::string& outname)
 }
 //-------------------------------------------------------------------------------------------------- 
 
-
-bool 
-DirContent::getNext_omp(std::string& outname)
-{
-  bool retVal = false;
-  
-#pragma omp critical (getNext)
-  {
-    dirent* dentry = readdir(m_dirstm);
-    if( dentry )
-      {
-        retVal = true;
-        outname = dentry->d_name;
-      }   
-  }
-  
-  return retVal;  
-}
-//--------------------------------------------------------------------------------------------------  
 
 
 

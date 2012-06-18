@@ -547,15 +547,17 @@ Cache::SyncData()
   if(allinIter != allinserts.end())
     throw a4z::ErrorNeverReach("valptr transfair to vector failed");
   
-  // TODO handle transaction flags for these calls, do transaction maybe arround   
+  m_db.Execute("BEGIN TRANSACTION");
+
   if(toremoveList.size()> 0)
-    DeletePgks(toremoveList) ;
+    DeletePgks(toremoveList, false) ;
 
   if(allinserts.size() > 0 )
-    PersistPgks(allinserts) ;
+    PersistPgks(allinserts, false) ;
 
-  UpdateLdDirs();
-  
+  UpdateLdDirs(false);
+
+  m_db.Execute("COMMIT TRANSACTION");
 
   //--------------------
   // from here only info generation about what happend within sync..
