@@ -168,7 +168,7 @@ set_target_properties(sbbdepcli PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
 
 include( a4cmk/myTestSetup.cmake )
 
-add_subdirectory(tests)
+#add_subdirectory(tests)
 
 #optional enable personal test/trial dir
 include(CMakeLocalOpts.cmake OPTIONAL)
