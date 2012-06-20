@@ -37,6 +37,7 @@ THE SOFTWARE.
 #include <sbbdep/lddirs.hpp>
 
 #include <sbbdep/cachecmds.hpp>
+#include <sbbdep/pkgadmdir.hpp>
 
 
 #include <sbbdep/log.hpp>
@@ -399,30 +400,19 @@ void
 Cache::CreateData()
 {
   
-
-  DirContent dircontent("/var/adm/packages/");
-  
-  dircontent.Open();
-  
   StringVec pkgnamevec;
-  
-  std::string pkgfilename;
-  while (dircontent.getNext(pkgfilename))  
-    {
-      if (pkgfilename.length() > 2) 
-        {
-          if ( pkgfilename[0]=='.' ) continue;
-          if ( *(pkgfilename.rbegin())=='~'  ) continue ;
-          // TODO, filter out others also,  temporary emacs files #filename#
- 
-          pkgnamevec.push_back(dircontent.getDirName() +"/"+ pkgfilename);          
-        }
 
-       
-    }
+  PkgAdmDir pkg_adm_dir;
+  auto newfiles_cb = [&](const std::string& d,const std::string& f) -> bool {
+    pkgnamevec.push_back(d +"/"+ f);
+    return true ;
+  };
+  pkg_adm_dir.apply(newfiles_cb) ;
+
   // TODO handle transaction flags for these calls, do transaction maybe arround
   PersistPgks( pkgnamevec ) ;
   UpdateLdDirs() ;
+
   m_isnew = false;
   
 }
@@ -438,72 +428,46 @@ Cache::SyncData()
   // get files with newer date and existing name for handling reinstalled pkgs
   
 
-  StringSet fpkgs;
-  StringSet dbpkgs;
-  StringSet newpkgs;
-  
-  DirContent dircontent("/var/adm/packages/");
-  
-  dircontent.Open();
-  
-  struct RowHandler : public a4sqlt3::RowHandler
-  {
-    StringSet& m_dbpkgs;
-    RowHandler( StringSet& dbpkgs_ ) :
-      m_dbpkgs(dbpkgs_)
-    {
-    }
-    
-    bool
-    OnHandleRow( a4sqlt3::Columns& rowcols, sqlite3_stmt* stmt )
-    {
-      m_dbpkgs.insert(rowcols[0].get<std::string>());
-      return true;
-    }
-  };
-  
-  RowHandler rh(dbpkgs);
-  
+  StringSet fpkgs; // all pks in file system
+  StringSet dbpkgs; // all pks in the db
+  StringSet newpkgs; // // all pks in file system with a newer date as the lastest known date
+
+
+  // get latest known file time for a package to compare later
   a4sqlt3::OneValResult< int64_t > MaxTimeStampRH;
-  
   m_db.Execute(CacheSQL::MaxPkgTimeStamp(), &MaxTimeStampRH);
-  
+  const time_t maxknownftime = MaxTimeStampRH.Val() ;
+
+  // var/adm/packages file dir for iteratong through ..
+  PkgAdmDir pkg_adm_dir;
+
 #pragma omp parallel sections
     {
-      
+
 #pragma omp section
         {
-          
-          std::string pkgfilename;
-          
-          while (dircontent.getNext(pkgfilename))
-            {
-              if (pkgfilename.length() > 2) 
-                {
-                  // other filters required? like if file was edit with emacs.. #filename#
-                  if ( pkgfilename[0]=='.' ) continue;
-                  if ( *(pkgfilename.rbegin())=='~'  ) continue ;
-                  fpkgs.insert(pkgfilename);                  
-                }
-              
-              
-              Path path(dircontent.getDirName() + "/" + pkgfilename);
-              if (path.isRegularFile()) // why did i do this, is it required?
-                { //also get reinstalled pkgs.. these have the same name but a newer time..
-                  if (path.getLastModificationTime() > MaxTimeStampRH.Val())
-                    {
-                      newpkgs.insert(pkgfilename);
-                    }
-                }
-            }
+          auto newfiles_cb = [&fpkgs, &newpkgs, &maxknownftime](const std::string& d,const std::string& f) -> bool {
+            fpkgs.insert(f); // insert filename in all existing file_pkgs,
+            Path path(d + "/" + f); // and if filedate is newer, insert into newpkgs
+            if (path.isRegularFile() && path.getLastModificationTime() > maxknownftime)
+                  newpkgs.insert(f);
+            return true ;
+          };
+          pkg_adm_dir.apply(newfiles_cb) ;
+
         }// opm section
 #pragma omp section
         {
-          m_db.Execute("SELECT fullname FROM pkgs;", &rh);
+          // insert existing names into all_pkgs;
+          auto rh = [&dbpkgs](a4sqlt3::Columns& cols) -> bool {
+            dbpkgs.insert(cols[0].get<std::string>());
+            return true ;
+          } ;
+          m_db.Execute("SELECT fullname FROM pkgs;", rh);
         } // opm section
     } //omp parallel sections
     
- 
+
   StringList toremoveList;
   StringList toinsertList;
   StringList reinstalledList;
@@ -535,18 +499,19 @@ Cache::SyncData()
   StringVec::iterator allinIter = allinserts.begin(); 
   for ( StringList::iterator pos=toinsertList.begin();pos!=toinsertList.end() ;++pos)
     {
-      *allinIter = dircontent.getDirName() +  *pos;
+      *allinIter = pkg_adm_dir.getDirName() + "/" +  *pos;
       ++allinIter;
     }
   for ( StringList::iterator pos = reinstalledList.begin();pos != reinstalledList.end();++pos)
     {
-      *allinIter = dircontent.getDirName() +*pos;
+      *allinIter = pkg_adm_dir.getDirName() + "/" +*pos;
       ++allinIter;
     }  
   
   if(allinIter != allinserts.end())
     throw a4z::ErrorNeverReach("valptr transfair to vector failed");
   
+
   m_db.Execute("BEGIN TRANSACTION");
 
   if(toremoveList.size()> 0)
