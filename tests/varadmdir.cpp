@@ -25,14 +25,14 @@ THE SOFTWARE.
 
 #include <a4z/testsuitebuilder.hpp>
 
-#include "sbbdep/dircontent.hpp"
+#include "sbbdep/pkgadmdir.hpp"
 
 #include <functional>
 #include <string>
 #include <vector>
 
 using namespace sbbdep;
-
+/*
 class PkgAdmDir{
 
   static bool DefaultIgnorFilter(const std::string& f){
@@ -78,11 +78,10 @@ public:
 
 private:
   DirContent m_dir;
-
   IgnorFilterCall m_ignoreFilter;
 
 };
-
+*/
 
 void RunDefault()
 {

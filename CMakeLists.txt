@@ -95,6 +95,7 @@ include/sbbdep/pathnamelist.hpp
 include/sbbdep/pathnameset.hpp
 include/sbbdep/pkfab.hpp
 include/sbbdep/pkg.hpp
+include/sbbdep/pkgadmdir.hpp
 include/sbbdep/pkgarchiv.hpp
 include/sbbdep/pkgdestdir.hpp
 include/sbbdep/pkgfile.hpp
@@ -124,6 +125,7 @@ src/sbbdep/path.cpp
 src/sbbdep/pathname.cpp
 src/sbbdep/pkfab.cpp
 src/sbbdep/pkg.cpp
+src/sbbdep/pkgadmdir.cpp
 src/sbbdep/pkgarchiv.cpp
 src/sbbdep/pkgdestdir.cpp
 src/sbbdep/pkgfile.cpp
