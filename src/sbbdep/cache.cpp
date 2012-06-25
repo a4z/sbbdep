@@ -478,7 +478,8 @@ Cache::SyncData()
         {
           std::set_difference(dbpkgs.begin(), dbpkgs.end(), fpkgs.begin(), fpkgs.end(),
               std::inserter(toremoveList, toremoveList.begin()));
-        }// opm section
+        }
+
 #pragma omp  section
         {
           
@@ -488,7 +489,8 @@ Cache::SyncData()
           std::set_difference(newpkgs.begin(), newpkgs.end(), toinsertList.begin(),
               toinsertList.end(), std::inserter(reinstalledList, reinstalledList.begin()));
           
-        }// opm section
+        }
+
     } //omp sections
 
   
@@ -589,8 +591,6 @@ Cache::PersistPgks( const StringVec& pkgfiles , bool owntransaction )
                 LogError()<< "waring, unable to load pkgfile with path " << path << "\n";  
               }
             else
-            // query > 0 == stupid cause non bin pkgs would always be handled within sync
-            //if( pkfile.getDynLinkedInfos().size() > 0 )   
               {  
                 StoreEntry* se = 
                     new StoreEntry( pkfile.getPathName().getBase(), 
