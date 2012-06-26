@@ -26,11 +26,11 @@
 
 #include <functional>
 #include <string>
-#include "sbbdep/dircontent.hpp"
+#include <sbbdep/dircontent.hpp>
 
 namespace sbbdep {
 
-#include <functional>
+
 
 /**
  * \brief Object for iterating over files in a directory.
