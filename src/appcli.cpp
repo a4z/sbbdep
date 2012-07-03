@@ -29,6 +29,8 @@ THE SOFTWARE.
 
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <cstdlib>
 
 #include "sbbdep/config.hpp" // generated 
 
@@ -81,12 +83,12 @@ AppCli::Run(const AppArgs& appargs)
     {
       if( !appargs.getDBName().size() )
         {
-          // TODO , think about default val to set here and not in all singles
-          init_all_singles( ) ;
+          std::string db = std::string(std::getenv("HOME") + std::string("/sbbdep.cache"));
+          init_all_singles( db ) ;
         }
       else 
         {
-          init_all_singles( appargs.getDBName().c_str() ) ; 
+          init_all_singles( appargs.getDBName() ) ;
         }
     }
   catch( const a4z::Err& e )

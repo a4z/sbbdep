@@ -26,8 +26,6 @@ THE SOFTWARE.
 #ifndef SBBDEP_SINGLES_HPP_
 #define SBBDEP_SINGLES_HPP_
 
-// since for test/trial a whole initialisation is sometimes requiered, but all here untill all ready
-
 
 #include "sbbdep/cache.hpp"
 #include "sbbdep/log.hpp"
@@ -35,20 +33,17 @@ THE SOFTWARE.
 #include "sbbdep/pkfab.hpp"
 #include "a4z/singlecollector.hpp"
 
-#include <cstdlib>
+
 #include <string>
 
 namespace sbbdep
 {
-  void init_all_singles(const char* dbname = 0){
+  void init_all_singles(const std::string& dbname){
     
-    Log::create(); //NOTE; very important, init log on first position..
+    Log::create(); //NOTE; very important, initialise  log on first position..
     
-    std::string db;
-    if (!dbname) db = std::string(std::getenv("HOME") + std::string("/sbbdep.cache"));
-    else db = dbname;
     
-    Cache::create( db.c_str() );
+    Cache::create( dbname );
     
     FMagSingle::create();
     PkFab::create();    

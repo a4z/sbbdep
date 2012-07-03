@@ -263,8 +263,8 @@ public:
 //--------------------------------------------------------------------------------------------------
 
 
-Cache::Cache( const char* dbname ) :
-  m_db(std::string(dbname))
+Cache::Cache( const std::string& dbname ) :
+  m_db(dbname)
 {
   
   m_isnew = false;

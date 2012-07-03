@@ -44,7 +44,7 @@ class Cache : public a4z::Single<Cache>
   friend class a4z::Single<Cache> ; 
   
   
-  Cache(const char* dbname);
+  Cache(const std::string& dbname);
   ~Cache();
 
   
