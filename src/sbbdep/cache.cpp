@@ -493,26 +493,22 @@ Cache::SyncData()
 
     } //omp sections
 
-  
+  // reinstalled packages are in both, to remove and ti insert
   toremoveList.insert(toremoveList.end(), reinstalledList.begin(), reinstalledList.end());
   toinsertList.insert(toinsertList.end(), reinstalledList.begin(), reinstalledList.end());
-  //need full path to precess these packages
-  StringVec allinserts( toinsertList.size() + reinstalledList.size() ) ;
-  StringVec::iterator allinIter = allinserts.begin(); 
-  for ( StringList::iterator pos=toinsertList.begin();pos!=toinsertList.end() ;++pos)
-    {
-      *allinIter = pkg_adm_dir.getDirName() + "/" +  *pos;
-      ++allinIter;
-    }
-  for ( StringList::iterator pos = reinstalledList.begin();pos != reinstalledList.end();++pos)
-    {
-      *allinIter = pkg_adm_dir.getDirName() + "/" +*pos;
-      ++allinIter;
-    }  
   
-  if(allinIter != allinserts.end())
-    throw a4z::ErrorNeverReach("valptr transfair to vector failed");
+  // for indexing full path is needed, so create a list of all new pkgs with the full path
+  StringVec allinserts;
+  auto fullpathname = [&pkg_adm_dir](std::string& s) ->std::string
+      { return pkg_adm_dir.getDirName() + "/" +s ; } ;
+
+
+  std::transform(toinsertList.begin(), toinsertList.end(),
+      std::back_insert_iterator<StringVec>(allinserts), fullpathname );
   
+  std::transform(reinstalledList.begin(), reinstalledList.end(),
+      std::back_insert_iterator<StringVec>(allinserts), fullpathname );
+
 
   m_db.Execute("BEGIN TRANSACTION");
 

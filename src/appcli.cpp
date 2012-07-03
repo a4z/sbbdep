@@ -70,7 +70,7 @@ AppCli::Run(const AppArgs& appargs)
 {
 
   if (appargs.getPrintVersions())
-    { //FIXME , use cmake config header for this...
+    {
       std::cout << "sbbdep version " 
           << sbbdep::MAJOR_VERSION << "."
           << sbbdep::MINOR_VERSION << "."
@@ -103,10 +103,10 @@ AppCli::Run(const AppArgs& appargs)
     {
       if ( nosync ) 
         {
-          std::cerr << "Cache is new, overrule nosync\n" ; // TODO, use log for all outgonig messages
+          LogInfo() << "Cache is new, overrule nosync\n" ;
           nosync = false;
         }
-      std::cerr << "create cache " << Cache::get()->DB().Name() << "\n";
+      LogInfo() << "create cache " << Cache::get()->DB().Name() << "\n";
     }
 
  if ( !nosync )
@@ -117,7 +117,7 @@ AppCli::Run(const AppArgs& appargs)
         }
       catch( const a4z::Err& e )
         {
-          std::cerr  << e << std::endl;
+          LogError()  << e << std::endl;
           return -2 ; 
         }
    }
@@ -142,7 +142,7 @@ AppCli::Run(const AppArgs& appargs)
       }
     catch( const a4z::Err& e )
       {
-        std::cerr  << e << std::endl;
+        LogError()  << e << std::endl;
         return -3 ; 
       }     
    
@@ -152,13 +152,14 @@ AppCli::Run(const AppArgs& appargs)
       }
     catch( const a4z::Err& e )
       {
-        std::cerr  << e << std::endl;
+        LogError()  << e << std::endl;
         return -4 ; 
       }    
       
     
     DepFileWriter dfw(  appargs.getAppendVersions());
     // TODO think about exception handling for this part
+    // TODO, set the outstream once and trunc else part
     if (!appargs.getWhoNeeds() )
       {
       if( appargs.getOutFile().size() )
