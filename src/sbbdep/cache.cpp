@@ -409,9 +409,24 @@ Cache::CreateData()
   };
   pkg_adm_dir.apply(newfiles_cb) ;
 
-  // TODO handle transaction flags for these calls, do transaction maybe arround
-  PersistPgks( pkgnamevec ) ;
-  UpdateLdDirs() ;
+
+  struct Transaction{
+    CacheDB& m_db;   bool m_commited;
+    Transaction(CacheDB& db): m_db(db), m_commited(false){m_db.Execute("BEGIN TRANSACTION");}
+    ~Transaction(){ if(!m_commited) m_db.Execute("ROLLBACK TRANSACTION");}
+    void commit(){ m_db.Execute("COMMIT TRANSACTION"); m_commited = true ; }
+  };
+  // TODO , think about how to use such a scope guard in future...
+  // TODO "PRAGMA journal_mode = OFF" and "PRAGMA synchronous = OFF"
+  // for first creation I could turn all off, put this on research ....
+  Transaction transaction(m_db);
+
+  PersistPgks( pkgnamevec , false) ;
+  UpdateLdDirs(false) ;
+
+  transaction.commit();
+
+  // TODO , if this throws, I will have an empty db, think about that
 
   m_isnew = false;
   
@@ -428,8 +443,8 @@ Cache::SyncData()
   // get files with newer date and existing name for handling reinstalled pkgs
   
 
-  StringSet fpkgs; // all pks in file system
-  StringSet dbpkgs; // all pks in the db
+  StringSet allpkgfiles; // all pks in file system
+  StringSet allpkgindb; // all pks in the db
   StringSet newpkgs; // // all pks in file system with a newer date as the lastest known date
 
 
@@ -446,23 +461,33 @@ Cache::SyncData()
 
 #pragma omp section
         {
-          auto newfiles_cb = [&fpkgs, &newpkgs, &maxknownftime](const std::string& d,const std::string& f) -> bool {
-            fpkgs.insert(f); // insert filename in all existing file_pkgs,
-            Path path(d + "/" + f); // and if filedate is newer, insert into newpkgs
-            if (path.isRegularFile() && path.getLastModificationTime() > maxknownftime)
-                  newpkgs.insert(f);
-            return true ;
-          };
+          auto newfiles_cb =
+              [&allpkgfiles, &newpkgs, &maxknownftime]
+               (const std::string& d,const std::string& f) -> bool
+              {
+                Path path(d + "/" + f); //
+                if ( path.isRegularFile() )
+                  {
+                    allpkgfiles.insert(f); // insert filename in all existing file_pkgs,
+                    // and if newer as the latest known file time
+                    if ( path.getLastModificationTime() > maxknownftime )
+                          newpkgs.insert(f); // insert into new pkgs
+                  }
+                return true ;
+              };
+
           pkg_adm_dir.apply(newfiles_cb) ;
 
         }// opm section
 #pragma omp section
         {
           // insert existing names into all_pkgs;
-          auto rh = [&dbpkgs](a4sqlt3::Columns& cols) -> bool {
-            dbpkgs.insert(cols[0].get<std::string>());
-            return true ;
-          } ;
+          auto rh = [&allpkgindb](a4sqlt3::Columns& cols) -> bool
+              {
+                allpkgindb.insert(cols[0].get<std::string>());
+                return true ;
+              } ;
+
           m_db.Execute("SELECT fullname FROM pkgs;", rh);
         } // opm section
     } //omp parallel sections
@@ -476,16 +501,20 @@ Cache::SyncData()
     {
 #pragma omp section
         {
-          std::set_difference(dbpkgs.begin(), dbpkgs.end(), fpkgs.begin(), fpkgs.end(),
+          // all that are in db but not in filesystem are to remove
+          std::set_difference(allpkgindb.begin(), allpkgindb.end(),
+              allpkgfiles.begin(), allpkgfiles.end(),
               std::inserter(toremoveList, toremoveList.begin()));
         }
 
 #pragma omp  section
         {
-          
-          std::set_difference(fpkgs.begin(), fpkgs.end(), dbpkgs.begin(), dbpkgs.end(),
+          // all that are in filesystem but not in db are new and need to be added to insert list
+          std::set_difference(allpkgfiles.begin(), allpkgfiles.end(),
+              allpkgindb.begin(), allpkgindb.end(),
               std::inserter(toinsertList, toinsertList.begin()));
 
+          // new pkgs that are not in the insert list are re-installed and need to be added again
           std::set_difference(newpkgs.begin(), newpkgs.end(), toinsertList.begin(),
               toinsertList.end(), std::inserter(reinstalledList, reinstalledList.begin()));
           
@@ -493,19 +522,16 @@ Cache::SyncData()
 
     } //omp sections
 
-  // reinstalled packages are in both, to remove and ti insert
-  toremoveList.insert(toremoveList.end(), reinstalledList.begin(), reinstalledList.end());
-  toinsertList.insert(toinsertList.end(), reinstalledList.begin(), reinstalledList.end());
   
   // for indexing full path is needed, so create a list of all new pkgs with the full path
   StringVec allinserts;
   auto fullpathname = [&pkg_adm_dir](std::string& s) ->std::string
       { return pkg_adm_dir.getDirName() + "/" +s ; } ;
 
-
+  // add the new ones
   std::transform(toinsertList.begin(), toinsertList.end(),
       std::back_insert_iterator<StringVec>(allinserts), fullpathname );
-  
+  // add the reinstalled ones to all, they need to be re indexed
   std::transform(reinstalledList.begin(), reinstalledList.end(),
       std::back_insert_iterator<StringVec>(allinserts), fullpathname );
 
@@ -515,6 +541,9 @@ Cache::SyncData()
   if(toremoveList.size()> 0)
     DeletePgks(toremoveList, false) ;
 
+  if(reinstalledList.size()> 0)
+    DeletePgks(reinstalledList, false) ;
+
   if(allinserts.size() > 0 )
     PersistPgks(allinserts, false) ;
 
@@ -523,34 +552,32 @@ Cache::SyncData()
   m_db.Execute("COMMIT TRANSACTION");
 
   //--------------------
-  // from here only info generation about what happend within sync..
+  // from here only info generation about what happened within sync..
   //--------------------
   typedef std::map<std::string, std::string> MessageMap;
   MessageMap messageMap;
-  for (StringList::iterator pos = toinsertList.begin(); pos != toinsertList.end(); ++pos)
+  for(const std::string& inserted : toinsertList)
     {
-      
-      PkgName inname(*pos) ;
-      StringList::iterator del = toremoveList.begin();
-      while( del!= toremoveList.end())
-        {
-          PkgName delname(*del) ;
-          if ( delname.Name() == inname.Name()) break;
-          ++del; 
-        }
+      PkgName inname(inserted) ; // need to compare just the  pkg name, without version tag ,..
 
-      if ( del != toremoveList.end()) 
+      auto compair = [&inname](const std::string& fullname)->bool {
+        return inname.Name() == PkgName(fullname).Name();
+      };
+      auto toremoveIter = std::find_if(toremoveList.begin(), toremoveList.end(), compair) ;
+      
+      if ( toremoveIter != toremoveList.end() )
         {
-          messageMap.insert( MessageMap::value_type(*pos , " => update from " + *del ) ) ;
-          toremoveList.erase(del) ;
+          messageMap.insert( MessageMap::value_type(inserted , " => update from " + *toremoveIter));
+          toremoveList.erase(toremoveIter) ;
         }
       else
         {
-          messageMap.insert( MessageMap::value_type(*pos , " => installed " ) ) ;
+          messageMap.insert( MessageMap::value_type(inserted , " => installed " ) ) ;
         }      
 
     }  
   
+
   for (StringList::iterator pos = toremoveList.begin(); pos != toremoveList.end(); ++pos)
     {
       messageMap.insert( MessageMap::value_type(*pos , " => removed " ) ) ;
@@ -574,7 +601,7 @@ Cache::PersistPgks( const StringVec& pkgfiles , bool owntransaction )
 {
   
   TmpStore tmpStore(m_db);
-  StoreEntryCollector collector(tmpStore); //writes the entries to store on thread end,firstprvate
+  StoreEntryCollector collector(tmpStore); //writes the entries to store on thread end,first private
 
 #pragma omp parallel for shared(tmpStore) firstprivate(collector)  
         for( std::size_t i = 0; i < pkgfiles.size() ; ++i )
@@ -619,7 +646,6 @@ Cache::DeletePgks( const StringList& pkgnames, bool owntransaction)
     {
       cmd_delpkg.setFullName(*pos) ;
       cmd_delpkg.Run();
-     // m_db.Execute(&cmd_delpkg);
     }
   
   if( owntransaction ) m_db.Execute("COMMIT;"); // TODO , was machen bei fehler?? 
