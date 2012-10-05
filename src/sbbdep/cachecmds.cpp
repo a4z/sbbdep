@@ -30,9 +30,8 @@ namespace sbbdep {
 using namespace a4sqlt3;
 
 
-CacheCmd::CacheCmd( const std::string& sql )
-: SqlParamCommand(sql)
-,m_emptystr("")
+CacheCmd::CacheCmd( const std::string& sql , a4sqlt3::ParameterTypeList tlist)
+: SqlParamCommand(sql,tlist)
 {
 
 }
@@ -49,7 +48,10 @@ CacheCmd::~CacheCmd()
 
 
 InsertPkg::InsertPkg()
-: CacheCmd(CacheSQL::InsertPkgSQL())
+: CacheCmd(CacheSQL::InsertPkgSQL(),
+    {ParameterType::Text,ParameterType::Text,
+        ParameterType::Text, ParameterType::Text
+        , ParameterType::Int ,ParameterType::Text, ParameterType::Int })
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -59,26 +61,16 @@ InsertPkg::~InsertPkg()
 }
 //--------------------------------------------------------------------------------------------------
 
-void InsertPkg::Compile()
-{
-  CacheCmd::Compile();
-
-  Parameters()->Nr(1)->setType<ParameterStringRef>( m_emptystr ) ; // pkgname.FullName()
-  Parameters()->Nr(2)->setType<ParameterStringRef>( m_emptystr ) ; // pkgname.Name()
-  Parameters()->Nr(3)->setType<ParameterStringRef>( m_emptystr ) ; // pkgname.Version()
-  Parameters()->Nr(4)->setType<ParameterStringRef>( m_emptystr ) ; // pkgname.Arch()
-  Parameters()->Nr(5)->setType<ParameterInt>( 0 ) ; //pkgname.Build().Num()
-  Parameters()->Nr(6)->setType<ParameterStringRef>( m_emptystr ) ; // pkgname.Build().Tag()
-  Parameters()->Nr(7)->setType<ParameterInt64>( 0 ) ; // timestamp
-}
-//--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 
 
 InsertDynLinked::InsertDynLinked()
-: CacheCmd(CacheSQL::InsertDynLinkedSQL())
+: CacheCmd(CacheSQL::InsertDynLinkedSQL(),
+    {ParameterType::Int,ParameterType::Text,
+        ParameterType::Text, ParameterType::Text
+        ,ParameterType::Text, ParameterType::Int })
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -88,25 +80,12 @@ InsertDynLinked::~InsertDynLinked()
 }
 //--------------------------------------------------------------------------------------------------
 
-void InsertDynLinked::Compile()
-{
-  CacheCmd::Compile();
-
-  Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>( 0 ); // pkgid
-  Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( m_emptystr ); //dli.filename
-  Parameters()->Nr(3)->setType<a4sqlt3::ParameterString>( m_emptystr ); // dli.filename.getDir()
-  Parameters()->Nr(4)->setType<a4sqlt3::ParameterString>( m_emptystr ); // dli.filename.getBase()
-  // 5 setNull (default), soname
-  Parameters()->Nr(6)->setType<a4sqlt3::ParameterInt>( 0 ); // dli.arch
-
-}
-//--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 
 InsertRequired::InsertRequired()
-: CacheCmd(CacheSQL::InsertRequiredSQL())
+: CacheCmd(CacheSQL::InsertRequiredSQL(),{ParameterType::Int,ParameterType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -116,20 +95,12 @@ InsertRequired::~InsertRequired()
 }
 //--------------------------------------------------------------------------------------------------
 
-void InsertRequired::Compile()
-{
-  CacheCmd::Compile();
-
-  Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>(0); // file id
-  Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( m_emptystr ); // needed
-}
-//--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 
 InsertRRunPath::InsertRRunPath()
-: CacheCmd(CacheSQL::InsertRRunPathSQL())
+: CacheCmd(CacheSQL::InsertRRunPathSQL(),{ParameterType::Int,ParameterType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -139,20 +110,12 @@ InsertRRunPath::~InsertRRunPath()
 }
 //--------------------------------------------------------------------------------------------------
 
-void InsertRRunPath::Compile()
-{
-  CacheCmd::Compile();
-
-  Parameters()->Nr(1)->setType<a4sqlt3::ParameterInt64>(0); // file id
-  Parameters()->Nr(2)->setType<a4sqlt3::ParameterStringRef>( m_emptystr ); // runpath
-}
-//--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 
 InsertLdDir::InsertLdDir()
-: CacheCmd(CacheSQL::InsertLdDirSQL())
+: CacheCmd(CacheSQL::InsertLdDirSQL(),{ParameterType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -162,19 +125,12 @@ InsertLdDir::~InsertLdDir()
 }
 //--------------------------------------------------------------------------------------------------
 
-void InsertLdDir::Compile()
-{
-  CacheCmd::Compile();
-  Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(m_emptystr);
-
-}
-//--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 
 InsertLdLnkDir::InsertLdLnkDir()
-: CacheCmd(CacheSQL::InsertLdLnkDirSQL())
+: CacheCmd(CacheSQL::InsertLdLnkDirSQL(), {ParameterType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -184,20 +140,13 @@ InsertLdLnkDir::~InsertLdLnkDir()
 }
 //--------------------------------------------------------------------------------------------------
 
-void
-InsertLdLnkDir::Compile()
-{
-  CacheCmd::Compile();
-  Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(m_emptystr);
-}
-//--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 
 
 DeletePkgByFullName::DeletePkgByFullName()
-:  CacheCmd(CacheSQL::DeletePkgByFullnameSQL())
+:  CacheCmd(CacheSQL::DeletePkgByFullnameSQL(),{ParameterType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -207,18 +156,11 @@ DeletePkgByFullName::~DeletePkgByFullName()
 }
 //--------------------------------------------------------------------------------------------------
 
-void
-DeletePkgByFullName::Compile()
-{
-  CacheCmd::Compile();
-  Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(m_emptystr);
-}
-//--------------------------------------------------------------------------------------------------
 
 void
 DeletePkgByFullName::setFullName(const std::string& val)
 {
-  Parameters()->Nr(1)->setValue(val);
+  Parameters()->Nr(1)->set(val);
 }
 //--------------------------------------------------------------------------------------------------
 

@@ -174,13 +174,13 @@ public:
   Persist( PkgName& pkgname, DynLinkedInfoList& dllist, int64_t& timestamp)
   {
 
-    m_cmdpkg.Parameters()->Nr(1)->setValue( pkgname.FullName() ) ;
-    m_cmdpkg.Parameters()->Nr(2)->setValue( pkgname.Name() ) ;
-    m_cmdpkg.Parameters()->Nr(3)->setValue( pkgname.Version() ) ;
-    m_cmdpkg.Parameters()->Nr(4)->setValue( pkgname.Arch() ) ;
-    m_cmdpkg.Parameters()->Nr(5)->setValue( pkgname.Build().Num() ) ;
-    m_cmdpkg.Parameters()->Nr(6)->setValue( pkgname.Build().Tag() ) ;
-    m_cmdpkg.Parameters()->Nr(7)->setValue( timestamp ) ;
+    m_cmdpkg.Parameters()->Nr(1)->set( pkgname.FullName() ) ;
+    m_cmdpkg.Parameters()->Nr(2)->set( pkgname.Name() ) ;
+    m_cmdpkg.Parameters()->Nr(3)->set( pkgname.Version() ) ;
+    m_cmdpkg.Parameters()->Nr(4)->set( pkgname.Arch() ) ;
+    m_cmdpkg.Parameters()->Nr(5)->set( pkgname.Build().Num() ) ;
+    m_cmdpkg.Parameters()->Nr(6)->set( pkgname.Build().Tag() ) ;
+    m_cmdpkg.Parameters()->Nr(7)->set( timestamp ) ;
 
     m_dbref.Execute(&m_cmdpkg);
     
@@ -189,17 +189,17 @@ public:
     for( DynLinkedInfoList::const_iterator pos=dllist.begin(); pos!=dllist.end();++pos)
       {
 
-        m_cmddynlinked.Parameters()->Nr(1)->setValue( pkgid );
-        m_cmddynlinked.Parameters()->Nr(2)->setValue( pos->filename.Str() );
-        m_cmddynlinked.Parameters()->Nr(3)->setValue( pos->filename.getDir() );
-        m_cmddynlinked.Parameters()->Nr(4)->setValue( pos->filename.getBase() );
+        m_cmddynlinked.Parameters()->Nr(1)->set( pkgid );
+        m_cmddynlinked.Parameters()->Nr(2)->set( pos->filename.Str() );
+        m_cmddynlinked.Parameters()->Nr(3)->set( pos->filename.getDir() );
+        m_cmddynlinked.Parameters()->Nr(4)->set( pos->filename.getBase() );
         
         if( pos->soName.size()>0 )
-          m_cmddynlinked.Parameters()->Nr(5)->setType<a4sqlt3::ParameterStringRef>( pos->soName );
+          m_cmddynlinked.Parameters()->Nr(5)->set( pos->soName );
         else
           m_cmddynlinked.Parameters()->Nr(5)->setNull() ;
         
-        m_cmddynlinked.Parameters()->Nr(6)->setValue( pos->arch );            
+        m_cmddynlinked.Parameters()->Nr(6)->set( pos->arch );
         
         m_dbref.Execute(&m_cmddynlinked);
         int64_t fileid = m_dbref.getLastInsertRowid() ;
@@ -207,8 +207,8 @@ public:
         StringList::const_iterator needediter= pos->Needed.begin() ;
         for( ; needediter != pos->Needed.end(); ++needediter)
           {
-            m_cmdrequired.Parameters()->Nr(1)->setValue(fileid) ;
-            m_cmdrequired.Parameters()->Nr(2)->setValue( *needediter );
+            m_cmdrequired.Parameters()->Nr(1)->set(fileid) ;
+            m_cmdrequired.Parameters()->Nr(2)->set( *needediter );
             m_dbref.Execute(&m_cmdrequired);
           }
 
@@ -216,8 +216,8 @@ public:
         StringList::const_iterator rrunpathiter= pos->RunRPaths.begin();
         for( ;rrunpathiter != pos->RunRPaths.end(); ++rrunpathiter)
           {
-            m_cmdrrunpath.Parameters()->Nr(1)->setValue(fileid) ;
-            m_cmdrrunpath.Parameters()->Nr(2)->setValue( *rrunpathiter );
+            m_cmdrrunpath.Parameters()->Nr(1)->set(fileid) ;
+            m_cmdrrunpath.Parameters()->Nr(2)->set( *rrunpathiter );
             m_dbref.Execute(&m_cmdrrunpath);
           }        
         
@@ -682,14 +682,14 @@ Cache::UpdateLdDirs(bool owntransaction )
   StringSet::const_iterator iterpos= lddirs.getLdDirs().begin() ;
   for(;iterpos!=lddirs.getLdDirs().end(); ++iterpos)
     {
-      cmdlddir.Parameters()->Nr(1)->setValue(*iterpos);
+      cmdlddir.Parameters()->Nr(1)->set(*iterpos);
       m_db.Execute(&cmdlddir);    
     }
   
   iterpos= ldlnknames.begin() ;
   for(;iterpos!=ldlnknames.end(); ++iterpos)
     {
-      cmdldlnkdir.Parameters()->Nr(1)->setValue(*iterpos);
+      cmdldlnkdir.Parameters()->Nr(1)->set(*iterpos);
       m_db.Execute(&cmdldlnkdir);
     }  
   

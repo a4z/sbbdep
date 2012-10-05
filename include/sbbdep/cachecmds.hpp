@@ -36,27 +36,21 @@ class CacheCmd : public a4sqlt3::SqlParamCommand
 
 public:
 
-  enum PreDefindSql{
-    InsertPkg,
-  };
-
-  CacheCmd( const std::string& sql );
+  CacheCmd( const std::string& sql, a4sqlt3::ParameterTypeList tlist);
   virtual ~CacheCmd();
 
   virtual void Compile() { a4sqlt3::SqlParamCommand::Compile() ;}
 
-protected:
-  const std::string m_emptystr ;
+
 };
 
-
+// since change to parametertyplist these is somehow old and could be done different,
 // CacheSQL::InsertPkgSQL()
 class InsertPkg : public CacheCmd
 {
 public:
   InsertPkg();
   ~InsertPkg();
-  void Compile();
 
 };
 
@@ -66,7 +60,6 @@ class InsertDynLinked : public CacheCmd
 public:
   InsertDynLinked();
   ~InsertDynLinked();
-  void Compile();
 
 };
 
@@ -76,7 +69,6 @@ class InsertRequired : public CacheCmd
 public:
   InsertRequired();
   ~InsertRequired();
-  void Compile();
 
 };
 
@@ -86,7 +78,6 @@ class InsertRRunPath : public CacheCmd
 public:
   InsertRRunPath();
   ~InsertRRunPath();
-  void Compile();
 
 };
 
@@ -96,7 +87,6 @@ class InsertLdDir : public CacheCmd
 public:
   InsertLdDir();
   ~InsertLdDir();
-  void Compile();
 
 };
 
@@ -106,7 +96,6 @@ class InsertLdLnkDir : public CacheCmd
 public:
   InsertLdLnkDir();
   ~InsertLdLnkDir();
-  void Compile();
 
 };
 
@@ -116,7 +105,7 @@ class DeletePkgByFullName : public CacheCmd
 public:
   DeletePkgByFullName() ;
   ~DeletePkgByFullName() ;
-  void Compile();
+
   void setFullName(const std::string& val);
 
 };

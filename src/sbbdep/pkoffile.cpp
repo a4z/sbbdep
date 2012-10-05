@@ -56,24 +56,8 @@ public:
   void
   setSerachVal( const std::string& soname, int arch  )
   {
-    // after init paras will be Null so type mix, 
-    try
-      {
-        Parameters()->Nr(1)->setValue(soname);
-      }
-    catch ( const a4sqlt3::ErrTypeMisMatch& e )
-      {
-        Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(soname);
-      }
-    
-    try
-      {
-        Parameters()->Nr(2)->setValue(arch);     
-      }
-    catch ( const a4sqlt3::ErrTypeMisMatch& e )
-      {
-        Parameters()->Nr(2)->setType<a4sqlt3::ParameterInt>(arch);
-      }    
+      Parameters()->Nr(1)->set(soname);
+      Parameters()->Nr(2)->set(arch);
             
   }//-----------------------------------------------------------------------------------------------
 
@@ -93,24 +77,8 @@ public:
   void
   setSerachVal( const std::string& soname, int arch  )
   {
-    // after init paras will be Null so type mix, 
-    try
-      {
-        Parameters()->Nr(1)->setValue(soname);
-      }
-    catch ( const a4sqlt3::ErrTypeMisMatch& e )
-      {
-        Parameters()->Nr(1)->setType<a4sqlt3::ParameterStringRef>(soname);
-      }
-    
-    try
-      {
-        Parameters()->Nr(2)->setValue(arch);     
-      }
-    catch ( const a4sqlt3::ErrTypeMisMatch& e )
-      {
-        Parameters()->Nr(2)->setType<a4sqlt3::ParameterInt>(arch);
-      }    
+    Parameters()->Nr(1)->set(soname);
+    Parameters()->Nr(2)->set(arch);
             
   }//-----------------------------------------------------------------------------------------------
 
