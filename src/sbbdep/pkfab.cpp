@@ -63,7 +63,7 @@ PkFab::createPkg( const PathName& pn, bool replaceLoaded )
 {
   
   Path path(pn);
-  if (!path.isAbsolute()) path.makeAbsolute(); // TODO, outsource this to caller??
+  if (!path.isAbsolute()) path.makeAbsolute();
   path.makeRealPath();
   
   PKMap::iterator fiter = m_pkmap.find(&path);
@@ -84,20 +84,18 @@ PkFab::createPkg( const PathName& pn, bool replaceLoaded )
       
       std::pair< PKMap::iterator, bool > inpair = m_pkmap.insert(std::make_pair(
           &(pkdd->getPathName()), pkdd));
-      // wenn nicht geinsertet dann muss pkdd geloescht werden weil der pfad schon drinnen war
-      // nur was returnier ich dann?? 0 oder das exestierende?
       if (inpair.second)
         retVal = pkdd;
       else
         {
           delete pkdd;
-          retVal = inpair.first->second; //TODO oder auf null lassen, eher 0 aber mal schauen..
+          retVal = inpair.first->second;
         }
       
     }
   else if (path.isRegularFile())
     {
-      //txt file in /var/...(somwhere)/packages ?
+      //txt file in /var/...(somewhere)/packages ?
 
       // tgz txz file ?
       std::string mime = FMagSingle::get()->getMagicMimeType(path.getURL());
@@ -110,7 +108,7 @@ PkFab::createPkg( const PathName& pn, bool replaceLoaded )
             }
 
             PkgFile* pkg = new PkgFile(path);
-            addPgk(pkg) ; //don't forgett, in case of problem pkg will be deleted  
+            addPgk(pkg) ; //don't forget, in case of problem pkg will be deleted
             retVal = pkg ;
         }
       //          tgz - Slackware package archive compressed using gzip
@@ -130,7 +128,9 @@ PkFab::createPkg( const PathName& pn, bool replaceLoaded )
         }
       else //  
         {
-          std::cerr << mime << std::endl;
+          LogError() << " unknown package format : " + path.getURL();
+          LogError() << " mime was : " + mime;
+
           throw ErrPkg("unknown package format : " + path.getURL()); // 
         }
       
@@ -140,7 +140,7 @@ PkFab::createPkg( const PathName& pn, bool replaceLoaded )
       throw ErrPkg("illegal url " + path.getURL() + "(orig:" + pn.getURL() + ")");
     }
 
-  // some selfprotection
+  // some self protection
   if (retVal->getPathName() != path) throw a4z::ErrorNeverReach("pkg without absolut real path");
   
   return retVal;
