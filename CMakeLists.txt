@@ -5,8 +5,8 @@ project(sbbdep C CXX)
 include( a4cmk/myMacros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
-set(sbbdep_MINOR_VERSION 0)
-set(sbbdep_PATCH_VERSION 9)
+set(sbbdep_MINOR_VERSION 1)
+set(sbbdep_PATCH_VERSION 0)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
@@ -104,6 +104,7 @@ include/sbbdep/pkgonebinlib.hpp
 include/sbbdep/pkoffile.hpp
 include/sbbdep/stringlist.hpp
 include/sbbdep/stringset.hpp
+${sbbdep_CONFIG_HEADER}
 )
 #-----------------------------------------------------------------------------------------
 SET ( libsbbdep_SRCHDR
