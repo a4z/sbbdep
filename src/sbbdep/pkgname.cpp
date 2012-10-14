@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/pkgname.hpp"
+#include <sbbdep/pkgname.hpp>
 
 #include <utility>
 #include <sstream>

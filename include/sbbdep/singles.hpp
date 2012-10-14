@@ -27,11 +27,11 @@ THE SOFTWARE.
 #define SBBDEP_SINGLES_HPP_
 
 
-#include "sbbdep/cache.hpp"
-#include "sbbdep/log.hpp"
-#include "sbbdep/filemagic.hpp"
-#include "sbbdep/pkfab.hpp"
-#include "a4z/singlecollector.hpp"
+#include <sbbdep/cache.hpp>
+#include <sbbdep/log.hpp>
+#include <sbbdep/filemagic.hpp>
+#include <sbbdep/pkfab.hpp>
+#include <a4z/singlecollector.hpp>
 
 
 #include <string>

@@ -23,13 +23,13 @@ THE SOFTWARE.
  
 
 
-#include "sbbdep/pkgfile.hpp"
-#include "sbbdep/error.hpp"
-#include "sbbdep/path.hpp"
-#include "sbbdep/log.hpp"
-#include "sbbdep/dynlinked.hpp"
+#include <sbbdep/pkgfile.hpp>
+#include <sbbdep/error.hpp>
+#include <sbbdep/path.hpp>
+#include <sbbdep/log.hpp>
+#include <sbbdep/dynlinked.hpp>
 
-#include "a4z/error.hpp"
+#include <a4z/error.hpp>
 
 #include <fstream>
 #include <algorithm>

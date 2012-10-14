@@ -22,21 +22,21 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/pkoffile.hpp"
+#include <sbbdep/pkoffile.hpp>
 
 
-#include "sbbdep/cache.hpp"
-#include "sbbdep/cachesql.hpp"
-#include "sbbdep/pathname.hpp"
+#include <sbbdep/cache.hpp>
+#include <sbbdep/cachesql.hpp>
+#include <sbbdep/pathname.hpp>
 
-#include "sbbdep/log.hpp"
+#include <sbbdep/log.hpp>
 
-#include "a4sqlt3/sqlparamcommand.hpp"
-#include "a4sqlt3/parameters.hpp"
+#include <a4sqlt3/sqlparamcommand.hpp>
+#include <a4sqlt3/parameters.hpp>
 
-#include "a4sqlt3/rowhandler.hpp"
-#include "a4sqlt3/columns.hpp"
-#include "a4sqlt3/error.hpp"
+#include <a4sqlt3/rowhandler.hpp>
+#include <a4sqlt3/columns.hpp>
+#include <a4sqlt3/error.hpp>
 
 #include <iostream>
 //#include <algorithm>

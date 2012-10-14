@@ -23,7 +23,6 @@ THE SOFTWARE.
 
 
 #include "appcli.hpp"
-
 #include "appargs.hpp"
 
 
@@ -32,14 +31,14 @@ THE SOFTWARE.
 #include <string>
 #include <cstdlib>
 
-#include "sbbdep/config.hpp" // generated 
+#include <sbbdep/config.hpp> // generated 
 
-#include "sbbdep/singles.hpp"
-#include "sbbdep/path.hpp"
-#include "sbbdep/depfilewriter.hpp"
-#include "sbbdep/pkg.hpp"
+#include <sbbdep/singles.hpp>
+#include <sbbdep/path.hpp>
+#include <sbbdep/depfilewriter.hpp>
+#include <sbbdep/pkg.hpp>
 
-#include "a4z/err.hpp"
+#include <a4z/err.hpp>
 
 
 

@@ -22,19 +22,19 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/depfilewriter.hpp"
+#include <sbbdep/depfilewriter.hpp>
 
-#include "sbbdep/pkg.hpp"
-#include "sbbdep/pkoffile.hpp"
+#include <sbbdep/pkg.hpp>
+#include <sbbdep/pkoffile.hpp>
 
-#include "sbbdep/dynlinkedinfolist.hpp"
+#include <sbbdep/dynlinkedinfolist.hpp>
 
-#include "sbbdep/stringlist.hpp"
-#include "sbbdep/stringset.hpp"
-#include "sbbdep/pkgname.hpp"
-#include "sbbdep/log.hpp"
+#include <sbbdep/stringlist.hpp>
+#include <sbbdep/stringset.hpp>
+#include <sbbdep/pkgname.hpp>
+#include <sbbdep/log.hpp>
 
-#include "a4z/error.hpp"
+#include <a4z/error.hpp>
 
 #include <vector>
 #include <algorithm>

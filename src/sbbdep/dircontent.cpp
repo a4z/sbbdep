@@ -22,9 +22,9 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/dircontent.hpp"
+#include <sbbdep/dircontent.hpp>
 
-#include "sbbdep/error.hpp"
+#include <sbbdep/error.hpp>
 
 #include <sys/types.h>
 //#include <dirent.h>

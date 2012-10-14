@@ -22,13 +22,13 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/lddirs.hpp"
+#include <sbbdep/lddirs.hpp>
 
-#include "sbbdep/path.hpp"
-#include "sbbdep/dircontent.hpp"
-#include "sbbdep/error.hpp"
-#include "sbbdep/log.hpp"
-#include "sbbdep/dynlinked.hpp"
+#include <sbbdep/path.hpp>
+#include <sbbdep/dircontent.hpp>
+#include <sbbdep/error.hpp>
+#include <sbbdep/log.hpp>
+#include <sbbdep/dynlinked.hpp>
 
 #include <fstream>
 #include <string>

@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 #include <list>
 
-#include "sbbdep/pathname.hpp"
+#include <sbbdep/pathname.hpp>
 
 namespace sbbdep{
 

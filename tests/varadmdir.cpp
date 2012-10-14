@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 #include <a4z/testsuitebuilder.hpp>
 
-#include "sbbdep/pkgadmdir.hpp"
+#include <sbbdep/pkgadmdir.hpp>
 
 #include <functional>
 #include <string>

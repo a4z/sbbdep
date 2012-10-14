@@ -26,7 +26,7 @@ THE SOFTWARE.
 #ifndef SBBDEP_DYNLINKEDINFOLIST_HPP_
 #define SBBDEP_DYNLINKEDINFOLIST_HPP_
 
-#include "sbbdep/dynlinkedinfo.hpp"
+#include <sbbdep/dynlinkedinfo.hpp>
 #include <list>
 
 namespace sbbdep{

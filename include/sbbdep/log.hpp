@@ -25,8 +25,8 @@ THE SOFTWARE.
 #ifndef SBBDEP_LOG_HPP_
 #define SBBDEP_LOG_HPP_
 
-#include "a4z/logsystemomp.hpp"
-#include "a4z/single.hpp"
+#include <a4z/logsystemomp.hpp>
+#include <a4z/single.hpp>
 
 
 namespace sbbdep {

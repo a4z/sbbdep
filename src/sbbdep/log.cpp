@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/log.hpp"
+#include <sbbdep/log.hpp>
 #include <iostream>
 
 namespace sbbdep {

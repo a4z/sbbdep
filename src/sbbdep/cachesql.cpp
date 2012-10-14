@@ -22,9 +22,9 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/cachesql.hpp"
+#include <sbbdep/cachesql.hpp>
 
-#include "sbbdep/pathname.hpp"
+#include <sbbdep/pathname.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 #include <sqlite3.h>

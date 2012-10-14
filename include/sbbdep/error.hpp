@@ -26,7 +26,7 @@ THE SOFTWARE.
 #ifndef SBBDEP_ERROR_HPP_
 #define SBBDEP_ERROR_HPP_
 
-#include "a4z/err.hpp"
+#include <a4z/err.hpp>
 
 
 namespace sbbdep{

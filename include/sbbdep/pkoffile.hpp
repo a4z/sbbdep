@@ -25,7 +25,7 @@ THE SOFTWARE.
 #ifndef SBBDEP_PKOFFILE_HPP_
 #define SBBDEP_PKOFFILE_HPP_
 
-#include "sbbdep/stringlist.hpp"
+#include <sbbdep/stringlist.hpp>
 #include <boost/noncopyable.hpp>
 
 namespace sbbdep {

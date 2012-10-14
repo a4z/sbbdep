@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include <string>
 #include <sys/stat.h>
 
-#include "sbbdep/pathname.hpp"
+#include <sbbdep/pathname.hpp>
 
 namespace sbbdep{
 

@@ -25,7 +25,7 @@ THE SOFTWARE.
 #ifndef SBBDEP_PKGONEBINLIB_HPP_
 #define SBBDEP_PKGONEBINLIB_HPP_
 
-#include "sbbdep/pkg.hpp"
+#include <sbbdep/pkg.hpp>
 
 namespace sbbdep
 {

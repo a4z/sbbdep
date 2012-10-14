@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/pkgarchiv.hpp"
+#include <sbbdep/pkgarchiv.hpp>
 
 namespace sbbdep {
 

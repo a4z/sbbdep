@@ -23,9 +23,9 @@ THE SOFTWARE.
 
  
  
-#include "sbbdep/filemagic.hpp"
-#include "sbbdep/error.hpp"
-#include "sbbdep/path.hpp"
+#include <sbbdep/filemagic.hpp>
+#include <sbbdep/error.hpp>
+#include <sbbdep/path.hpp>
 
 #include <iostream>
 

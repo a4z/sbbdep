@@ -22,19 +22,19 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/pkfab.hpp"
+#include <sbbdep/pkfab.hpp>
 
-#include "sbbdep/pkgdestdir.hpp"
-#include "sbbdep/pkgfile.hpp"
-#include "sbbdep/pkgonebinlib.hpp"
+#include <sbbdep/pkgdestdir.hpp>
+#include <sbbdep/pkgfile.hpp>
+#include <sbbdep/pkgonebinlib.hpp>
 
-#include "sbbdep/path.hpp"
-#include "sbbdep/pathname.hpp"
-#include "sbbdep/filemagic.hpp"
-#include "sbbdep/log.hpp"
-#include "sbbdep/error.hpp"
+#include <sbbdep/path.hpp>
+#include <sbbdep/pathname.hpp>
+#include <sbbdep/filemagic.hpp>
+#include <sbbdep/log.hpp>
+#include <sbbdep/error.hpp>
 
-#include "a4z/error.hpp"
+#include <a4z/error.hpp>
 
 namespace sbbdep {
 

@@ -22,8 +22,8 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/dynlinked.hpp"
-#include "sbbdep/log.hpp"
+#include <sbbdep/dynlinked.hpp>
+#include <sbbdep/log.hpp>
 
 //#include <iostream>
 
@@ -34,10 +34,10 @@ THE SOFTWARE.
 
 #include <fcntl.h>
 
-#include "sbbdep/path.hpp"
+#include <sbbdep/path.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
-#include "a4z/error.hpp"
+#include <a4z/error.hpp>
 
 namespace sbbdep {
 

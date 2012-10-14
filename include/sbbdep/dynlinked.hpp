@@ -26,7 +26,7 @@ THE SOFTWARE.
 #define SBBDEP_DYNLINKED_HPP_
 
 #include <string>
-#include "sbbdep/dynlinkedinfo.hpp"
+#include <sbbdep/dynlinkedinfo.hpp>
 
 
 class Elf;

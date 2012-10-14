@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/pathname.hpp"
+#include <sbbdep/pathname.hpp>
 
 
 

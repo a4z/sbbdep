@@ -25,7 +25,7 @@ THE SOFTWARE.
 #ifndef SBBDEP_LDDIRS_HPP_
 #define SBBDEP_LDDIRS_HPP_
 
-#include "sbbdep/stringset.hpp"
+#include <sbbdep/stringset.hpp>
 
 namespace sbbdep
 {

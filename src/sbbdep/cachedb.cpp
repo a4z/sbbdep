@@ -22,8 +22,8 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/cachedb.hpp"
-#include "sbbdep/cachesql.hpp"
+#include <sbbdep/cachedb.hpp>
+#include <sbbdep/cachesql.hpp>
 
 #include <cstdlib>
 #include <sqlite3.h>

@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 #include <iosfwd>
 
-#include "sbbdep/log.hpp"
+#include <sbbdep/log.hpp>
 
 
 namespace sbbdep {

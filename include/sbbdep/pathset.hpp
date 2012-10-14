@@ -26,7 +26,7 @@ THE SOFTWARE.
 #define SBBDEP_PATHSET_HPP_
 
 #include <set>
-#include "sbbdep/path.hpp"
+#include <sbbdep/path.hpp>
 
 namespace sbbdep{
 

@@ -23,7 +23,7 @@ THE SOFTWARE.
 
 
 
-#include "sbbdep/pkg.hpp"
+#include <sbbdep/pkg.hpp>
 
 namespace sbbdep {
 

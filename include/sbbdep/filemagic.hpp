@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 #include <magic.h>
 #include <string>
-#include "a4z/single.hpp"
+#include <a4z/single.hpp>
 
 namespace sbbdep {
 

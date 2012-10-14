@@ -26,9 +26,9 @@ THE SOFTWARE.
 #define SBBDEP_PKG_HPP_
 
 
-#include "sbbdep/pathname.hpp"
-#include "sbbdep/stringset.hpp"
-#include "sbbdep/dynlinkedinfolist.hpp"
+#include <sbbdep/pathname.hpp>
+#include <sbbdep/stringset.hpp>
+#include <sbbdep/dynlinkedinfolist.hpp>
 
 namespace sbbdep {
 

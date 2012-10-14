@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/path.hpp"
+#include <sbbdep/path.hpp>
 
 #include <climits> //path_max
 #include <cstdlib>

@@ -30,8 +30,8 @@ THE SOFTWARE.
 #include <string>
 #include <utility>
 
-#include "sbbdep/stringlist.hpp"
-#include "sbbdep/pathname.hpp"
+#include <sbbdep/stringlist.hpp>
+#include <sbbdep/pathname.hpp>
 
 namespace sbbdep{
 

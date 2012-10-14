@@ -22,15 +22,15 @@ THE SOFTWARE.
 */
 
 
-#include "sbbdep/pkgdestdir.hpp"
+#include <sbbdep/pkgdestdir.hpp>
 
-#include "sbbdep/error.hpp"
-#include "sbbdep/dircontent.hpp"
-#include "sbbdep/dynlinked.hpp"
-#include "sbbdep/path.hpp"
-#include "sbbdep/log.hpp"
+#include <sbbdep/error.hpp>
+#include <sbbdep/dircontent.hpp>
+#include <sbbdep/dynlinked.hpp>
+#include <sbbdep/path.hpp>
+#include <sbbdep/log.hpp>
 
-#include "a4z/error.hpp"
+#include <a4z/error.hpp>
 
 #include <iostream>
 

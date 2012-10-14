@@ -27,8 +27,8 @@ THE SOFTWARE.
 #define SBBDEP_CACHE_HPP_
 
 
-#include "sbbdep/cachedb.hpp"
-#include "sbbdep/stringlist.hpp"
+#include <sbbdep/cachedb.hpp>
+#include <sbbdep/stringlist.hpp>
 
 
 #include <a4z/single.hpp>

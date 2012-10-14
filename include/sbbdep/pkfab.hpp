@@ -29,8 +29,8 @@ THE SOFTWARE.
 
 
 #include <map>
-#include "a4z/single.hpp"
-#include "sbbdep/pathname.hpp"
+#include <a4z/single.hpp>
+#include <sbbdep/pathname.hpp>
 
 
 namespace sbbdep {

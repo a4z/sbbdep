@@ -26,7 +26,7 @@ THE SOFTWARE.
 #define SBBDEP_PKGFILE_HPP_
 
 
-#include "sbbdep/pkg.hpp"
+#include <sbbdep/pkg.hpp>
 
 
 namespace sbbdep {
