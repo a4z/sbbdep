@@ -1,5 +1,30 @@
 
-sbbdep is tool for Slackware and Slackware based distributions like Salixos
+sbbdep is tool for Slackware and Slackware based distributions like Salixos that traces 
+binary runtime dependencies of dynamic linked files.
+
+some simple usage example:
+
+    >./sbbdep --whoneeds /usr/lib64/libboost_program_options.so
+    akonadi-1.7.2-x86_64-1
+
+this shows us that libboost_program_options.so is required by the package akonadi.
+
+sbbdep works also in the other direction
+ 
+    >./sbbdep -s  /usr/lib64/libboost_program_options.so
+    aaa_elflibs | gcc, cxxlibs | gcc-g++, glibc | glibc-solibs
+ 
+ 
+this shows us that which packages libboost_program_options.so requires. 
+ 
+ 
+Of course sbbdep can do much more, like 
+    reporting missing files, 
+    reporting dependencies between files and files
+    generating dependencies information for packages and install destinations of Slackware builds 
+
+
+Some more information:
 
  sbbdep takes a snap shoot of installed packages, extracts information about 
  binary runtime dependencies between files and stores these info in a sqlite3 database 
@@ -11,7 +36,7 @@ sbbdep is tool for Slackware and Slackware based distributions like Salixos
    and 
   who needs file/package
 
- through having a static storage sbbdep is fast in querying these information.
+ through having a static storage sbbdep is very fast in querying these information.
 
  currently query for package/packages and file/packages in both directions are implemented in sbbdep
 
@@ -21,7 +46,7 @@ sbbdep is tool for Slackware and Slackware based distributions like Salixos
  A description of the database can be found in README_db.txt.
 
 
-building sbbdep
+building sbbdep:
 
 Beside boost, libelf and file, which are part of the current Slackware distribution.
 sbbdep needs a4z and a4sqlt3 which are both available on bitbucket
