@@ -1,5 +1,5 @@
 
-sbbdep is tool for Slackware and Slackware based distributions like Salixos that traces 
+sbbdep is a tool for Slackware and Slackware based distributions like Salixos that traces 
 binary runtime dependencies of dynamic linked files.
 
 some simple usage example:
