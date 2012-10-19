@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "appcli.hpp"
 #include "appargs.hpp"
 #include "depfilewriter.hpp"
-
+#include "xdl.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -124,7 +124,7 @@ AppCli::Run(const AppArgs& appargs)
   
    // TODO; here I could reopen the cache read only!!
  
-  
+  // the more options I add the more spaghetti this becomes, so its subject to change..
 
    Path pn( appargs.getQuery() ) ;
    
@@ -146,6 +146,9 @@ AppCli::Run(const AppArgs& appargs)
         return -3 ; 
       }     
    
+    // since xdl option was added this is to early here cause for XDL I do only want a file
+    // so I possible load package info for just print an error
+    // not a big deal or problem but can be done better, so -> TODO
     try
       {
         pkg->Load() ;
@@ -157,11 +160,10 @@ AppCli::Run(const AppArgs& appargs)
       }    
       
     
-    DepFileWriter dfw(  appargs.getAppendVersions());
-    // TODO think about exception handling for this part
-    // TODO, set the outstream once and trunc else part
-    if (!appargs.getWhoNeeds() )
+
+    if (!appargs.getWhoNeeds() && !appargs.getXDL())
       {
+        DepFileWriter dfw(appargs.getAppendVersions());
       if( appargs.getOutFile().size() )
         {
           std::ofstream outfile;
@@ -170,13 +172,30 @@ AppCli::Run(const AppArgs& appargs)
         }
       else
         {
+
           dfw.generate(*pkg , std::cout ) ;
           std::cout << "\n"<< std::endl;
         }
       }
+    else if(appargs.getWhoNeeds())
+      {
+        DepFileWriter dfw(appargs.getAppendVersions());
+        dfw.who_requires(*pkg , std::cout ) ;    
+      }
+    else if(appargs.getXDL())
+      {
+
+        if(!handleXDLrequest(pkg))
+          LogError()<< "explain dynamic linked did not work\n"
+          << "a better error message is in development\n";
+
+      }
     else
       {
-        dfw.who_requires(*pkg , std::cout ) ;    
+        LogError()  << "Can not run given combination of arguments \n" ;
+        LogError()  << "(could possible, but I do not want)\n";
+        LogError()  << "Please run just one QUERY.\n" << std::endl;
+        return -6 ;
       }
   
 

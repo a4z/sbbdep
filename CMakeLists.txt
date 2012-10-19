@@ -150,6 +150,9 @@ SET ( sbbdepcli_SRC
     src/cli/main.cpp
     src/cli/pkoffile.hpp
     src/cli/pkoffile.cpp
+    
+    src/cli/xdl.hpp
+    src/cli/xdl.cpp    
 )
 
 

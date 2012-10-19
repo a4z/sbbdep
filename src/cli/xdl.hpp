@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2012 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2012-2012 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,46 +22,16 @@ THE SOFTWARE.
 */
 
 
-#ifndef SBBDEP_APPARGS_HPP_
-#define SBBDEP_APPARGS_HPP_
+#ifndef XDL_HPP_
+#define XDL_HPP_
 
-#include <string>
+namespace sbbdep{
 
-namespace sbbdep {
+  class Pkg;
 
-class AppArgs
-{
-  
-  bool m_help;
-  std::string m_dbname ;
-  std::string m_query;
-  std::string m_outfile ;
-  bool m_append_versions;
-  bool m_sbbdep_version;
-  bool m_nosync;
-  bool m_whoneeds;
-  bool m_explain_dynlinked;
-  
-public:
-  AppArgs();
-  ~AppArgs();
-  
-  bool Parse( int argc, char** argv ) ;
-  
-  bool getHelp() const { return m_help ;}
-  const std::string& getDBName() const { return m_dbname ; }
-  const std::string& getQuery() const { return m_query; }
-  const std::string& getOutFile() const { return m_outfile ; }
-  bool getAppendVersions() const { return m_append_versions ;}
-  bool getPrintVersions() const { return m_sbbdep_version ;}
-  bool getNoSync() const { return m_nosync ; }
-  bool getWhoNeeds() const { return m_whoneeds ; }
-  bool getXDL() const { return m_explain_dynlinked ; }
-  
-  void PrintHelp();
- 
-};
+  bool handleXDLrequest(Pkg* pkg);
 
 }
 
-#endif /* SBBDEP_APPARGS_HPP_ */
+
+#endif /* XDL_HPP_ */

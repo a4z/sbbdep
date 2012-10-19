@@ -33,7 +33,7 @@ namespace sbbdep {
 
 AppArgs::AppArgs() :
   m_help(false), m_dbname(), m_query(), m_outfile(), m_append_versions(true), 
-  m_sbbdep_version(false), m_nosync(false),m_whoneeds(false)
+  m_sbbdep_version(false), m_nosync(false),m_whoneeds(false), m_explain_dynlinked(false)
 {
   
 }
@@ -133,6 +133,12 @@ AppArgs::PrintHelp()
   write.newline();
   write.newline();  
   
+  write.option("--xdl") .description("explain dynamic linked file") ;
+  write.descriptionline("needs a dynamic linked binary as QUERY") ;
+  write.descriptionline("reports detailed information about needed and whoneeds") ;
+  write.newline();
+  write.newline();
+
   write.option("-v,  --version") .description("display sbbdep version") ;
   write.newline();
   write.newline();  
@@ -163,6 +169,7 @@ AppArgs::Parse( int argc, char** argv )
       { "version", no_argument, 0, 'v' },         
       { "nosync", no_argument, 0, 1 },
       { "whoneeds", no_argument, 0, 1 },
+      { "xdl", no_argument, 0, 1 },
       { 0, 0, 0, 0 } // Required end   
     };
   
@@ -180,6 +187,7 @@ AppArgs::Parse( int argc, char** argv )
           optionName = long_options[optionIdx].name;
           if (optionName == "nosync") m_nosync = true;
           else if(optionName == "whoneeds") m_whoneeds = true;
+          else if (optionName == "xdl") m_explain_dynlinked = true;
           break;
           
         case 'c':
