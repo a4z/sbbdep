@@ -46,7 +46,7 @@ public:
   
   const PathName& getPathName() const { return  m_pathname; }  
   
-  // if ever required to have a pkg just with file infos, split file and dynlink loading
+  // if ever required to have a pkg just with file info, split file and dynlink loading
   bool Load() { 
     m_floaded = doLoad() ;  
     return m_floaded ;
@@ -62,14 +62,14 @@ protected:
   Pkg( const Pkg& other );
   Pkg& operator=( const Pkg& other );
   
-  //needs to be spezial for each pkg type
+  //needs to be special for each pkg type
   virtual bool doLoad() = 0;
  
   PathName m_pathname; // name  of 
   bool m_floaded ; // files loaded...
 
   StringSet m_libdirs; //dirs where libs are ( /lib(64) /usr/lib(64) .. ), used for search 
-  StringSet m_bindirs; //dirs where other dynamicly linked are ( /(s)bin) /usr/(s)bin /usr/libexec ), used for search  
+  StringSet m_bindirs; //dirs where other dynamically linked are ( /(s)bin) /usr/(s)bin /usr/libexec ), used for search
   
   DynLinkedInfoList m_dlinfos;
   
