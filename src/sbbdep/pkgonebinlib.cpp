@@ -32,7 +32,7 @@ THE SOFTWARE.
 namespace sbbdep{
 
 PkgOneBinLib::PkgOneBinLib( const PathName& pname )
-:Pkg( pname )
+:Pkg( pname ), m_arch(ArchNA)
 {
   
 }
@@ -53,6 +53,7 @@ PkgOneBinLib::doLoad()
   DynLinked dl; 
   if ( dl.Open(p.getURL()))
     {
+      m_arch = dl.getArch();
       DynLinkedInfo dlinfo; 
       if ( dl.getInfos( dlinfo ) ) m_dlinfos.push_back(dlinfo) ;
     }
