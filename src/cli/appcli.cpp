@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include "appcli.hpp"
 #include "appargs.hpp"
+#include "depfilewriter.hpp"
 
 
 #include <iostream>
@@ -35,7 +36,7 @@ THE SOFTWARE.
 
 #include <sbbdep/singles.hpp>
 #include <sbbdep/path.hpp>
-#include <sbbdep/depfilewriter.hpp>
+
 #include <sbbdep/pkg.hpp>
 
 #include <a4z/err.hpp>

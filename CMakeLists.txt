@@ -79,8 +79,6 @@ include/sbbdep/cache.hpp
 include/sbbdep/cachecmds.hpp
 include/sbbdep/cachedb.hpp
 include/sbbdep/cachesql.hpp
-include/sbbdep/depfilewriter.hpp
-include/sbbdep/depwriter.hpp
 include/sbbdep/dircontent.hpp
 include/sbbdep/dynlinked.hpp
 include/sbbdep/dynlinkedinfo.hpp
@@ -101,7 +99,7 @@ include/sbbdep/pkgdestdir.hpp
 include/sbbdep/pkgfile.hpp
 include/sbbdep/pkgname.hpp
 include/sbbdep/pkgonebinlib.hpp
-include/sbbdep/pkoffile.hpp
+
 include/sbbdep/stringlist.hpp
 include/sbbdep/stringset.hpp
 ${sbbdep_CONFIG_HEADER}
@@ -115,8 +113,6 @@ src/sbbdep/cache.cpp
 src/sbbdep/cachecmds.cpp
 src/sbbdep/cachedb.cpp
 src/sbbdep/cachesql.cpp
-src/sbbdep/depfilewriter.cpp
-src/sbbdep/depwriter.cpp
 src/sbbdep/dircontent.cpp
 src/sbbdep/dynlinked.cpp
 src/sbbdep/filemagic.cpp
@@ -132,7 +128,7 @@ src/sbbdep/pkgdestdir.cpp
 src/sbbdep/pkgfile.cpp
 src/sbbdep/pkgname.cpp
 src/sbbdep/pkgonebinlib.cpp
-src/sbbdep/pkoffile.cpp
+
 
 )
 ##########################################################################################
@@ -143,11 +139,17 @@ set(libsbbdep_ALLSRC ${libsbbdep_SRC} ${libsbbdep_SRCHDR} ${libsbbdep_HDR})
 add_library( sbbdep STATIC ${libsbbdep_ALLSRC}  )
 
 SET ( sbbdepcli_SRC
-    src/appargs.cpp
-    src/appargs.hpp
-    src/appcli.cpp
-    src/appcli.hpp
-    src/main.cpp
+    src/cli/appargs.cpp
+    src/cli/appargs.hpp
+    src/cli/appcli.cpp
+    src/cli/appcli.hpp
+    src/cli/depfilewriter.hpp
+    src/cli/depfilewriter.cpp
+    src/cli/depwriter.hpp
+    src/cli/depwriter.cpp
+    src/cli/main.cpp
+    src/cli/pkoffile.hpp
+    src/cli/pkoffile.cpp
 )
 
 

@@ -22,11 +22,10 @@ THE SOFTWARE.
 */
 
 
-#include <sbbdep/depfilewriter.hpp>
+#include "depfilewriter.hpp"
+#include "pkoffile.hpp"
 
 #include <sbbdep/pkg.hpp>
-#include <sbbdep/pkoffile.hpp>
-
 #include <sbbdep/dynlinkedinfolist.hpp>
 
 #include <sbbdep/stringlist.hpp>

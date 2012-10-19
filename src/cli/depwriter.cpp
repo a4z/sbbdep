@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include <sbbdep/depwriter.hpp>
+#include "depwriter.hpp"
 
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgarchiv.hpp>

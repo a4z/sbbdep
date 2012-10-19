@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include <sbbdep/pkoffile.hpp>
+#include "pkoffile.hpp"
 
 
 #include <sbbdep/cache.hpp>
