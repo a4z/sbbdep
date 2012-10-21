@@ -76,7 +76,7 @@ LDDirs::readLdDirs()
               Path p(dirname);
               p.makeRealPath();
               if( p.isFolder() )
-                m_lddirs.insert(dirname) ;
+                m_lddirs.insert(p.getURL()) ;
             }
         }
     }
