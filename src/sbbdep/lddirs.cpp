@@ -71,7 +71,13 @@ LDDirs::readLdDirs()
           std::size_t commentpos = line.find_first_of("#");
           if( commentpos!=std::string::npos ) line.erase(commentpos);
           std::string dirname = boost::algorithm::trim_copy(line) ;
-          if( dirname.size() && Path(dirname).isFolder() ) m_lddirs.insert(dirname) ; // realy required to check if folder?
+          if( dirname.size() )
+            { //  folder path could also be a link
+              Path p(dirname);
+              p.makeRealPath();
+              if( p.isFolder() )
+                m_lddirs.insert(dirname) ;
+            }
         }
     }
   else 
