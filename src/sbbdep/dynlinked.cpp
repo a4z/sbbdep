@@ -185,7 +185,7 @@ DynLinked::Close()
 //--------------------------------------------------------------------------------------------------
 
 bool
-DynLinked::getInfos( DynLinkedInfo& info )
+DynLinked::getInfos( DynLinkedInfo& info ) const
 {
   
   if (!(m_type == Binary || m_type == Library)) return false;
@@ -202,7 +202,8 @@ DynLinked::getInfos( DynLinkedInfo& info )
     {
       if (gelf_getshdr(scn, &shdr) != &shdr)
         {
-          m_errmsg = std::string("gelf_getshdr failed: ") + elf_errmsg(-1);
+          //m_errmsg = std::string("gelf_getshdr failed: ") + elf_errmsg(-1);
+          // TODO write the message to errlog, function should be const
           return false;
         }
       

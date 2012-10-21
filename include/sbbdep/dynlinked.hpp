@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 #include <string>
 #include <sbbdep/dynlinkedinfo.hpp>
-#include <sbbdep/dynlinkedarch.hpp>
+
 
 class Elf;
 
@@ -42,7 +42,7 @@ public:
   DynLinked();
   ~DynLinked() {Close();}
   
-
+  enum Arch { ArchNA = 0, Arch32 = 32 , Arch64 = 64 };
   enum Type { TypeNA= 0 , Other,  Binary , Library};
   
 
@@ -51,10 +51,10 @@ public:
   bool isOpen() { return m_elf!=0; } 
   
   const std::string& getFileName() const { return m_filename; }
-  DynLinkedArch getArch() const {return m_arch;}
+  Arch getArch() const {return m_arch;}
   Type getType()  const{ return m_type; }  
   
-  bool getInfos( DynLinkedInfo& info );
+  bool getInfos( DynLinkedInfo& info ) const ;
   
   
   const std::string& getErrMsg()const{return m_errmsg; }
@@ -66,7 +66,7 @@ private:
 
   Elf* m_elf;
   std::string m_filename;
-  DynLinkedArch m_arch;
+  Arch m_arch;
   Type m_type;
  
   

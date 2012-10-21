@@ -26,12 +26,16 @@ THE SOFTWARE.
 #define SBBDEP_PKGONEBINLIB_HPP_
 
 #include <sbbdep/pkg.hpp>
-#include <sbbdep/dynlinkedarch.hpp>
+
+
 
 namespace sbbdep
 {
+
+
 /**
  * check dependencies for one file
+ *
  */
 class PkgOneBinLib : public Pkg
 {
@@ -40,12 +44,11 @@ public:
   PkgOneBinLib( const PathName& pname );  
   ~PkgOneBinLib();
     
-  DynLinkedArch getArch(){return m_arch;}
+
 
 private:
     bool doLoad();
-    
-    DynLinkedArch m_arch;
+
     
 };
 
