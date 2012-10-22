@@ -218,8 +218,7 @@ CacheSQL::SearchRequiredByLib()
 /*  " ORDER BY  pkg , dynlinked.filename , needed" */
   ";"
    ;
-  // do the fileter of pkg within result, cause query a lib may return the pkg it is memeber of...
-  // order by so fare senesless by may be reactevated again if required to spare an onw sort part of result
+// for special filter or sort, just replace the last ";" with the wanted stuff, no need to do it here
 }
 
 
