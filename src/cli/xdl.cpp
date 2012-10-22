@@ -73,7 +73,7 @@ typedef std::shared_ptr<a4sqlt3::Dataset> DatasetPtr;
 
 
 void
-printRequired(DynLinkedInfo& dlinfos)
+printRequiredBy(DynLinkedInfo& dlinfos)
 {
 
   std::string query = CacheSQL::SearchRequiredByLib();
@@ -100,11 +100,11 @@ printRequired(DynLinkedInfo& dlinfos)
 
 
 void
-printRequires(DynLinkedInfo& dlinfos)
+printRequires(DatasetPtr dspkg, PkgOneBinLib* pkbl)
 {
 
   std::string sql =
-  "SELECT pkgs.fullname as pkg, dynlinked.filename as file"
+  "SELECT pkgs.fullname as pkg, dynlinked.filename as file, dynlinked.soname as soname"
   " FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
   " WHERE dynlinked.soname=? AND dynlinked.arch=? "
   " AND dirname IN (SELECT dirname FROM lddirs "
@@ -114,19 +114,89 @@ printRequires(DynLinkedInfo& dlinfos)
   ";"
   ;
 
+  auto isInOwnPkgDataSet = [dspkg](const std::string& pkgname){
+    for(auto& flds : *dspkg)
+      {
+        if (flds.getField(0).getString() == pkgname)
+          return true;
+      }
+    return false;
+  };
+
   XdlCmd cmd(sql);
   Cache::getInstance()->DB().CompileCommand(&cmd);
 
+  DynLinkedInfo dlinfos = *pkbl->getDynLinkedInfos().begin() ;
+  typedef std::map<std::string , std::string> DepMapType;
+  DepMapType depmap , ownmap , similarmap;
+  StringList notfound  ;
+  StringSet ownsonames;
 
-  typedef std::multimap<std::string , std::string> DepMapType;
-  DepMapType depmap ;
-  StringList notfound ;
+  auto addToMap = [](DepMapType& map, const std::string& fname, const std::string& pkgname )
+    {
+      auto findIter = map.find(fname);
+      if(findIter==map.end())
+        map.insert(DepMapType::value_type(fname, pkgname));
+      else
+        findIter->second+=",  " + pkgname;
+    };
+
   for( auto& soname : dlinfos.Needed )
     {
-      //such im eigenen packet
+      cmd.Parameters()->at(0)->set( soname );
+      cmd.Parameters()->at(1)->set( dlinfos.arch );
+      a4sqlt3::Dataset ds;
+      Cache::getInstance()->DB().Execute(&cmd, &ds);
+
+      if(ds.npos())
+        notfound.push_back(soname);
+
+      for(auto& flds : ds)
+        {
+          if (isInOwnPkgDataSet(flds.getField(0).getString()))
+            {
+              addToMap( ownmap,flds.getField(1).getString(), flds.getField(0).getString() );
+              ownsonames.insert(flds.getField(2).getString());
+            }
+        }
+      for(auto& flds : ds)
+        {
+          if (!isInOwnPkgDataSet(flds.getField(0).getString()))
+            {
+              if(ownsonames.find(flds.getField(2).getString()) == ownsonames.end())
+                addToMap( depmap,flds.getField(1).getString(), flds.getField(0).getString() );
+              else
+                addToMap( similarmap,flds.getField(1).getString(), flds.getField(0).getString() );
+            }
+        }
+
+
     }
 
+    if(ownmap.size() > 0 )
+      std::cout << "dependencies from own package:\n" ;
+    for(auto iter : ownmap)
+      {
+        std::cout << "  " << iter.first << " : " << iter.second << "\n";
+      }
+    if(similarmap.size() > 0 )
+    std::cout << "dependencies in own and others:\n" ;
+    for(auto iter : similarmap)
+      {
+        std::cout << "  "<< iter.first << " : " << iter.second << "\n";
+      }
+    std::cout << "dependencies from others:\n" ;
+    for(auto iter : depmap)
+      {
+        std::cout << "  " << iter.first << " : " << iter.second << "\n";
+      }
 
+    if(notfound.size() > 0)
+      std::cout << "possible problems:\n" ;
+    for(auto iter : notfound)
+      {
+        std::cout << "  NOT FOUND in standard link paths: " << iter << "\n";
+      }
 }
 
 DatasetPtr
@@ -188,7 +258,7 @@ void printSoInfo(DatasetPtr dspkg, const DynLinkedInfo& dlinfos )
 
   if(!ds->npos())
     {
-      std::cout<<  "   also provided from:\n" ;
+      std::cout<<  "  also provided from:\n" ;
       for( auto& flds : *ds )
         {
           std::cout << "   " << flds.getField(0).asString() << ":"<<  flds.getField(1).asString() <<std::endl ;
@@ -230,11 +300,12 @@ handleXDLrequest(Pkg* pkg)
   DynLinkedInfo dlinfos = *pkbl->getDynLinkedInfos().begin() ;
 
   printSoInfo(ds_package, dlinfos); // if nothing to do, func will do nothing
+  printRequires(ds_package, pkbl);
 
   // TODO , can I change the dyn linked info list to a vector without side effects ?
   // should be possible ?
 
-  //printRequired(dlinfos);
+  //printRequiredBy(dlinfos);
 
   return true;
 }
