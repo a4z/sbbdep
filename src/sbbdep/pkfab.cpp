@@ -129,7 +129,7 @@ PkFab::createPkg( const PathName& pn, bool replaceLoaded )
       else //  
         {
           LogError() << " unknown package format : " + path.getURL();
-          LogError() << " mime was : " + mime;
+          LogError() << " mime was : " + mime << std::endl; ;
 
           throw ErrPkg("unknown package format : " + path.getURL()); // 
         }
