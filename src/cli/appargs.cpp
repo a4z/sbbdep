@@ -232,8 +232,13 @@ AppArgs::Parse( int argc, char** argv )
     { // use extern optind to find out if one additional argument was given use as file?    
       if (argc - optind != 1)
         {
-          std::cerr << " wrong arguments " << std::endl; 
-          retVal = false;
+          //if only -c for creating a new chache, this is not wrong...
+          // but TODO, (./sbbdep -c tmp.db --whoneeeds) does nothing but report no message, could be done better
+          if(m_dbname.empty())
+            {
+              std::cerr << " wrong arguments " << std::endl;
+              retVal = false;
+            }
         }
       else
         { //std::cout << " use " << argv[optind] << " as f arg" << std::endl ;
