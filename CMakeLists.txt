@@ -6,7 +6,7 @@ include( a4cmk/myMacros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 1)
-set(sbbdep_PATCH_VERSION 0)
+set(sbbdep_PATCH_VERSION 1)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
