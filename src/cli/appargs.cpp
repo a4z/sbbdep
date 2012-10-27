@@ -234,6 +234,7 @@ AppArgs::Parse( int argc, char** argv )
         {
           //if only -c for creating a new chache, this is not wrong...
           // but TODO, (./sbbdep -c tmp.db --whoneeeds) does nothing but report no message, could be done better
+          // FIXME ./sbbdep --nosync --short /tmp/SBo/package-unrar (or some other installdest goes to wrong arguments
           if(m_dbname.empty())
             {
               std::cerr << " wrong arguments " << std::endl;
