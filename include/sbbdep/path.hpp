@@ -57,10 +57,17 @@ public:
   Path(const std::string& url);
   Path(const char* url);
   
+
+  Path(Path&& other);
+  Path& operator=(Path&& rhs);
+
   Path(const Path& other);
   Path(const PathName& other);
   
   Path& operator=(const Path& rhs);
+
+
+
   Path& operator=(const std::string& rhs);
   Path& operator=(const char* rhs);
   Path& operator=(const PathName& rhs);

@@ -63,7 +63,8 @@ PkFab::createPkg( const PathName& pn, bool replaceLoaded )
 {
   
   Path path(pn);
-  if (!path.isAbsolute()) path.makeAbsolute();
+  if (!path.isAbsolute())
+    path.makeAbsolute();
   path.makeRealPath();
   
   PKMap::iterator fiter = m_pkmap.find(&path);
@@ -128,8 +129,8 @@ PkFab::createPkg( const PathName& pn, bool replaceLoaded )
         }
       else //  
         {
-          LogError() << " unknown package format : " + path.getURL();
-          LogError() << " mime was : " + mime << std::endl; ;
+          //LogError() << " unknown package format : " + path.getURL();
+          //LogError() << " mime was : " + mime << std::endl; ;
 
           throw ErrPkg("unknown package format : " + path.getURL()); // 
         }

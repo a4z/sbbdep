@@ -44,7 +44,7 @@ class PkgAdmDir
 public:
 
    ///Callback functor, taking the dir path and the file name.
-  typedef std::function<bool(const std::string&, const std::string&)> DirContentCall;
+  typedef std::function<bool(const std::string&, const std::string&&)> DirContentCall;
 
   /// default filter action, returns true if entry shall be ignored
   typedef std::function<bool(const std::string&)> IgnorFilterCall;

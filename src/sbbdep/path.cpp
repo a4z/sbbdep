@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <climits> //path_max
 #include <cstdlib>
 #include <unistd.h>
-//#include <iostream>
+#include <iostream>
 
 
 namespace sbbdep{
@@ -76,6 +76,7 @@ Path::Path(const Path& other)
 }  
 //--------------------------------------------------------------------------------------------------
 
+
 Path& 
 Path::operator=(const Path& rhs)
 {
@@ -85,7 +86,30 @@ Path::operator=(const Path& rhs)
 }
 //--------------------------------------------------------------------------------------------------
 
+
+Path::Path(Path&& other)
+: PathName(std::move(other.getURL()))
+, m_type( std::move(other.m_type) )
+, m_stat( std::move(other.m_stat) )
+{
+
+}
+//--------------------------------------------------------------------------------------------------
+
 Path& 
+Path::operator=(Path&& rhs)
+{
+  if (this != &rhs)
+     {
+        m_type = std::move(rhs.m_type);
+        m_stat = std::move(rhs.m_stat);
+     }
+
+  return *this ;
+}
+
+
+Path&
 Path::operator=(const std::string& rhs)
 {
   setURL(rhs) ;

@@ -32,15 +32,16 @@ namespace sbbdep {
 class AppArgs
 {
   
-  bool m_help;
+  int m_help;
   std::string m_dbname ;
   std::string m_query;
   std::string m_outfile ;
-  bool m_append_versions;
-  bool m_sbbdep_version;
-  bool m_nosync;
-  bool m_whoneeds;
-  bool m_explain_dynlinked;
+  int m_append_versions;
+  int m_sbbdep_version;
+  int m_nosync;
+  int m_whoneeds;
+  int m_explain_dynlinked;
+  int m_featureX;
   
 public:
   AppArgs();
@@ -57,6 +58,7 @@ public:
   bool getNoSync() const { return m_nosync ; }
   bool getWhoNeeds() const { return m_whoneeds ; }
   bool getXDL() const { return m_explain_dynlinked ; }
+  bool getFeatureX() const { return m_featureX ; }
   
   void PrintHelp();
  

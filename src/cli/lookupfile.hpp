@@ -21,38 +21,13 @@
  -----------------------------------------------------------------------------
  */
 
-#include <sbbdep/pkgadmdir.hpp>
+#ifndef LOOKUPFILEINPACKAGES_HPP_
+#define LOOKUPFILEINPACKAGES_HPP_
 
-namespace sbbdep {
+namespace sbbdep{ class Path; }
 
-PkgAdmDir::PkgAdmDir(std::string path , IgnorFilterCall filter)
-:m_dir(path) , m_ignoreFilter(filter)
-{
-  m_dir.Open();
-}
-//--------------------------------------------------------------------------------------------------
 
-PkgAdmDir::~PkgAdmDir()
-{
-  if(m_dir.isOpen())
-    m_dir.Close();
-}
-//--------------------------------------------------------------------------------------------------
-void
-PkgAdmDir::apply(DirContentCall call)
-{
-  std::string fname;
-  while( m_dir.getNext(fname) )
-    {
-      if( m_ignoreFilter(fname) )
-        continue;
-      // TODO , change to move(fname)
-      if( !call(m_dir.getDirName(), std::move(fname)) )
-        break;
-    }
-}
-//--------------------------------------------------------------------------------------------------
+bool lookupFileInPackages(const sbbdep::Path& argument);
 
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-} /* namespace sbbdep */
+
+#endif /* LOOKUPFILEINPACKAGES_HPP_ */

@@ -37,7 +37,7 @@ THE SOFTWARE.
 
 #include <boost/algorithm/string.hpp>
 
-#include <iostream>
+//#include <iostream>
 #include <memory>
 
 namespace sbbdep
@@ -91,8 +91,8 @@ printRequiredBy(DynLinkedInfo& dlinfos)
   Cache::getInstance()->DB().Execute(&cmd, ds.get());
 
   for( auto& flds : *ds ){
-      std::cout << "required by pgk " << flds.getField("pkgname").asString() ;
-      std::cout << " file " << flds.getField("dynlinked").asString() << "\n";
+      WriteAppMsg() << "required by pgk " << flds.getField("pkgname").asString() ;
+      WriteAppMsg() << " file " << flds.getField("dynlinked").asString() << "\n";
   }
 
 
@@ -174,28 +174,28 @@ printRequires(DatasetPtr dspkg, PkgOneBinLib* pkbl)
     }
 
     if(ownmap.size() > 0 )
-      std::cout << "dependencies from own package:\n" ;
+      WriteAppMsg() << "dependencies from own package:\n" ;
     for(auto iter : ownmap)
       {
-        std::cout << "  " << iter.first << " : " << iter.second << "\n";
+        WriteAppMsg() << "  " << iter.first << " : " << iter.second << "\n";
       }
     if(similarmap.size() > 0 )
-    std::cout << "dependencies in own and others:\n" ;
+    WriteAppMsg() << "dependencies in own and others:\n" ;
     for(auto iter : similarmap)
       {
-        std::cout << "  "<< iter.first << " : " << iter.second << "\n";
+        WriteAppMsg() << "  "<< iter.first << " : " << iter.second << "\n";
       }
-    std::cout << "dependencies from others:\n" ;
+    WriteAppMsg() << "dependencies from others:\n" ;
     for(auto iter : depmap)
       {
-        std::cout << "  " << iter.first << " : " << iter.second << "\n";
+        WriteAppMsg() << "  " << iter.first << " : " << iter.second << "\n";
       }
 
     if(notfound.size() > 0)
-      std::cout << "possible problems:\n" ;
+      WriteAppMsg() << "possible problems:\n" ;
     for(auto iter : notfound)
       {
-        std::cout << "  NOT FOUND in standard link paths: " << iter << "\n";
+        WriteAppMsg() << "  NOT FOUND in standard link paths: " << iter << "\n";
       }
 }
 
@@ -214,13 +214,13 @@ printPackageInfo(PkgOneBinLib* pkbl)
 
   if(ds->getRowCount()==0)
     {
-      std::cout << pkbl->getPathName() << " not in a known package" << std::endl ;
+      WriteAppMsg() << pkbl->getPathName() << " not in a known package" << std::endl ;
     }
   else
     {
       for( auto& flds : *ds )
         {
-          std::cout << " from package:" << flds.getField(0).asString() << std::endl ;
+          WriteAppMsg() << " from package:" << flds.getField(0).asString() << std::endl ;
         }
     }
 
@@ -233,7 +233,7 @@ void printSoInfo(DatasetPtr dspkg, const DynLinkedInfo& dlinfos )
   if(dlinfos.soName.empty())
     return;
 
-  std::cout << "link name is: " << dlinfos.soName << std::endl;
+  WriteAppMsg() << "link name is: " << dlinfos.soName << std::endl;
 
   std::string pkgname = dspkg->npos() ? "" : dspkg->getField(0).asString();
 
@@ -258,10 +258,10 @@ void printSoInfo(DatasetPtr dspkg, const DynLinkedInfo& dlinfos )
 
   if(!ds->npos())
     {
-      std::cout<<  "  also provided from:\n" ;
+      WriteAppMsg()<<  "  also provided from:\n" ;
       for( auto& flds : *ds )
         {
-          std::cout << "   " << flds.getField(0).asString() << ":"<<  flds.getField(1).asString() <<std::endl ;
+          WriteAppMsg() << "   " << flds.getField(0).asString() << ":"<<  flds.getField(1).asString() <<std::endl ;
         }
     }
 
@@ -284,7 +284,7 @@ handleXDLrequest(Pkg* pkg)
     }
 
 
-  std::cout << "Absolute path: " << pkbl->getPathName() << std::endl ;
+  WriteAppMsg() << "Absolute path: " << pkbl->getPathName() << std::endl ;
 
 
   if ( getArch(pkbl) == 0 )

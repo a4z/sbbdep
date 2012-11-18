@@ -314,14 +314,14 @@ Cache::doSync()
   
   if (m_isnew)
     {
-      Log::Info() << "create cache  \n" << std::endl;
+      Log::Info() << "create cache (" << m_db.Name() <<")" << std::endl;
       CreateData();
       // create indexes after first data
       CreateIndexes() ; 
     }
   else
     {
-      Log::Info() << "sync cache \n" << std::endl;
+      Log::Info() << "sync cache (" << m_db.Name() <<")" << std::endl;
       SyncData();
     }
  
@@ -403,7 +403,7 @@ Cache::CreateData()
   StringVec pkgnamevec;
 
   PkgAdmDir pkg_adm_dir;
-  auto newfiles_cb = [&](const std::string& d,const std::string& f) -> bool {
+  auto newfiles_cb = [&](const std::string& d,const std::string&& f) -> bool {
     pkgnamevec.push_back(d +"/"+ f);
     return true ;
   };
@@ -463,7 +463,7 @@ Cache::SyncData()
         {
           auto newfiles_cb =
               [&allpkgfiles, &newpkgs, &maxknownftime]
-               (const std::string& d,const std::string& f) -> bool
+               (const std::string& d,const std::string&& f) -> bool
               {
                 Path path(d + "/" + f); //
                 if ( path.isRegularFile() )

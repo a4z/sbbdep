@@ -49,7 +49,7 @@ public:
   void generate_log(const Pkg& pkg, Log::ChannelType& lc);
   
   
-  void who_requires(const Pkg& pkg, std::ostream& outstm);
+  void who_requires(const Pkg& pkg, Log::ChannelType& outstm);
   
 };
 

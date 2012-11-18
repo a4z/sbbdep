@@ -26,11 +26,12 @@ THE SOFTWARE.
 #include "appargs.hpp"
 #include "depfilewriter.hpp"
 #include "xdl.hpp"
+#include "lookupfile.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstdlib>
+
 
 #include <sbbdep/config.hpp> // generated 
 
@@ -63,143 +64,157 @@ AppCli::~AppCli()
 }
 //--------------------------------------------------------------------------------------------------
 
+namespace {
+bool prepairCache(bool syncflag)
+{
+  if( Cache::get()->isNew() )
+    {
+      if ( syncflag )
+        {
+          LogInfo() << "Cache is new, overrule nosync\n" ;
+          syncflag = false;
+        }
+    }
 
+ if ( !syncflag )
+   {
+      try
+        {
+          Cache::get()->doSync();
+        }
+      catch( const a4z::Err& e )
+        {
+          LogError()  << e << std::endl;
+          return false ;
+        }
+   }
+ // TODO; here I could reopen the cache read only!!
+
+  return true;
+}
+}
 
 int
 AppCli::Run(const AppArgs& appargs)
 {
 
-  if (appargs.getPrintVersions())
+  if( appargs.getPrintVersions() )
     {
-      std::cout << "sbbdep version " 
-          << sbbdep::MAJOR_VERSION << "."
-          << sbbdep::MINOR_VERSION << "."
+      std::cout << "sbbdep version " << sbbdep::MAJOR_VERSION << "." << sbbdep::MINOR_VERSION << "."
           << sbbdep::PATCH_VERSION << std::endl;
       return 0;
     }
-  
-  // create the cache  
+
+
   try
     {
-      if( !appargs.getDBName().size() )
-        {
-          std::string db = std::string(std::getenv("HOME") + std::string("/sbbdep.cache"));
-          init_all_singles( db ) ;
-        }
-      else 
-        {
-          init_all_singles( appargs.getDBName() ) ;
-        }
-    }
-  catch( const a4z::Err& e )
-    {
-      std::cerr  << e << std::endl; 
-      return -1; 
-    }  
+      init_all_singles(appargs.getDBName());
 
-  // sync (or not) the cache
-  bool nosync = appargs.getNoSync();
-  if( Cache::get()->isNew() ) 
+      if( !prepairCache(appargs.getNoSync()) )
+        return -2;
+    }
+  catch (const a4z::Err& e)
     {
-      if ( nosync ) 
-        {
-          LogInfo() << "Cache is new, overrule nosync\n" ;
-          nosync = false;
-        }
-      LogInfo() << "create cache " << Cache::get()->DB().Name() << "\n";
+      std::cerr << e << std::endl;
+      return -1;
     }
 
- if ( !nosync )
-   {
-      try
-        {
-          Cache::get()->doSync(); 
-        }
-      catch( const a4z::Err& e )
-        {
-          LogError()  << e << std::endl;
-          return -2 ; 
-        }
-   }
-  
-   // TODO; here I could reopen the cache read only!!
- 
-  // the more options I add the more spaghetti this becomes, so its subject to change..
 
-   Path pn( appargs.getQuery() ) ;
-   
-   if ( pn.isEmpty() ) return 0; // was a sync only call ....
+  std::ofstream outfile;
+  if( appargs.getOutFile().size() )
+    {
+      outfile.open(appargs.getOutFile().c_str(), std::ofstream::out | std::ofstream::trunc);
+      Log::getInstance()->addChannel(Log::ChannelId::AppMessage, outfile , "AppMessage");
+    }
+  else
+    {
+      Log::getInstance()->addChannel(Log::ChannelId::AppMessage, std::cout , "AppMessage");
+    }
 
-   // TODO, could be to early here, /var/log/packages = /var/amd/packages,...
-     // also think about some validation... and exit stuff....
-    pn.makeAbsolute();
-    pn.makeRealPath();
-    
-    Pkg* pkg = 0;
-    try
-      {
-        pkg = PkFab::get()->createPkg( pn ) ; 
-      }
-    catch( const a4z::Err& e )
-      {
-        LogError()  << e << std::endl;
-        return -3 ; 
-      }     
-   
-    // since xdl option was added this is to early here cause for XDL I do only want a file
-    // so I possible load package info for just print an error
-    // not a big deal or problem but can be done better, so -> TODO
-    try
-      {
-        pkg->Load() ;
-      }
-    catch( const a4z::Err& e )
-      {
-        LogError()  << e << std::endl;
-        return -4 ; 
-      }    
-      
-    
 
-    if (!appargs.getWhoNeeds() && !appargs.getXDL())
-      {
-        DepFileWriter dfw(appargs.getAppendVersions());
-      if( appargs.getOutFile().size() )
-        {
-          std::ofstream outfile;
-          outfile.open (appargs.getOutFile().c_str() , std::ofstream::out | std::ofstream::trunc) ;
-          dfw.generate(*pkg , outfile ) ;
+
+  Path querypath(appargs.getQuery());
+
+  if( querypath.isEmpty() )
+    return 0; // was a sync only call ....
+
+  querypath.makeAbsolute();
+  querypath.makeRealPath();
+
+  Pkg* pkg = 0;
+  try
+    {
+      pkg = PkFab::get()->createPkg(querypath);
+    }
+  catch (const a4z::Err& e)
+    { //if nothing with dependencies, than simply search for the file in packages..
+      if( querypath.isRegularFile() )
+        { // TODO; check this ./sbbdep -c ~/tmpcache
+          // this uses ~/tmpcache also as query, not just as cache, and continues here ...
+          LogInfo() << "not a file with binary dependencies: " << appargs.getQuery()
+              << "\n try to find other information:\n";
+          try
+            {
+              lookupFileInPackages(querypath);
+              return 0;
+            }
+          catch (const a4z::Err& e)
+            {
+              LogError() << e << std::endl;
+              return -3;
+            }
         }
       else
         {
-
-          dfw.generate(*pkg , std::cout ) ;
-          std::cout << "\n"<< std::endl;
+          LogError() << e << std::endl;
+          return -3;
         }
-      }
-    else if(appargs.getWhoNeeds())
-      {
-        DepFileWriter dfw(appargs.getAppendVersions());
-        dfw.who_requires(*pkg , std::cout ) ;    
-      }
-    else if(appargs.getXDL())
-      {
+    }
 
-        if(!handleXDLrequest(pkg))
-          LogError()<< "explain dynamic linked did not work\n"
-          << "a better error message is in development\n";
+  // since xdl option was added this is to early here cause for XDL I do only want a file
+  // so I possible load package info for just print an error
+  // not a big deal or problem but can be done better, so -> TODO
+  try
+    {
+      pkg->Load();
+    }
+  catch (const a4z::Err& e)
+    {
+      LogError() << e << std::endl;
+      return -4;
+    }
 
-      }
-    else
-      {
-        LogError()  << "Can not run given combination of arguments \n" ;
-        LogError()  << "(could possible, but I do not want)\n";
-        LogError()  << "Please run just one QUERY.\n" << std::endl;
-        return -6 ;
-      }
-  
 
-    return 0; 
+  if( !appargs.getWhoNeeds() && !appargs.getXDL() )
+    {
+      DepFileWriter dfw(appargs.getAppendVersions());
+      Log::ChannelType lc = WriteAppMsg();
+      dfw.generate_log(*pkg, lc);
+    }
+  else if( appargs.getWhoNeeds() )
+    {
+      // todo , if file is give, message that file is ignored or implement this
+      DepFileWriter dfw(appargs.getAppendVersions());
+      Log::ChannelType lc = WriteAppMsg();
+      dfw.who_requires(*pkg, lc);
+    }
+  else if( appargs.getXDL() )
+    {
+
+      if( !handleXDLrequest(pkg) )
+        LogError() << "explain dynamic linked did not work\n"
+            << "a better error message is in development\n";
+
+    }
+  else
+    {
+      LogError() << "Can not run given combination of arguments \n";
+      LogError() << "(could possible, but I do not want)\n";
+      LogError() << "Please run just one QUERY.\n" << std::endl;
+      return -6;
+    }
+
+  return 0;
 }
 //--------------------------------------------------------------------------------------------------
 

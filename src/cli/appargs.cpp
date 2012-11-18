@@ -24,16 +24,25 @@ THE SOFTWARE.
 
 #include "appargs.hpp"
 
-#include <getopt.h>
-
+#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 
+#include <getopt.h>
+
 namespace sbbdep {
 
-AppArgs::AppArgs() :
-  m_help(false), m_dbname(), m_query(), m_outfile(), m_append_versions(true), 
-  m_sbbdep_version(false), m_nosync(false),m_whoneeds(false), m_explain_dynlinked(false)
+AppArgs::AppArgs()
+  : m_help(0)
+  , m_dbname(std::string(std::getenv("HOME") + std::string("/sbbdep.cache")))
+  , m_query()
+  , m_outfile()
+  , m_append_versions(1)
+  , m_sbbdep_version(0)
+  , m_nosync(0)
+  , m_whoneeds(0)
+  , m_explain_dynlinked(0)
+  , m_featureX(0)
 {
   
 }
@@ -160,49 +169,53 @@ AppArgs::Parse( int argc, char** argv )
 
   const char* const short_options = "hf:c:sv";
   
+
   const struct option long_options[] =
     {
-      { "help", no_argument, 0, 'h' },
-      { "file", required_argument, 0, 'f' },
-      { "cache", required_argument, 0, 'c' },
-      { "short", required_argument, 0, 's' },
-      { "version", no_argument, 0, 'v' },         
-      { "nosync", no_argument, 0, 1 },
-      { "whoneeds", no_argument, 0, 1 },
-      { "xdl", no_argument, 0, 1 },
+      { "file", required_argument, 0, 1 },
+      { "cache", required_argument, 0, 1 },
+      { "help", no_argument, &m_help, 1 },
+      { "short", no_argument, &m_append_versions, 0 },
+      { "version", no_argument, &m_sbbdep_version, 1 },
+      { "nosync", no_argument, &m_nosync, 1 },
+      { "whoneeds", no_argument, &m_whoneeds, 1 },
+      { "xdl", no_argument, &m_explain_dynlinked, 1 },
+      { "fx", no_argument, &m_featureX, 1 }, // undocumented option for the next test...
       { 0, 0, 0, 0 } // Required end   
     };
   
   int optionIdx = 0;
   int optionVal = 0;
   
-  while (!(optionVal < 0))
+  while ( optionVal > -1 )
     {
       optionVal = getopt_long(argc, argv, short_options, long_options, &optionIdx);
       std::string optionName;
-      
       switch (optionVal)
         {
+
         case 1:
           optionName = long_options[optionIdx].name;
-          if (optionName == "nosync") m_nosync = true;
-          else if(optionName == "whoneeds") m_whoneeds = true;
-          else if (optionName == "xdl") m_explain_dynlinked = true;
+          if (optionName == "file")
+            m_outfile = optarg ? optarg : "";
+          else if(optionName == "cache")
+            m_dbname = optarg ? optarg : "";
+
           break;
-          
+
+
         case 'c':
           m_dbname = optarg ? optarg : "";
+          break;
+
+        case 'f':
+          m_outfile = optarg ? optarg : "";
           break;
           
         case 'h':
           optionVal = -1; //exit from here
           m_help = true;
           break;
-          
-        case 'f':
-          m_outfile = optarg ? optarg : "";
-          break;
-          
           
         case 's':
           m_append_versions = false;
@@ -215,36 +228,23 @@ AppArgs::Parse( int argc, char** argv )
           
         case '?': //unknown param
         case ':': //missing arg
-          std::cout << "\n   commandline parsing failed, execution stopped\n" << std::endl;
-          optionVal = -1;
-          retVal = false;
-          break;
+          //std::cerr  << "unknown option -" << optionVal << "\n" ;
+          return false;
           
         default:
-          break; // throw never reach ? 
+          break;
 
         }
       
     }
 
+
   // if help was submitted, ignore following cause only helptext is to show
   if (!m_help && !m_sbbdep_version)
     { // use extern optind to find out if one additional argument was given use as file?    
-      if (argc - optind != 1)
-        {
-          //if only -c for creating a new chache, this is not wrong...
-          // but TODO, (./sbbdep -c tmp.db --whoneeeds) does nothing but report no message, could be done better
-          // FIXME ./sbbdep --nosync --short /tmp/SBo/package-unrar (or some other installdest goes to wrong arguments
-          if(m_dbname.empty())
-            {
-              std::cerr << " wrong arguments " << std::endl;
-              retVal = false;
-            }
-        }
-      else
-        { //std::cout << " use " << argv[optind] << " as f arg" << std::endl ;
-          m_query = argv[optind];
-        }
+        m_query = argv[argc -1];
+        if(m_query[0]=='-')
+          m_query.clear();
     }
   
   return retVal;

@@ -113,6 +113,7 @@ namespace
   typedef std::set<LibInfoType, LibInfoCompair> LibInfoSet;
 
 }
+//--------------------------------------------------------------------------------------------------
 
 void 
 DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
@@ -150,18 +151,20 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
       else deps.insert(  joindep2string(pkgsrequired, m_addVersion) ) ;      
     }  
   
-  std::string seperator = m_addVersion ? "\n" : ", "; 
-  std::ostream_iterator< std::string > oIt (outstm, seperator.c_str() );
-  
 
-  // since packages like glibc have no external dependencies, just return ( TODO , do soemthing else? )
-  if(deps.size()==0) return ;
+  std::string seperator;
+  for(auto& s : deps){
+      if(seperator.empty())
+        seperator = m_addVersion ? "\n" : ", ";
+      else
+        outstm  << seperator ;
 
-  StringSet::iterator last = --(deps.end()); // avoid tailing separator
-  std::copy ( deps.begin(), last, oIt );
-  outstm << *last << std::endl;
+      outstm << s  ;
+  }
+
   for (StringSet::iterator pos = notfound.begin();pos != notfound.end();++pos )
-    {
+    { // TODO re-think where the best location to write this stuff is
+      //outstm << pkg.getPathName() <<" ! not found: " << *pos <<"\n" ;
       LogError()<< pkg.getPathName() <<" ! not found: " << *pos <<"\n" ;
     }
   
@@ -180,7 +183,7 @@ DepFileWriter::generate_log(const Pkg& pkg, Log::ChannelType& lc)
 //--------------------------------------------------------------------------------------------------
 
 void 
-DepFileWriter::who_requires(const Pkg& pkg, std::ostream& outstm)
+DepFileWriter::who_requires(const Pkg& pkg, Log::ChannelType& outstm)
 {
 
   StringSet requiredby ;  
@@ -197,11 +200,19 @@ DepFileWriter::who_requires(const Pkg& pkg, std::ostream& outstm)
   
   requiredby.erase( pkg.getPathName().getBase() ) ;
   
-  for(StringSet::iterator pos = requiredby.begin(); pos != requiredby.end(); ++pos)
-    {
-      outstm << *pos << "\n";
-    }
-  outstm << std::flush; 
+
+  std::string seperator;
+  for(auto& s : requiredby){
+      if(seperator.empty())
+        seperator = m_addVersion ? "\n" : ", ";
+      else
+        outstm  << seperator ;
+
+      outstm << (m_addVersion ? s : PkgName(s).Name() ) ;
+  }
+
+  outstm << std::endl;
+
       
 }
 

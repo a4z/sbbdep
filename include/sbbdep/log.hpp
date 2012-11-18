@@ -44,7 +44,7 @@ public:
     //typedef a4z::LogSystemOMP< char >::ChannelType ChannelType;
     
     struct ChannelId{  enum ChannelNames    {
-      Debug = 1 , Info = 2, Error = 3
+      Debug = 1 , Info = 2, Error = 3, AppMessage = 4
     } ;   };
 
     
@@ -80,6 +80,18 @@ public:
     return sbbdep::Log::get()->Channel( ChannelId::Error , loglevel); 
   }  
 
+  static Log::ChannelType AppMessage(int loglevel = Level::NDebug){
+    try
+      { // needs to be setup by the application
+        return sbbdep::Log::get()->Channel(ChannelId::AppMessage, loglevel);
+      }
+    catch (a4z::LogError& e)
+      {
+        Error()<< e << "\n";
+        throw;
+      }
+  }
+
   
 };
 
@@ -99,6 +111,12 @@ inline
 Log::ChannelType LogError(){ 
   return Log::get()->Error(); 
 }  
+
+inline
+Log::ChannelType WriteAppMsg(){
+  return Log::get()->AppMessage();
+}
+
 
 
 typedef Log::ChannelType LogChannelType; 
