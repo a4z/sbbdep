@@ -22,19 +22,70 @@ THE SOFTWARE.
 */
 
 
-#ifndef XDL_HPP_
-#define XDL_HPP_
+#include <sbbdep/pkgonebinlib.hpp>
+#include <sbbdep/log.hpp>
 
-namespace sbbdep{
+#include <sbbdep/cache.hpp>
+#include <sbbdep/cachedb.hpp>
+#include <sbbdep/cachesql.hpp>
+#include <sbbdep/dynlinked.hpp>
+#include <sbbdep/dynlinkedinfo.hpp>
 
-  class Pkg;
+#include <a4sqlt3/sqlparamcommand.hpp>
+#include <a4sqlt3/parameters.hpp>
+#include <a4sqlt3/dataset.hpp>
 
-  bool handleXDLrequest(Pkg* pkg);
+#include <boost/algorithm/string.hpp>
+
+//#include <iostream>
+#include <memory>
+
+namespace sbbdep
+{
+
+namespace{
+
+int getArch(PkgOneBinLib* pkbl)
+{
+  if(pkbl->getDynLinkedInfos().size() != 1)
+    return 0;
+
+  return pkbl->getDynLinkedInfos().begin()->arch;
+}//-------------------------------------------------------------------------------------------------
 
 
-  bool handleXDLwhoneed(Pkg* pkg);
+} // ano ns
 
+
+
+bool
+handleXDLwhoneed(Pkg* pkg)
+{
+
+
+  PkgOneBinLib* pkbl = dynamic_cast<PkgOneBinLib*>(pkg);
+
+  if(not pkbl)
+    {
+      LogError()<< "Can not handle " << pkg->getPathName()  << std::endl;
+      return false;
+    }
+
+
+  WriteAppMsg() << "Absolute path: " << pkbl->getPathName() << std::endl ;
+
+
+  if ( getArch(pkbl) == 0 )
+    {
+      LogError()<< "unable to get ARCH of " << pkbl->getPathName() << std::endl;
+      return false;
+    }
+
+
+
+  return true;
 }
 
 
-#endif /* XDL_HPP_ */
+
+} // ns

@@ -152,7 +152,8 @@ SET ( sbbdepcli_SRC
     src/cli/pkoffile.cpp
     
     src/cli/xdl.hpp
-    src/cli/xdl.cpp    
+    src/cli/xdl.cpp
+    src/cli/xdl_whoneed.cpp        
     
     src/cli/lookupfile.hpp
     src/cli/lookupfile.cpp    

@@ -191,7 +191,7 @@ AppCli::Run(const AppArgs& appargs)
       Log::ChannelType lc = WriteAppMsg();
       dfw.generate_log(*pkg, lc);
     }
-  else if( appargs.getWhoNeeds() )
+  else if( appargs.getWhoNeeds() && !appargs.getXDL() )
     {
       // todo , if file is give, message that file is ignored or implement this
       DepFileWriter dfw(appargs.getAppendVersions());
@@ -200,10 +200,19 @@ AppCli::Run(const AppArgs& appargs)
     }
   else if( appargs.getXDL() )
     {
+      if(appargs.getWhoNeeds())
+        {
+          if( !handleXDLwhoneed(pkg) )
+            LogError() << "explain dynamic linked (whoneeds) did not work\n"
+                << "a better error message is in development\n";
+        }
+      else
+        {
+          if( !handleXDLrequest(pkg) )
+            LogError() << "explain dynamic linked did not work\n"
+                << "a better error message is in development\n";
+        }
 
-      if( !handleXDLrequest(pkg) )
-        LogError() << "explain dynamic linked did not work\n"
-            << "a better error message is in development\n";
 
     }
   else

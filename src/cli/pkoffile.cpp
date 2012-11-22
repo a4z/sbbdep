@@ -185,7 +185,7 @@ PkOfFile::searchRequiredBy( const std::string& soname, int arch , StringList& re
 
     bool OnHandleRow( a4sqlt3::Columns& rowcols, sqlite3_stmt* stmt )
     {
-      ResultList.push_back(rowcols[0].get<std::string>());
+      ResultList.push_back(rowcols[0].get< std::string >());
       return true;
     }//---------------------------------------------------------------  
     void Reset()
