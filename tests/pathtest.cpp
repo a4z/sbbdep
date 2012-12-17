@@ -136,7 +136,30 @@ void TestDiv()
   BOOST_REQUIRE ( !pn.isRelative()  ) ;
   BOOST_REQUIRE ( !pn.isPath()  ) ;
   
-  
+  PathName pathtonowhere = "/etc/../path/to/nowhere" ;
+  {
+    Path p(pathtonowhere);
+    BOOST_REQUIRE_NO_THROW( p.makeAbsolute() );
+    BOOST_REQUIRE_NO_THROW( p.makeRealPath() );
+    BOOST_REQUIRE ( !p.isAbsolute()  ) ;
+    BOOST_REQUIRE ( !p.isRelative()  ) ;
+    BOOST_REQUIRE ( !p.isPath()  ) ;
+    BOOST_REQUIRE ( !p.isValid() ) ;
+  }
+  {
+    Path p(pathtonowhere);
+    BOOST_CHECK(p.makeRealPath()==false);
+  }
+  {
+    Path p(pathtonowhere);
+    BOOST_CHECK(p.makeAbsolute()==false);
+  }
+  {
+    Path p(pathtonowhere);
+    BOOST_CHECK(p.makeRealPath()==false);
+    BOOST_CHECK(p.makeAbsolute()==false);
+  }
+
 }
 
 //--------------------------------------------------------------------------------------------------

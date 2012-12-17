@@ -5,8 +5,8 @@ project(sbbdep C CXX)
 include( a4cmk/myMacros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
-set(sbbdep_MINOR_VERSION 1)
-set(sbbdep_PATCH_VERSION 1)
+set(sbbdep_MINOR_VERSION 2)
+set(sbbdep_PATCH_VERSION 0)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
@@ -145,8 +145,7 @@ SET ( sbbdepcli_SRC
     src/cli/appcli.hpp
     src/cli/depfilewriter.hpp
     src/cli/depfilewriter.cpp
-    src/cli/depwriter.hpp
-    src/cli/depwriter.cpp
+
     src/cli/main.cpp
     src/cli/pkoffile.hpp
     src/cli/pkoffile.cpp
@@ -158,6 +157,9 @@ SET ( sbbdepcli_SRC
     src/cli/lookupfile.hpp
     src/cli/lookupfile.cpp    
     
+    src/cli/lookup.hpp
+    src/cli/lookup.cpp
+    src/cli/lookup_whoneeds.cpp        
 )
 
 

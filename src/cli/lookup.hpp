@@ -22,39 +22,32 @@ THE SOFTWARE.
 */
 
 
-#ifndef SBBDEP_DEPWRITER_HPP_
-#define SBBDEP_DEPWRITER_HPP_
+#ifndef SBBDEP_LOOKUP_HPP_
+#define SBBDEP_LOOKUP_HPP_
 
-#include <iosfwd>
+#include <sbbdep/log.hpp>
 
 namespace sbbdep {
 
 class Pkg;
+class Path;
+class PkgOneBinLib;
 
-class DepWriter
-{
-  
-public:
-  DepWriter();
-  virtual ~DepWriter();
-  
-  virtual void WriteOut( Pkg& pkg, std::ostream& ostm  ) = 0 ;
-  
-};
+namespace lookup{
 
+bool dependenciesOf(Pkg& pkg , Log::ChannelType& out);
 
-// just a sample implementation
-class DepWriteList
-{
-  
-public:
-  DepWriteList(){}//;
-  ~DepWriteList(){}//;
-  
-  void WriteOut( Pkg& pkg, std::ostream& ostm  )  ;
-  
-};
+bool who_needs(Pkg& pkg , Log::ChannelType& out);
 
+bool explain_dependenciesOf(PkgOneBinLib& pkg , Log::ChannelType& out);
+
+bool explain_who_needs(PkgOneBinLib& pkg , Log::ChannelType& out);
+
+bool inPackages(const sbbdep::Path& filepath);
+
+bool inPackages(const sbbdep::Path& filepath, Log::ChannelType& out);
+
+}
 
 
 

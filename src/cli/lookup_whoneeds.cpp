@@ -22,55 +22,49 @@ THE SOFTWARE.
 */
 
 
-#include <sbbdep/cachedb.hpp>
-#include <sbbdep/cachesql.hpp>
+#include "lookup.hpp"
 
-#include <cstdlib>
-#include <sqlite3.h>
+#include <sbbdep/pkg.hpp>
+#include <sbbdep/pkgarchiv.hpp>
+#include <sbbdep/pkgdestdir.hpp>
+#include <sbbdep/pkgfile.hpp>
+#include <sbbdep/pkgonebinlib.hpp>
+
+#include <iostream>
+#include <string>
 
 
 namespace sbbdep {
+namespace lookup{
 
 
 
-CacheDB::CacheDB()
-: a4sqlt3::Database(std::string(std::getenv("HOME")) + std::string("/sbbdep.cache")) //TODO wenn test vorbei nach .config/.. oder sonst wo
+bool who_needs(Pkg& pkg , Log::ChannelType& out)
 {
- 
+  return false;
+}
+
+
+bool explain_who_needs(PkgOneBinLib& pkg , Log::ChannelType& out)
+{
+  // ok, got a file ....
+  PathName dirname = pkg.getPathName().getDir();
+  std::string filename = pkg.getPathName().getBase();
+
+  // who needs the link name of this file,
+  // where do I get the link name from  ? ..
+
+  // need the rpath informations also,
+  //check if this is in the rpath ,
+
+
+  return false;
+}
+
+
 
 }
-//--------------------------------------------------------------------------------------------------
-
-CacheDB::CacheDB( const std::string& name )
-: a4sqlt3::Database( name )
-{
- 
-
-}
-//--------------------------------------------------------------------------------------------------
 
 
 
-CacheDB::~CacheDB()
-{
- 
-}
-//--------------------------------------------------------------------------------------------------
-
-bool
-CacheDB::Open()
-{
-
-  int flags = SQLITE_OPEN_READWRITE ; // thread will be handled outside only  
-  bool retval = a4sqlt3::Database::Open(flags );
-  
-  CacheSQL::register_own_sql_functions(m_sql3db);
-  
-  return retval;
-}
-//--------------------------------------------------------------------------------------------------
-
-
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
 } // ns

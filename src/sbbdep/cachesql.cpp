@@ -25,9 +25,13 @@ THE SOFTWARE.
 #include <sbbdep/cachesql.hpp>
 
 #include <sbbdep/pathname.hpp>
+#include <sbbdep/path.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
+#include <sbbdep/config.hpp> // generated
 #include <sqlite3.h>
+
+#include <sstream>
 
 namespace sbbdep {
 
@@ -39,7 +43,7 @@ CacheSQL::CreateSchemaSQL()
 {
   
   
-  return "CREATE TABLE pkgs ("
+  std::string sql= "CREATE TABLE pkgs ("
       "    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
       "    fullname TEXT NOT NULL, "
       "    name TEXT NOT NULL, "
@@ -86,10 +90,42 @@ CacheSQL::CreateSchemaSQL()
       "CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL);" // if usr what to add special places ....
       ;  
 
+  sql+=CreateVersion(MAJOR_VERSION , MINOR_VERSION , PATCH_VERSION);
+  return sql;
     
 }
 
 //--------------------------------------------------------------------------------------------------
+
+std::string
+CacheSQL::CreateVersion(int major, int minor, int patchlevel)
+{
+
+  std::stringstream sql ;
+  sql << "CREATE TABLE version (major INTEGER NOT NULL, minor INTEGER NOT NULL, patchlevel INTEGER NOT NULL);"
+      << "INSERT INTO VERSION (major, minor, patchlevel) "
+      <<    "VALUES(" << major << "," << minor << "," << patchlevel << ");";
+
+  return sql.str();
+}
+//--------------------------------------------------------------------------------------------------
+
+std::string
+CacheSQL::CheckVersion(int major, int minor, int patchlevel)
+{
+  std::stringstream sql (
+      "SELECT * FROM version"
+  );
+  sql << " WHERE "
+      << " major = " << major
+      << " AND minor = " << minor
+      << " AND patchlevel = " << patchlevel
+      << ";";
+
+  return sql.str();
+}
+//--------------------------------------------------------------------------------------------------
+
 std::string 
 CacheSQL::CreateIndexes()
 {
@@ -203,7 +239,8 @@ CacheSQL::SearchRequiredByLib()
   " INNER JOIN dynlinked dl2 ON dl2.soname =  required.needed AND dl2.arch = dynlinked.arch" 
   " WHERE dl2.dirname IN( "
   " SELECT dirname FROM lddirs " 
-  " UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs"      
+  " UNION SELECT dirname FROM ldlnkdirs "
+  " UNION SELECT dirname FROM ldusrdirs"
   " UNION SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
   " INNER JOIN dynlinked ON dynlinked.id = rrunpath.dynlinked_id"
   " WHERE dynlinked.soname=?1"
@@ -225,8 +262,18 @@ CacheSQL::SearchRequiredByLib()
 
 
 
-namespace
+
+std::string
+CacheSQL::replaceORIGIN(const std::string& originstr, const std::string& fromfile)
 {
+  sbbdep::PathName destfile(fromfile);
+  using boost::algorithm::replace_first_copy;
+  std::string result=replace_first_copy(originstr,"$ORIGIN/..",destfile.getDir()) ;
+  return replace_first_copy(result ,"$ORIGIN", destfile.getURL()) ;
+}
+
+  namespace
+  {
 
   // replaceOrigin( ld_elf_filepath, ld_homedir  )
   static void replace_origin_func(sqlite3_context *context, int argc, sqlite3_value **argv)
@@ -240,22 +287,40 @@ namespace
     std::string filepath = (const char*)sqlite3_value_text(argv[0]);
     std::string homepath = (const char*)sqlite3_value_text(argv[1]);
     
-    sbbdep::PathName home = homepath; 
-    
-    using boost::algorithm::replace_first_copy; 
-    std::string result=replace_first_copy(filepath,"$ORIGIN/..",home.getDir()) ;
-    result=replace_first_copy(result ,"$ORIGIN", home.getURL()) ;    
+    std::string result=CacheSQL::replaceORIGIN(filepath, homepath);
     
     //void sqlite3_result_text(sqlite3_context*, const char*, int, void(*)(void*));
     sqlite3_result_text(context, result.c_str(), -1, SQLITE_TRANSIENT);
     
   }
+
+  static void make_realpath_func(sqlite3_context *context, int argc, sqlite3_value **argv)
+  {
+    if (argc != 1)
+      {
+        static const std::string errmsg = "incorrect count of arguments, should be 1";
+        sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
+      }
+
+    Path p((const char*)sqlite3_value_text(argv[0]));
+    p.makeAbsolute();
+    p.makeRealPath();
+
+    if ( p.isValid() )
+      sqlite3_result_text(context, p.getURL().c_str(), -1, SQLITE_TRANSIENT);
+    else
+      sqlite3_result_null(context);
+  }
+
 }
 
 void 
-CacheSQL::register_replaceOrigin_function(sqlite3* db)
+CacheSQL::register_own_sql_functions(sqlite3* db)
 {
   sqlite3_create_function(db, "replaceOrigin", 2, 0,0, &replace_origin_func , 0 , 0 );
+  sqlite3_create_function(db, "mkRealPath", 1, 0,0, &make_realpath_func , 0 , 0 );
+  // mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
+
 }
 
 

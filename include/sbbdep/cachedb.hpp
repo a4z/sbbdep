@@ -46,7 +46,7 @@ public:
   // don't forget , SQLITE_OPEN_READWRITE no mtx
   bool Open() ;
   
-  
+  // TODO , put the db version / schema check here ...
   
 };
 

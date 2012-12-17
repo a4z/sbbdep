@@ -58,8 +58,9 @@ public:
   
   CacheDB& DB() { return m_db ;}
   
-  //as long as also required for testing make this here
-  
+
+  //us major minor combination to see if schema has changed in an way that it needs to be re-created
+  void checkVersion( int major, int minor, int patchlevel );
 
 private:
   void CreateSchema();

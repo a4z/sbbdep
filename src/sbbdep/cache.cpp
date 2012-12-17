@@ -23,9 +23,7 @@ THE SOFTWARE.
 
 
 #include <sbbdep/cache.hpp>
-
 #include <sbbdep/cachesql.hpp>
-
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/pathname.hpp>
@@ -35,24 +33,16 @@ THE SOFTWARE.
 #include <sbbdep/stringlist.hpp>
 #include <sbbdep/dynlinkedinfolist.hpp>
 #include <sbbdep/lddirs.hpp>
-
 #include <sbbdep/cachecmds.hpp>
 #include <sbbdep/pkgadmdir.hpp>
-
-
 #include <sbbdep/log.hpp>
-
 
 #include <a4sqlt3/sqlparamcommand.hpp>
 #include <a4sqlt3/parameters.hpp>
-
-
-
 #include <a4sqlt3/error.hpp>
-#include <a4sqlt3/rowhandler.hpp>
 #include <a4sqlt3/columns.hpp>
 #include <a4sqlt3/onevalresult.hpp>
-
+#include <a4sqlt3/dataset.hpp>
 #include <a4z/errtrace.hpp>
 
 #include <list>
@@ -60,7 +50,7 @@ THE SOFTWARE.
 #include <set>
 #include <algorithm>
 #include <iterator>
-
+#include <sstream>
 #include <iostream>
 
 
@@ -72,6 +62,13 @@ namespace {
 //--------------------------------------------------------------------------------------------------
 
 using namespace sbbdep;
+
+struct Transaction{
+  CacheDB& m_db;   bool m_commited;
+  Transaction(CacheDB& db): m_db(db), m_commited(false){m_db.Execute("BEGIN TRANSACTION");}
+  ~Transaction(){ if(!m_commited) m_db.Execute("ROLLBACK TRANSACTION");}
+  void commit(){ m_db.Execute("COMMIT TRANSACTION"); m_commited = true ; }
+};
 
 
 struct StoreEntry
@@ -309,6 +306,103 @@ Cache::~Cache()
 
 
 void
+Cache::checkVersion( int major, int minor, int patchlevel )
+{
+    {
+      std::string sql = "select count(*) from sqlite_master where name='version';";
+      a4sqlt3::OneValResult<int> rc;
+      m_db.Execute(sql, &rc);
+      if(!rc.isValid())
+        throw a4z::ErrorTodo();
+
+      if( rc.Val() != 1 )
+        {
+          if( rc.Val() > 1 )
+            {
+              LogError() << "more than one entry in version table, confused and can not continue\n";
+              throw a4z::ErrorTodo();
+            }
+          m_db.Execute(CacheSQL::CreateVersion(0, 1, 0)); // set default to 1, so update steps gi from one.
+        }
+
+    }
+
+  // get db schema version from v
+  auto calcDbVersion = [](int ma, int mi ) noexcept -> int
+    {
+      return (100000 + ma * 10000) + (1000 + mi * 100);
+    };
+  auto calcFullVersion = [](int ma, int mi, int pl ) noexcept -> int
+    {
+      return (100000 + ma * 10000) + (1000 + mi * 100) + pl;
+    };
+  using namespace a4sqlt3;
+  auto getDbVersion = [calcDbVersion](CacheDB& db) -> int
+    {
+      Dataset ds( {DsFieldType::Int, DsFieldType::Int} );
+      db.Execute("SELECT major, minor FROM version", &ds);
+      return calcDbVersion(ds.getField(0).getInt(), ds.getField(1).getInt());
+    };
+  auto getDbAppVersion = [calcFullVersion](CacheDB& db) -> int
+    {
+      Dataset ds({DsFieldType::Int, DsFieldType::Int, DsFieldType::Int});
+      db.Execute("SELECT major, minor , patchlevel FROM version", &ds);
+      return calcFullVersion(ds.getField(0).getInt(),
+          ds.getField(1).getInt(),ds.getField(2).getInt());
+    };
+
+
+  if( calcFullVersion(major, minor, patchlevel) == getDbAppVersion(m_db) )
+    return ;
+
+
+  int app_dbversion = calcDbVersion(major, minor);
+  int db_dbversion = getDbVersion(m_db);
+
+  while( db_dbversion < app_dbversion )
+    {
+      if( db_dbversion ==  calcDbVersion(0, 1) )
+        {
+          LogInfo()<< "updateing db schema form 0.1 to 0.2" << std::endl;
+          Transaction transaction(m_db);
+          m_db.Execute("ALTER TABLE rrunpath ADD COLUMN lddir TEXT;");
+          std::string sql="update rrunpath "
+              "set lddir = mkRealPath("
+              "replaceOrigin(ldpath,(SELECT dirname FROM dynlinked WHERE id=dynlinked_id))"
+              ") ;" ;
+          m_db.Execute(sql);
+          m_db.Execute("UPDATE version set major=0, minor=2, patchlevel=0;");
+          transaction.commit();
+        }
+//      // for the future
+//      else if( db_dbversion ==  calcDbVersion(0, 2) )
+//        {
+//          // update form 0.2.x to 0.3.x
+//        }
+      else
+        throw a4z::ErrorTodo("Cache version update failed in compare version number");
+
+
+      db_dbversion = getDbVersion(m_db);
+   }
+
+
+  if( calcFullVersion(major, minor, patchlevel) > getDbAppVersion(m_db) )
+    {
+      std::stringstream ss;
+      ss << "UPDATE version set patchlevel=" << patchlevel << ";" ;
+      m_db.Execute(ss.str());
+    }
+
+#ifdef DEBUG
+  if( calcFullVersion(major, minor, patchlevel) != getDbAppVersion(m_db) )
+    throw a4z::ErrorNeverReach("version update incorrect");
+#endif
+
+}
+//--------------------------------------------------------------------------------------------------
+
+void
 Cache::doSync()
 {
   
@@ -410,12 +504,7 @@ Cache::CreateData()
   pkg_adm_dir.apply(newfiles_cb) ;
 
 
-  struct Transaction{
-    CacheDB& m_db;   bool m_commited;
-    Transaction(CacheDB& db): m_db(db), m_commited(false){m_db.Execute("BEGIN TRANSACTION");}
-    ~Transaction(){ if(!m_commited) m_db.Execute("ROLLBACK TRANSACTION");}
-    void commit(){ m_db.Execute("COMMIT TRANSACTION"); m_commited = true ; }
-  };
+
   // TODO , think about how to use such a scope guard in future...
   // TODO "PRAGMA journal_mode = OFF" and "PRAGMA synchronous = OFF"
   // for first creation I could turn all off, put this on research ....

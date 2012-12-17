@@ -1,26 +1,25 @@
 /*
---------------Copyright (c) 2010-2012 H a r a l d  A c h i t z---------------
------------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+ --------------Copyright (c) 2010-2012 H a r a l d  A c h i t z---------------
+ -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
------------------------------------------------------------------------------
-*/
-
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ -----------------------------------------------------------------------------
+ */
 
 #include "appcli.hpp"
 #include "appargs.hpp"
@@ -32,9 +31,7 @@ THE SOFTWARE.
 #include <fstream>
 #include <string>
 
-
 #include <sbbdep/config.hpp> // generated 
-
 #include <sbbdep/singles.hpp>
 #include <sbbdep/path.hpp>
 
@@ -42,13 +39,7 @@ THE SOFTWARE.
 
 #include <a4z/err.hpp>
 
-
-
-
-
 namespace sbbdep {
-
-
 
 AppCli::AppCli()
 {
@@ -56,39 +47,52 @@ AppCli::AppCli()
 }
 //--------------------------------------------------------------------------------------------------
 
-
 AppCli::~AppCli()
 {
   //clear all singletons
-  destroy_all_singles();   
+  destroy_all_singles();
 }
 //--------------------------------------------------------------------------------------------------
 
 namespace {
-bool prepairCache(bool syncflag)
+bool
+prepairCache(bool syncflag)
 {
   if( Cache::get()->isNew() )
     {
-      if ( syncflag )
+      if( syncflag )
         {
-          LogInfo() << "Cache is new, overrule nosync\n" ;
+          LogInfo() << "Cache is new, overrule nosync\n";
           syncflag = false;
         }
     }
 
- if ( !syncflag )
-   {
+  try
+    { //us major minor combination to see if schema has changed in an way that it needs to be re-created
+      Cache::get()->checkVersion(
+          sbbdep::MAJOR_VERSION,
+          sbbdep::MINOR_VERSION ,
+          sbbdep::PATCH_VERSION );
+    }
+  catch (const a4z::Err& e)
+    {
+      LogError() << e << std::endl;
+      return false;
+    }
+
+  if( !syncflag )
+    {
       try
         {
           Cache::get()->doSync();
         }
-      catch( const a4z::Err& e )
+      catch (const a4z::Err& e)
         {
-          LogError()  << e << std::endl;
-          return false ;
+          LogError() << e << std::endl;
+           return false;
         }
-   }
- // TODO; here I could reopen the cache read only!!
+    }
+  // TODO; here I could reopen the cache read only!!
 
   return true;
 }
@@ -105,7 +109,6 @@ AppCli::Run(const AppArgs& appargs)
       return 0;
     }
 
-
   try
     {
       init_all_singles(appargs.getDBName());
@@ -119,19 +122,16 @@ AppCli::Run(const AppArgs& appargs)
       return -1;
     }
 
-
   std::ofstream outfile;
   if( appargs.getOutFile().size() )
     {
       outfile.open(appargs.getOutFile().c_str(), std::ofstream::out | std::ofstream::trunc);
-      Log::getInstance()->addChannel(Log::ChannelId::AppMessage, outfile , "AppMessage");
+      Log::getInstance()->addChannel(Log::ChannelId::AppMessage, outfile, "AppMessage");
     }
   else
     {
-      Log::getInstance()->addChannel(Log::ChannelId::AppMessage, std::cout , "AppMessage");
+      Log::getInstance()->addChannel(Log::ChannelId::AppMessage, std::cout, "AppMessage");
     }
-
-
 
   Path querypath(appargs.getQuery());
 
@@ -184,7 +184,6 @@ AppCli::Run(const AppArgs& appargs)
       return -4;
     }
 
-
   if( !appargs.getWhoNeeds() && !appargs.getXDL() )
     {
       DepFileWriter dfw(appargs.getAppendVersions());
@@ -200,7 +199,7 @@ AppCli::Run(const AppArgs& appargs)
     }
   else if( appargs.getXDL() )
     {
-      if(appargs.getWhoNeeds())
+      if( appargs.getWhoNeeds() )
         {
           if( !handleXDLwhoneed(pkg) )
             LogError() << "explain dynamic linked (whoneeds) did not work\n"
@@ -212,7 +211,6 @@ AppCli::Run(const AppArgs& appargs)
             LogError() << "explain dynamic linked did not work\n"
                 << "a better error message is in development\n";
         }
-
 
     }
   else
@@ -226,6 +224,5 @@ AppCli::Run(const AppArgs& appargs)
   return 0;
 }
 //--------------------------------------------------------------------------------------------------
-
 
 }

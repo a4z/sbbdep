@@ -18,7 +18,7 @@ struct TmpDB : public a4sqlt3::Database
   
   void createExtendedFunctions()
   {
-    CacheSQL::register_replaceOrigin_function( m_sql3db );
+    CacheSQL::register_own_sql_functions( m_sql3db );
   }
   
 };

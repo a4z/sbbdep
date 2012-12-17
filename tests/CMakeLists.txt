@@ -18,6 +18,7 @@ pathtest.cpp
 pknametest.cpp
 replorig.cpp
 varadmdir.cpp
+cacheup1_2.cpp
 )
 
 

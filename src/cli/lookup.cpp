@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include "depwriter.hpp"
+#include "lookup.hpp"
 
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgarchiv.hpp>
@@ -36,32 +36,45 @@ THE SOFTWARE.
 
 namespace sbbdep {
 
-DepWriter::DepWriter()
+namespace {
+void keep_todo( Pkg& pkg )
 {
-}
-DepWriter::~DepWriter()
-{
-}
+  std::string pkgtypename ;
 
-
-
-//--------------------------------------------------------------------------------------------------
-void
-DepWriteList::WriteOut( Pkg& pkg, std::ostream& ostm )
-{
-  std::string pkgtypename ; 
-  
   // todo,  think about add the name into pkg, this code is ugly
   if ( dynamic_cast<PkgArchiv*>(&pkg) ) pkgtypename = "Archiv" ;
   else if ( dynamic_cast<PkgDestDir*>(&pkg) ) pkgtypename = "Dir" ;
   else if ( dynamic_cast<PkgFile*>(&pkg) ) pkgtypename = "Package" ;
   else if ( dynamic_cast<PkgOneBinLib*>(&pkg) ) pkgtypename = "File" ;
   else pkgtypename="Unknown Package Type" ;
-  
-  
-  
+
 }
-//--------------------------------------------------------------------------------------------------
+}
+
+
+
+namespace lookup{
+
+
+bool dependenciesOf(Pkg& pkg , Log::ChannelType& out)
+{
+  // write("hallo").into(out) ;
+  // lookup::dependenciesOf("hallo").andDumpThemInto(out) ;
+
+
+  return false;
+}
+
+
+bool explain_dependenciesOf(PkgOneBinLib& pkg , Log::ChannelType& out)
+{
+  return false;
+}
+
+
+
+
+}
 
 
 

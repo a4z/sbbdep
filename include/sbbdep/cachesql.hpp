@@ -41,7 +41,10 @@ struct CacheSQL
   // cache stuff 
   static std::string CreateSchemaSQL();
   
+  static std::string CreateVersion(int major, int minor, int patchlevel);
   
+  static std::string CheckVersion(int major, int minor, int patchlevel);
+
   // create indexes...
   static std::string CreateIndexes();
   
@@ -61,12 +64,16 @@ struct CacheSQL
   
   static std::string MaxPkgTimeStamp();
   
+
+
   //depfinder
   static std::string SearchPgkOfSoNameSQL();
   
   static std::string SearchRequiredByLib() ; // 1 soname, 2 arch
 
-  static void register_replaceOrigin_function(sqlite3* db);
+  // this is for rpath $ORIGIN replacement,
+  static std::string replaceORIGIN(const std::string& originstr, const std::string& fromfile);
+  static void register_own_sql_functions(sqlite3* db);
   
 };
 
