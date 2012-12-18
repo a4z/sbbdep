@@ -100,7 +100,7 @@ InsertRequired::~InsertRequired()
 //--------------------------------------------------------------------------------------------------
 
 InsertRRunPath::InsertRRunPath()
-: CacheCmd(CacheSQL::InsertRRunPathSQL(),{ParameterType::Int,ParameterType::Text})
+: CacheCmd(CacheSQL::InsertRRunPathSQL(),{ParameterType::Int,ParameterType::Text, ParameterType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------

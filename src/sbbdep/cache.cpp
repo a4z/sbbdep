@@ -185,10 +185,10 @@ public:
     int64_t pkgid = m_dbref.getLastInsertRowid() ;
     for( DynLinkedInfoList::const_iterator pos=dllist.begin(); pos!=dllist.end();++pos)
       {
-
+        std::string dlhomedir = pos->filename.getDir();
         m_cmddynlinked.Parameters()->Nr(1)->set( pkgid );
         m_cmddynlinked.Parameters()->Nr(2)->set( pos->filename.Str() );
-        m_cmddynlinked.Parameters()->Nr(3)->set( pos->filename.getDir() );
+        m_cmddynlinked.Parameters()->Nr(3)->set( dlhomedir );
         m_cmddynlinked.Parameters()->Nr(4)->set( pos->filename.getBase() );
         
         if( pos->soName.size()>0 )
@@ -215,6 +215,7 @@ public:
           {
             m_cmdrrunpath.Parameters()->Nr(1)->set(fileid) ;
             m_cmdrrunpath.Parameters()->Nr(2)->set( *rrunpathiter );
+            m_cmdrrunpath.Parameters()->Nr(3)->set( dlhomedir );
             m_dbref.Execute(&m_cmdrrunpath);
           }        
         

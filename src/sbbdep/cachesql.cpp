@@ -70,7 +70,8 @@ CacheSQL::CreateSchemaSQL()
       "CREATE TABLE rrunpath( "
       "    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
       "    dynlinked_id INTEGER NOT NULL,     "
-      "    ldpath TEXT NOT NULL "
+      "    ldpath TEXT NOT NULL, "
+      "    lddir TEXT  "
       ");"
       "CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs "
       "  FOR EACH ROW  BEGIN"
@@ -166,8 +167,8 @@ CacheSQL::InsertRequiredSQL()
 std::string 
 CacheSQL::InsertRRunPathSQL()
 {
-  return "INSERT INTO rrunpath ( dynlinked_id, ldpath )"
-           " VALUES( ?,? ) ; "
+  return "INSERT INTO rrunpath ( dynlinked_id, ldpath, lddir )"
+           " VALUES( ?1,?2, mkRealPath( replaceOrigin(?2, ?3) ) ) ; "
     ;  
 }
 //--------------------------------------------------------------------------------------------------
