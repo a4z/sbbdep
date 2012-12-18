@@ -240,11 +240,16 @@ AppArgs::Parse( int argc, char** argv )
 
 
   // if help was submitted, ignore following cause only helptext is to show
-  if (!m_help && !m_sbbdep_version)
-    { // use extern optind to find out if one additional argument was given use as file?    
-        m_query = argv[argc -1];
-        if(m_query[0]=='-')
-          m_query.clear();
+  if( !m_help && !m_sbbdep_version )
+    {
+      for (int argidx = optind; argidx < argc; ++argidx)
+        {
+          if(m_query.empty())
+            m_query = argv[argidx];
+          else
+            break;
+          // TODO, log ignored arguments ....or change m_query to a list
+        }
     }
   
   return retVal;
