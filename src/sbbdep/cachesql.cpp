@@ -207,15 +207,16 @@ CacheSQL::MaxPkgTimeStamp()
 std::string 
 CacheSQL::SearchPgkOfSoNameSQL()
 {
- 
-  
   return 
   "SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
   " WHERE dynlinked.soname=? AND dynlinked.arch=? "
   " AND dirname IN (SELECT dirname FROM lddirs "
   " UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs"
-  " UNION SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
-  " WHERE  dynlinked_id =  dynlinked.id)"
+  " UNION SELECT lddir from rrunpath "
+  " WHERE  dynlinked_id =  dynlinked.id "
+  "  AND rrunpath.lddir IS NOT NULL "
+  "  AND rrunpath.lddir NOT IN ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs )"
+  ")"
   ";"
   ;
   
@@ -242,9 +243,10 @@ CacheSQL::SearchRequiredByLib()
   " SELECT dirname FROM lddirs " 
   " UNION SELECT dirname FROM ldlnkdirs "
   " UNION SELECT dirname FROM ldusrdirs"
-  " UNION SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
+  " UNION SELECT lddir from rrunpath "
   " INNER JOIN dynlinked ON dynlinked.id = rrunpath.dynlinked_id"
-  " WHERE dynlinked.soname=?1"
+  " WHERE dynlinked.soname=?1 AND rrunpath.lddir IS NOT NULL "
+  " AND rrunpath.lddir NOT IN ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs )"
   " ) "
   " AND required.needed =?1" 
   " AND dynlinked.arch=?2"    
