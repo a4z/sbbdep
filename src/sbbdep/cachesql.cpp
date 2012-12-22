@@ -43,57 +43,64 @@ CacheSQL::CreateSchemaSQL()
 {
   
   
-  std::string sql= "CREATE TABLE pkgs ("
-      "    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-      "    fullname TEXT NOT NULL, "
-      "    name TEXT NOT NULL, "
-      "    version TEXT NOT NULL, "
-      "    arch TEXT NOT NULL, "
-      "    build INTEGER NOT NULL, "
-      "    tag TEXT, "
-      "    timestamp INTEGER NOT NULL "
-      ");"
-      "CREATE TABLE dynlinked ( "
-      "    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-      "    pkg_id INTEGER NOT NULL, "      
-      "    filename TEXT NOT NULL, "
-      "    dirname TEXT NOT NULL, "
-      "    basename TEXT NOT NULL, "
-      "    soname TEXT , "
-      "    arch INTEGER NOT NULL "
-      ");"
-      "CREATE TABLE required ( "
-      "    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-      "    dynlinked_id INTEGER NOT NULL, "
-      "    needed TEXT NOT NULL"
-      ");"      
-      "CREATE TABLE rrunpath( "
-      "    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
-      "    dynlinked_id INTEGER NOT NULL,     "
-      "    ldpath TEXT NOT NULL, "
-      "    lddir TEXT  "
-      ");"
-      "CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs "
-      "  FOR EACH ROW  BEGIN"
-      "  DELETE from dynlinked WHERE pkg_id = OLD.id;"
-      "  END;"
-      "CREATE TRIGGER on_before_delete_dynlinked BEFORE DELETE ON dynlinked "
-      "  FOR EACH ROW  BEGIN"
-      "  DELETE from required WHERE dynlinked_id = OLD.id;"
-      "  DELETE from rrunpath WHERE dynlinked_id = OLD.id;"
-      "  END;"
-      "CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);"
-/*      "INSERT INTO lddirs ( dirname ) VALUES ('/lib') ;"          // moved to lddirs
-      "INSERT INTO lddirs ( dirname ) VALUES ('/lib64') ;"
-      "INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib') ;"
-      "INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib64') ;"  */
-      "CREATE TABLE ldlnkdirs (dirname TEXT PRIMARY KEY NOT NULL);"      
-      "CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL);" // if usr what to add special places ....
-      ;  
+  std::string sql= R"~( 
+  CREATE TABLE pkgs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+      fullname TEXT NOT NULL, 
+      name TEXT NOT NULL, 
+      version TEXT NOT NULL, 
+      arch TEXT NOT NULL, 
+      build INTEGER NOT NULL, 
+      tag TEXT, 
+      timestamp INTEGER NOT NULL 
+  );
+  CREATE TABLE dynlinked ( 
+      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+      pkg_id INTEGER NOT NULL,       
+      filename TEXT NOT NULL, 
+      dirname TEXT NOT NULL, 
+      basename TEXT NOT NULL, 
+      soname TEXT , 
+      arch INTEGER NOT NULL 
+  );
+  CREATE TABLE required ( 
+      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+      dynlinked_id INTEGER NOT NULL, 
+      needed TEXT NOT NULL
+  );      
+  CREATE TABLE rrunpath( 
+      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+      dynlinked_id INTEGER NOT NULL,     
+      ldpath TEXT NOT NULL, 
+      lddir TEXT  
+  );
+  CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs 
+    FOR EACH ROW  BEGIN
+    DELETE from dynlinked WHERE pkg_id = OLD.id;
+    END;
+  CREATE TRIGGER on_before_delete_dynlinked BEFORE DELETE ON dynlinked 
+    FOR EACH ROW  BEGIN
+    DELETE from required WHERE dynlinked_id = OLD.id;
+    DELETE from rrunpath WHERE dynlinked_id = OLD.id;
+    END;
+  CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);
+
+  CREATE TABLE ldlnkdirs (dirname TEXT PRIMARY KEY NOT NULL);      
+  CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL); 
+        
+)~";
 
   sql+=CreateVersion(MAJOR_VERSION , MINOR_VERSION , PATCH_VERSION);
   return sql;
-    
+
+
+  /*    INSERT INTO lddirs ( dirname ) VALUES ('/lib') ;
+        INSERT INTO lddirs ( dirname ) VALUES ('/lib64') ;
+        INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib') ;
+        INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib64') ;
+  // moved to lddirs class
+  */
+
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -130,11 +137,11 @@ CacheSQL::CheckVersion(int major, int minor, int patchlevel)
 std::string 
 CacheSQL::CreateIndexes()
 {
-  return
-  "create index  idx_required_needed on required(needed);"
-  "create index  idx_dynlinked_soname on dynlinked(soname);"
-  "create index  idx_dynlinked_dirname on dynlinked(dirname);"
-  ;
+  return R"~(
+  create index  idx_required_needed on required(needed);
+  create index  idx_dynlinked_soname on dynlinked(soname);
+  create index  idx_dynlinked_dirname on dynlinked(dirname);
+)~";
 }
 //--------------------------------------------------------------------------------------------------
 
@@ -207,18 +214,19 @@ CacheSQL::MaxPkgTimeStamp()
 std::string 
 CacheSQL::SearchPgkOfSoNameSQL()
 {
-  return 
-  "SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
-  " WHERE dynlinked.soname=? AND dynlinked.arch=? "
-  " AND dirname IN (SELECT dirname FROM lddirs "
-  " UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs"
-  " UNION SELECT lddir from rrunpath "
-  " WHERE  dynlinked_id =  dynlinked.id "
-  "  AND rrunpath.lddir IS NOT NULL "
-  "  AND rrunpath.lddir NOT IN ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs )"
-  ")"
-  ";"
-  ;
+  return R"~(
+SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
+ WHERE dynlinked.soname=? AND dynlinked.arch=? 
+ AND dirname IN (SELECT dirname FROM lddirs 
+ UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs
+ UNION SELECT lddir from rrunpath 
+ WHERE  dynlinked_id =  dynlinked.id 
+  AND rrunpath.lddir IS NOT NULL 
+  AND rrunpath.lddir NOT IN 
+    ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs )
+)  ;
+
+)~";
   
   
 }
@@ -228,36 +236,41 @@ std::string
 CacheSQL::SearchRequiredByLib()
 {
 
-  return
-  "SELECT "
-  " pkgs.fullname AS pkgname," 
-  " pkgs.name AS pkg, "
-  " dynlinked.filename AS dynlinked," 
-  " required.needed ,"
-  " dl2.filename AS filename"  
-  " FROM pkgs "
-  " INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id "
-  " INNER JOIN required ON dynlinked.id =  required.dynlinked_id"
-  " INNER JOIN dynlinked dl2 ON dl2.soname =  required.needed AND dl2.arch = dynlinked.arch" 
-  " WHERE dl2.dirname IN( "
-  " SELECT dirname FROM lddirs " 
-  " UNION SELECT dirname FROM ldlnkdirs "
-  " UNION SELECT dirname FROM ldusrdirs"
-  " UNION SELECT lddir from rrunpath "
-  " INNER JOIN dynlinked ON dynlinked.id = rrunpath.dynlinked_id"
-  " WHERE dynlinked.soname=?1 AND rrunpath.lddir IS NOT NULL "
-  " AND rrunpath.lddir NOT IN ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs )"
-  " ) "
-  " AND required.needed =?1" 
-  " AND dynlinked.arch=?2"    
+  return R"~(
+SELECT 
+ pkgs.fullname AS pkgname, 
+ pkgs.name AS pkg, 
+ dynlinked.filename AS dynlinked, 
+ required.needed ,
+ dl2.filename AS filename  
+ FROM pkgs 
+ INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id 
+ INNER JOIN required ON dynlinked.id =  required.dynlinked_id
+ INNER JOIN dynlinked dl2 ON dl2.soname =  required.needed AND dl2.arch = dynlinked.arch 
+ WHERE dl2.dirname IN( 
+ SELECT dirname FROM lddirs  
+ UNION SELECT dirname FROM ldlnkdirs 
+ UNION SELECT dirname FROM ldusrdirs
+ UNION SELECT lddir from rrunpath 
+ INNER JOIN dynlinked ON dynlinked.id = rrunpath.dynlinked_id
+ WHERE dynlinked.soname=?1 AND rrunpath.lddir IS NOT NULL 
+ AND rrunpath.lddir NOT IN 
+   ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs )
+ ) 
+ AND required.needed =?1 
+ AND dynlinked.arch=?2
+;
+  
+)~";
+
   /*" AND pkgs.name NOT IN ("
   " SELECT name from pkgs "
   " INNER JOIN dynlinked ON dynlinked.pkg_id = pkgs.id"
   " WHERE dynlinked.soname = ?1"
-  ")"*/  
+  ")"*/
 /*  " ORDER BY  pkg , dynlinked.filename , needed" */
-  ";"
-   ;
+
+
 // for special filter or sort, just replace the last ";" with the wanted stuff, no need to do it here
 }
 
