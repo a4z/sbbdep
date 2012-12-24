@@ -46,7 +46,7 @@ public:
     
     BuildTag(const std::string& buildtag) ; 
     
-    ~BuildTag() {} 
+    ~BuildTag() = default;
     
     const std::string& Tag() const  { return m_tag; }
     int Num() const { return m_num; }
@@ -56,7 +56,7 @@ public:
   
   PkgName(const std::string& name): m_fullname(name) {makeDetails();}
   PkgName(const char* name): m_fullname(name) {makeDetails();}
-  ~PkgName(){}
+  ~PkgName() = default;
 
   const BuildTag& Build() const { return m_build; }
   const std::string& BuildStr() const { return m_buildstr ; }
