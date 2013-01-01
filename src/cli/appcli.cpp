@@ -23,18 +23,22 @@
 
 #include "appcli.hpp"
 #include "appargs.hpp"
+
+// should become one
 #include "depfilewriter.hpp"
 #include "xdl.hpp"
-#include "lookupfile.hpp"
+#include "lookup.hpp"
 
 #include <iostream>
 #include <fstream>
 #include <string>
 
+
 #include <sbbdep/config.hpp> // generated 
 #include <sbbdep/singles.hpp>
 #include <sbbdep/path.hpp>
 
+// should possible not be required here
 #include <sbbdep/pkg.hpp>
 
 #include <a4z/err.hpp>
@@ -155,7 +159,7 @@ AppCli::Run(const AppArgs& appargs)
               << "\n try to find other information:\n";
           try
             {
-              lookupFileInPackages(querypath);
+              lookup::fileInPackages(querypath);
               return 0;
             }
           catch (const a4z::Err& e)
@@ -201,7 +205,7 @@ AppCli::Run(const AppArgs& appargs)
     {
       if( appargs.getWhoNeeds() )
         {
-          if( !handleXDLwhoneed(pkg) )
+          if( !lookup::explain_who_needs(*pkg, Log::AppMessage() ) )
             LogError() << "explain dynamic linked (whoneeds) did not work\n"
                 << "a better error message is in development\n";
         }

@@ -237,15 +237,17 @@ void printSoInfo(DatasetPtr dspkg, const DynLinkedInfo& dlinfos )
 
   std::string pkgname = dspkg->npos() ? "" : dspkg->getField(0).asString();
 
-  std::string sql = "SELECT pkgs.fullname, dynlinked.filename FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
-  " WHERE dynlinked.soname=? AND dynlinked.arch=? "
-  " AND dirname IN (SELECT dirname FROM lddirs "
-  " UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs"
-  " UNION SELECT replaceOrigin( ldpath, dynlinked.dirname) from rrunpath "
-  " WHERE  dynlinked_id =  dynlinked.id)"
-  " AND pkgs.fullname != ?"
-  ";"
-  ;
+  std::string sql = R"~(
+SELECT pkgs.fullname, dynlinked.filename 
+FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id 
+WHERE dynlinked.soname=? AND dynlinked.arch=?  
+  AND dirname IN (SELECT dirname FROM lddirs  
+    UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs 
+    UNION SELECT lddir from rrunpath  
+    WHERE  dynlinked_id =  dynlinked.id) 
+  AND pkgs.fullname != ? 
+ ; 
+  )~" ;
 
 
   XdlCmd cmd(sql) ;

@@ -22,12 +22,25 @@ THE SOFTWARE.
 */
 
 
-#ifndef SBBDEP_LOOKUP_HPP_
-#define SBBDEP_LOOKUP_HPP_
+#ifndef SBBDEP_LOOKUP_DEPENDENCIES_HPP_
+#define SBBDEP_LOOKUP_DEPENDENCIES_HPP_
 
-#include "lookup_fileinpackages.hpp"
-#include "lookup_whoneeds.hpp"
-#include "lookup_dependencies.hpp"
+#include <sbbdep/log.hpp>
+
+namespace sbbdep {
+
+class Pkg;
+class PkgOneBinLib;
+
+namespace lookup{
 
 
-#endif
+bool dependenciesOf(Pkg& pkg , Log::ChannelType& out);
+
+bool explain_dependenciesOf(PkgOneBinLib& pkg , Log::ChannelType& out);
+
+
+}
+}
+
+#endif /* DEPWRITER_HPP_ */

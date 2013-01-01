@@ -134,6 +134,16 @@ CacheSQL::CheckVersion(int major, int minor, int patchlevel)
 }
 //--------------------------------------------------------------------------------------------------
 
+constexpr const char*
+CacheSQL::CreateViews()
+{
+  // for future, will need this ...
+  return R"~(
+
+)~";
+}
+//--------------------------------------------------------------------------------------------------
+
 std::string 
 CacheSQL::CreateIndexes()
 {

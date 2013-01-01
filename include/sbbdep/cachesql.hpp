@@ -28,7 +28,6 @@ THE SOFTWARE.
 
 #include <string>
 
-//mal alles was mit db zu tun hat hier sammeln, wegen uebersicht,
 
 struct sqlite3;
 
@@ -36,7 +35,7 @@ namespace sbbdep {
 
 struct CacheSQL
 {
-  
+  // TODO check what of these chould  be const char* / constexpr
   
   // cache stuff 
   static std::string CreateSchemaSQL();
@@ -64,6 +63,9 @@ struct CacheSQL
   
   static std::string MaxPkgTimeStamp();
   
+
+  constexpr const char* CreateViews();
+
 
 
   //depfinder

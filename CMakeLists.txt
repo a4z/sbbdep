@@ -152,13 +152,14 @@ SET ( sbbdepcli_SRC
     
     src/cli/xdl.hpp
     src/cli/xdl.cpp
-    src/cli/xdl_whoneed.cpp        
-    
-    src/cli/lookupfile.hpp
-    src/cli/lookupfile.cpp    
-    
+       
+   
     src/cli/lookup.hpp
-    src/cli/lookup.cpp
+    src/cli/lookup_dependencies.hpp 
+    src/cli/lookup_fileinpackages.hpp
+    src/cli/lookup_whoneeds.hpp            
+    src/cli/lookup_dependencies.cpp 
+    src/cli/lookup_fileinpackages.cpp
     src/cli/lookup_whoneeds.cpp        
 )
 

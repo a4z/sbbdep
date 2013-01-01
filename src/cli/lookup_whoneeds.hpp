@@ -22,12 +22,25 @@ THE SOFTWARE.
 */
 
 
-#ifndef SBBDEP_LOOKUP_HPP_
-#define SBBDEP_LOOKUP_HPP_
+#ifndef SBBDEP_LOOKUP_WHONEEDS_HPP_
+#define SBBDEP_LOOKUP_WHONEEDS_HPP_
 
-#include "lookup_fileinpackages.hpp"
-#include "lookup_whoneeds.hpp"
-#include "lookup_dependencies.hpp"
+#include <sbbdep/log.hpp>
+
+namespace sbbdep {
+
+class Pkg;
 
 
-#endif
+namespace lookup{
+
+
+bool who_needs(Pkg& pkg , Log::ChannelType out, bool addVersion);
+
+bool explain_who_needs(Pkg& pkg , Log::ChannelType out);
+
+
+}
+}
+
+#endif /* DEPWRITER_HPP_ */

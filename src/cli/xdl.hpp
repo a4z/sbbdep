@@ -32,7 +32,7 @@ namespace sbbdep{
   bool handleXDLrequest(Pkg* pkg);
 
 
-  bool handleXDLwhoneed(Pkg* pkg);
+
 
 }
 

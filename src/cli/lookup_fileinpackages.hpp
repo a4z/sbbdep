@@ -22,60 +22,29 @@ THE SOFTWARE.
 */
 
 
-#include "lookup.hpp"
+#ifndef SBBDEP_LOOKUP_FILEINPACKAGES_HPP_
+#define SBBDEP_LOOKUP_FILEINPACKAGES_HPP_
 
-#include <sbbdep/pkg.hpp>
-#include <sbbdep/pkgarchiv.hpp>
-#include <sbbdep/pkgdestdir.hpp>
-#include <sbbdep/pkgfile.hpp>
-#include <sbbdep/pkgonebinlib.hpp>
-
-#include <iostream>
-#include <string>
-
+#include <sbbdep/log.hpp>
 
 namespace sbbdep {
 
-namespace {
-void keep_todo( Pkg& pkg )
-{
-  std::string pkgtypename ;
-
-  // todo,  think about add the name into pkg, this code is ugly
-  if ( dynamic_cast<PkgArchiv*>(&pkg) ) pkgtypename = "Archiv" ;
-  else if ( dynamic_cast<PkgDestDir*>(&pkg) ) pkgtypename = "Dir" ;
-  else if ( dynamic_cast<PkgFile*>(&pkg) ) pkgtypename = "Package" ;
-  else if ( dynamic_cast<PkgOneBinLib*>(&pkg) ) pkgtypename = "File" ;
-  else pkgtypename="Unknown Package Type" ;
-
-}
-}
-
-
+class Pkg;
+class Path;
+class PkgOneBinLib;
 
 namespace lookup{
 
 
-bool dependenciesOf(Pkg& pkg , Log::ChannelType& out)
-{
-  // write("hallo").into(out) ;
-  // lookup::dependenciesOf("hallo").andDumpThemInto(out) ;
 
+// TODO this needs to become obsolete , pass channel as arg
+bool fileInPackages(const sbbdep::Path& filepath);
 
-  return false;
-}
-
-
-bool explain_dependenciesOf(PkgOneBinLib& pkg , Log::ChannelType& out)
-{
-  return false;
-}
-
+//bool fileInPackages(const sbbdep::Path& filepath, Log::ChannelType& out);
 
 
 
 }
+}
 
-
-
-} // ns
+#endif /* DEPWRITER_HPP_ */

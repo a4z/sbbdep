@@ -64,19 +64,6 @@ namespace {
     return retVal; 
 
   }
-  
-  /*
-  struct IsNotFound
-  {
-    PathNameList& m_notFounds;
-    IsNotFound(PathNameList& notFounds):m_notFounds(notFounds){}
-    
-    bool operator()(const PathName& pn)
-    {
-      return std::find(m_notFounds.begin(), m_notFounds.end(), pn ) != m_notFounds.end() ; 
-    }
-  };
-  */
 
 }
 
@@ -163,8 +150,7 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
   }
 
   for (StringSet::iterator pos = notfound.begin();pos != notfound.end();++pos )
-    { // TODO re-think where the best location to write this stuff is
-      //outstm << pkg.getPathName() <<" ! not found: " << *pos <<"\n" ;
+    {
       LogError()<< pkg.getPathName() <<" ! not found: " << *pos <<"\n" ;
     }
   

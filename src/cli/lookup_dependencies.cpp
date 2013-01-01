@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2012-2012 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2012 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,68 +22,59 @@ THE SOFTWARE.
 */
 
 
+#include "lookup_dependencies.hpp"
+
+#include <sbbdep/pkg.hpp>
+#include <sbbdep/pkgarchiv.hpp>
+#include <sbbdep/pkgdestdir.hpp>
+#include <sbbdep/pkgfile.hpp>
 #include <sbbdep/pkgonebinlib.hpp>
-#include <sbbdep/log.hpp>
 
-#include <sbbdep/cache.hpp>
-#include <sbbdep/cachedb.hpp>
-#include <sbbdep/cachesql.hpp>
-#include <sbbdep/dynlinked.hpp>
-#include <sbbdep/dynlinkedinfo.hpp>
+#include <iostream>
+#include <string>
 
-#include <a4sqlt3/sqlparamcommand.hpp>
-#include <a4sqlt3/parameters.hpp>
-#include <a4sqlt3/dataset.hpp>
 
-#include <boost/algorithm/string.hpp>
+namespace sbbdep {
 
-//#include <iostream>
-#include <memory>
-
-namespace sbbdep
+namespace {
+void keep_todo( Pkg& pkg )
 {
+  std::string pkgtypename ;
+  // and see, oop in this way is ugly, fix this implementation of pkgs TODO
 
-namespace{
+  // todo,  think about add the name into pkg, this code is ugly
+  if ( dynamic_cast<PkgArchiv*>(&pkg) ) pkgtypename = "Archiv" ;
+  else if ( dynamic_cast<PkgDestDir*>(&pkg) ) pkgtypename = "Dir" ;
+  else if ( dynamic_cast<PkgFile*>(&pkg) ) pkgtypename = "Package" ;
+  else if ( dynamic_cast<PkgOneBinLib*>(&pkg) ) pkgtypename = "File" ;
+  else pkgtypename="Unknown Package Type" ;
 
-int getArch(PkgOneBinLib* pkbl)
+}
+}
+
+
+
+namespace lookup{
+
+
+bool dependenciesOf(Pkg& pkg , Log::ChannelType& out)
 {
-  if(pkbl->getDynLinkedInfos().size() != 1)
-    return 0;
-
-  return pkbl->getDynLinkedInfos().begin()->arch;
-}//-------------------------------------------------------------------------------------------------
+  // write("hallo").into(out) ;
+  // lookup::dependenciesOf("hallo").andDumpThemInto(out) ;
 
 
-} // ano ns
+  return false;
+}
 
 
-
-bool
-handleXDLwhoneed(Pkg* pkg)
+bool explain_dependenciesOf(PkgOneBinLib& pkg , Log::ChannelType& out)
 {
-
-
-  PkgOneBinLib* pkbl = dynamic_cast<PkgOneBinLib*>(pkg);
-
-  if(not pkbl)
-    {
-      LogError()<< "Can not handle " << pkg->getPathName()  << std::endl;
-      return false;
-    }
-
-
-  WriteAppMsg() << "Absolute path: " << pkbl->getPathName() << std::endl ;
-
-
-  if ( getArch(pkbl) == 0 )
-    {
-      LogError()<< "unable to get ARCH of " << pkbl->getPathName() << std::endl;
-      return false;
-    }
+  return false;
+}
 
 
 
-  return true;
+
 }
 
 

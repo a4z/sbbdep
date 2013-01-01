@@ -37,15 +37,56 @@ THE SOFTWARE.
 namespace sbbdep {
 namespace lookup{
 
+// helper space
+namespace {
 
-
-bool who_needs(Pkg& pkg , Log::ChannelType& out)
+bool isPublicLib(const std::string dirname, const std::string soname)
 {
+  return true;
+}
+
+}// helper space
+
+
+bool who_needs(Pkg& pkg , Log::ChannelType out, bool addVersion)
+{
+  // check, if got a filename, if this is a ldpath stuff or public or absolut no known path..
+
+  for(const DynLinkedInfo& dli : pkg.getDynLinkedInfos())
+    {
+      if(dli.soName.empty())
+        continue; // nothing to do if this not a so file
+
+      // ok, it is a so, does it exist more than once on the system
+      // is it in a public findable place
+      // who finds it and who may prefere an ohter one for eg within own package or via rpath..
+
+      std::string indir = dli.filename.getDir();
+      // check if this lib is public findable or more a private stuff of a package
+      // this will be complecated if ldusr dir is used...
+      if( isPublicLib(indir, dli.soName) )
+        {
+
+        }
+      else
+        {
+
+        }
+      //int arch;
+      //std::string soName;
+      /*
+       *  ok, hab den soname und weiss wo das ding liegt.
+       *  schauen wer das alles braucht,
+       *  ergebniss untersuchen, braucht es wirklich das oder etwas anderes... ?
+       *
+      */
+    }
+
   return false;
 }
 
 
-bool explain_who_needs(PkgOneBinLib& pkg , Log::ChannelType& out)
+bool explain_who_needs(Pkg& pkg , Log::ChannelType out)
 {
   // ok, got a file ....
   PathName dirname = pkg.getPathName().getDir();
@@ -64,7 +105,4 @@ bool explain_who_needs(PkgOneBinLib& pkg , Log::ChannelType& out)
 
 
 }
-
-
-
 } // ns
