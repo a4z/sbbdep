@@ -1,0 +1,25 @@
+make a general list here, 
+
+start using issue tracker
+next version will be 0.2.0 
+
+transfere longer tasks into bbit 
+
+
+log, work through all log and channel usage, check the right one is used, 
+unify usage in cli by either pass channel or access (pass channel prefered)
+
+care about rpath handling in whoneed fix lookup to check  pathes,    
+ 
+pkg and derivated, remove derivation , flip/apply implementation instead
+
+chachsql , use const char* and constexpr for fixed strings
+
+create more modules, shrink amount of public headers and move more into private stuff 
+
+
+
+
+
+
+ 
