@@ -43,7 +43,7 @@ THE SOFTWARE.
 #include <a4sqlt3/columns.hpp>
 #include <a4sqlt3/onevalresult.hpp>
 #include <a4sqlt3/dataset.hpp>
-#include <a4z/errtrace.hpp>
+#include <a4sqlt3/error.hpp>
 
 #include <list>
 #include <vector>
@@ -286,11 +286,11 @@ Cache::Cache( const std::string& dbname ) :
       catch ( const a4sqlt3::SQLite3Error& e )
         {
           LogError() << e << "\n" ;
-          throw A4Z_ERRTRACE( e );
+          A4Z_THROW_NESTED("");
         }
       catch ( const a4z::Err& e )
         {
-          throw A4Z_ERRTRACE( e );
+          A4Z_THROW_NESTED("");
         }
       
     }
@@ -455,7 +455,7 @@ Cache::CreateSchema()
   catch ( const a4z::Err& e )
     {
       m_db.Execute("ROLLBACK;");
-      throw A4Z_ERRTRACE( e );
+      A4Z_THROW_NESTED("");
     }
   
 }
@@ -484,7 +484,7 @@ Cache::CreateIndexes()
   catch ( const a4z::Err& e )
     {
       m_db.Execute("ROLLBACK;");
-      throw A4Z_ERRTRACE( e );
+      A4Z_THROW_NESTED("");
     }
   
 }

@@ -66,7 +66,7 @@ struct FindBinPathSuite : public a4z::TestSuiteBuilder< >
 {
   
   void
-  assambleCases()
+  assembleCases()
   {
     A4Z_TEST_ADDCASEFUNC( RunDefault );
   }

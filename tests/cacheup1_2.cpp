@@ -117,7 +117,7 @@ struct CacheVersionSuite : public a4z::TestSuiteBuilder< Case >
 {
   
   void
-  assambleCases()
+  assembleCases()
   {
     A4Z_TEST_ADDCLASSCASE( Case::mkTestEnviroment );
     A4Z_TEST_ADDCLASSCASE( Case::CheckAlterTable );

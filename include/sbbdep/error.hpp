@@ -31,9 +31,9 @@ THE SOFTWARE.
 
 namespace sbbdep{
 
-  A4Z_STATICNAME(ErrDomName , "sbbdep") ;
+  A4Z_NAME_AS(sbbdep) sbbdepDomainName ;
   /// defines the root domain 
-  typedef a4z::ErrDomainRoot<ErrDomName> ErrorDomain;
+  typedef a4z::ErrDomain<sbbdepDomainName> ErrorDomain;
   
   struct ErrorCodes 
   {
@@ -49,9 +49,9 @@ namespace sbbdep{
   };
 
   ///defines the err name
-  A4Z_STATICNAME(ErrName , "Error") ; 
+  A4Z_NAME_AS(Error) ErrorName ;
   ///defines err type
-  typedef a4z::ErrType< ErrName, ErrorDomain , ErrorCodes::Value  > Error;
+  typedef a4z::ErrType< ErrorName, ErrorDomain , ErrorCodes::Value  > Error;
 
 
   typedef a4z::ErrObject< Error , ErrorCodes::Generic > ErrGeneric ;

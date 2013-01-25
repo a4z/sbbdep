@@ -26,7 +26,7 @@ THE SOFTWARE.
 #define SBBDEP_LOOKUP_DEPENDENCIES_HPP_
 
 #include <sbbdep/log.hpp>
-
+#include <sbbdep/error.hpp>
 namespace sbbdep {
 
 class Pkg;

@@ -170,7 +170,7 @@ struct PathSuite : public a4z::TestSuiteBuilder< >
 {
   
   void
-  assambleCases()
+  assembleCases()
   {
     A4Z_TEST_ADDCASEFUNC( TestDefaults );
     A4Z_TEST_ADDCASEFUNC( TestDirBase );
