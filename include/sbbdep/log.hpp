@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 #include <a4z/logsystemomp.hpp>
 #include <a4z/single.hpp>
+#include <a4z/errostream.hpp>
 
 
 namespace sbbdep {
