@@ -133,8 +133,11 @@ src/sbbdep/pkgonebinlib.cpp
 )
 ##########################################################################################
 
+file(GLOB elfio_HDR RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/elfio/*.hpp")
 
-set(libsbbdep_ALLSRC ${libsbbdep_SRC} ${libsbbdep_SRCHDR} ${libsbbdep_HDR})
+
+set(libsbbdep_ALLSRC ${libsbbdep_SRC} ${libsbbdep_SRCHDR} ${libsbbdep_HDR} ${elfio_HDR})
 
 add_library( sbbdep STATIC ${libsbbdep_ALLSRC}  )
 
@@ -168,7 +171,7 @@ ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
 #TODO, sqlite & dl only needed  if a4sqlt3 was build with that requirement ...
 #set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl elf) #macig still used in pkfab..
-set(SBBDEP_REQURIED_LIBS sbbdep ${a4sqlt3_library} ${a4z_library} magic elf)
+set(SBBDEP_REQURIED_LIBS sbbdep ${a4sqlt3_library} ${a4z_library} magic )
 
 set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
 

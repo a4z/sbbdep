@@ -25,11 +25,16 @@ THE SOFTWARE.
 #ifndef SBBDEP_DYNLINKED_HPP_
 #define SBBDEP_DYNLINKED_HPP_
 
+#include <memory>
 #include <string>
 #include <sbbdep/dynlinkedinfo.hpp>
 
 
-class Elf;
+//class Elf;
+
+namespace ELFIO{
+ class elfio;
+}
 
 namespace sbbdep {
 
@@ -40,7 +45,7 @@ class DynLinked
 public:
   
   DynLinked();
-  ~DynLinked() {Close();}
+  ~DynLinked();
   
   enum Arch { ArchNA = 0, Arch32 = 32 , Arch64 = 64 };
   enum Type { TypeNA= 0 , Other,  Binary , Library};
@@ -48,7 +53,7 @@ public:
 
   bool Open(const std::string& filename);
   void Close(); 
-  bool isOpen() { return m_elf!=0; } 
+  bool isOpen() {return m_elfreader.get() != nullptr ; }
   
   const std::string& getFileName() const { return m_filename; }
   Arch getArch() const {return m_arch;}
@@ -64,13 +69,13 @@ private:
   DynLinked& operator=(const DynLinked&);
   
 
-  Elf* m_elf;
+  std::unique_ptr<ELFIO::elfio> m_elfreader;
   std::string m_filename;
   Arch m_arch;
   Type m_type;
- 
   
-  std::string m_errmsg; // libelf error, if used..
+
+  std::string m_errmsg; // libelf error, if used.. // TODO, check if required since elfio
  
   
 };
