@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 
 
-#include <sbbdep/pkgonebinlib.hpp>
+#include <sbbdep/pkg.hpp>
 #include <sbbdep/log.hpp>
 
 #include <sbbdep/cache.hpp>
@@ -58,13 +58,13 @@ public:
 //--------------------------------------------------------------------------------------------------
 
 
-int getArch(PkgOneBinLib* pkbl)
+int getArch(Pkg& pkg)
 {
-  if(pkbl->getDynLinkedInfos().size() != 1)
+  if(pkg.getDynLinkedInfos().size() != 1)
     return 0;
 
 
-  return pkbl->getDynLinkedInfos().begin()->arch;
+  return pkg.getDynLinkedInfos().begin()->arch;
 
 }
 
@@ -100,7 +100,7 @@ printRequiredBy(DynLinkedInfo& dlinfos)
 
 
 void
-printRequires(DatasetPtr dspkg, PkgOneBinLib* pkbl)
+printRequires(DatasetPtr dspkg, Pkg& pkg)
 {
 
   std::string sql =
@@ -126,7 +126,7 @@ printRequires(DatasetPtr dspkg, PkgOneBinLib* pkbl)
   XdlCmd cmd(sql);
   Cache::getInstance()->DB().CompileCommand(&cmd);
 
-  DynLinkedInfo dlinfos = *pkbl->getDynLinkedInfos().begin() ;
+  DynLinkedInfo dlinfos = *(pkg.getDynLinkedInfos().begin()) ;
   typedef std::map<std::string , std::string> DepMapType;
   DepMapType depmap , ownmap , similarmap;
   StringList notfound  ;
@@ -200,21 +200,21 @@ printRequires(DatasetPtr dspkg, PkgOneBinLib* pkbl)
 }
 
 DatasetPtr
-printPackageInfo(PkgOneBinLib* pkbl)
+printPackageInfo(Pkg& pkg)
 {
   XdlCmd cmd(
       "SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id "
       "WHERE dynlinked.filename = ? AND dynlinked.arch=?;");
   Cache::getInstance()->DB().CompileCommand(&cmd);
-  cmd.Parameters()->at(0)->set( pkbl->getPathName() );
-  cmd.Parameters()->at(1)->set( getArch(pkbl) );
+  cmd.Parameters()->at(0)->set( pkg.getPathName() );
+  cmd.Parameters()->at(1)->set( getArch(pkg) );
 
   DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
   Cache::getInstance()->DB().Execute(&cmd, ds.get());
 
   if(ds->getRowCount()==0)
     {
-      WriteAppMsg() << pkbl->getPathName() << " not in a known package" << std::endl ;
+      WriteAppMsg() << pkg.getPathName() << " not in a known package" << std::endl ;
     }
   else
     {
@@ -273,36 +273,29 @@ WHERE dynlinked.soname=? AND dynlinked.arch=?
 
 
 bool
-handleXDLrequest(Pkg* pkg)
+handleXDLrequest(Pkg& pkg)
 {
 
 
-  PkgOneBinLib* pkbl = dynamic_cast<PkgOneBinLib*>(pkg);
 
-  if(not pkbl)
+
+  WriteAppMsg() << "Absolute path: " << pkg.getPathName() << std::endl ;
+
+
+  if ( getArch(pkg) == 0 )
     {
-      LogError()<< "Can not handle " << pkg->getPathName()  << std::endl;
+      LogError()<< "unable to get ARCH of " << pkg.getPathName() << std::endl;
       return false;
     }
 
 
-  WriteAppMsg() << "Absolute path: " << pkbl->getPathName() << std::endl ;
-
-
-  if ( getArch(pkbl) == 0 )
-    {
-      LogError()<< "unable to get ARCH of " << pkbl->getPathName() << std::endl;
-      return false;
-    }
-
-
-  DatasetPtr ds_package = printPackageInfo(pkbl);
+  DatasetPtr ds_package = printPackageInfo(pkg);
 
   //binlib pkg must have exactly one info ....
-  DynLinkedInfo dlinfos = *pkbl->getDynLinkedInfos().begin() ;
+  DynLinkedInfo dlinfos = *(pkg.getDynLinkedInfos().begin() );
 
   printSoInfo(ds_package, dlinfos); // if nothing to do, func will do nothing
-  printRequires(ds_package, pkbl);
+  printRequires(ds_package, pkg);
 
   // TODO , can I change the dyn linked info list to a vector without side effects ?
   // should be possible ?

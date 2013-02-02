@@ -29,8 +29,8 @@ THE SOFTWARE.
 
 #include <sbbdep/cache.hpp>
 #include <sbbdep/log.hpp>
-#include <sbbdep/filemagic.hpp>
-#include <sbbdep/pkfab.hpp>
+//#include <sbbdep/filemagic.hpp>
+//#include <sbbdep/pkfab.hpp>
 #include <a4z/singlecollector.hpp>
 
 
@@ -45,8 +45,8 @@ namespace sbbdep
     
     Cache::create( dbname );
     
-    FMagSingle::create();
-    PkFab::create();    
+  //  FMagSingle::create();
+  //  PkFab::create();
     
   }
   

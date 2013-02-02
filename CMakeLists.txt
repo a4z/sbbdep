@@ -84,21 +84,19 @@ include/sbbdep/dynlinked.hpp
 include/sbbdep/dynlinkedinfo.hpp
 include/sbbdep/dynlinkedinfolist.hpp
 include/sbbdep/error.hpp
-include/sbbdep/filemagic.hpp
+
 include/sbbdep/log.hpp
 include/sbbdep/lddirs.hpp
 include/sbbdep/path.hpp
 include/sbbdep/pathname.hpp
 include/sbbdep/pathnamelist.hpp
 include/sbbdep/pathnameset.hpp
-include/sbbdep/pkfab.hpp
+
 include/sbbdep/pkg.hpp
 include/sbbdep/pkgadmdir.hpp
-include/sbbdep/pkgarchiv.hpp
-include/sbbdep/pkgdestdir.hpp
-include/sbbdep/pkgfile.hpp
+
 include/sbbdep/pkgname.hpp
-include/sbbdep/pkgonebinlib.hpp
+
 
 include/sbbdep/stringlist.hpp
 include/sbbdep/stringset.hpp
@@ -109,25 +107,20 @@ SET ( libsbbdep_SRCHDR
 )
 #-----------------------------------------------------------------------------------------
 SET ( libsbbdep_SRC
+
 src/sbbdep/cache.cpp
 src/sbbdep/cachecmds.cpp
 src/sbbdep/cachedb.cpp
 src/sbbdep/cachesql.cpp
 src/sbbdep/dircontent.cpp
 src/sbbdep/dynlinked.cpp
-src/sbbdep/filemagic.cpp
 src/sbbdep/lddirs.cpp
 src/sbbdep/log.cpp
 src/sbbdep/path.cpp
 src/sbbdep/pathname.cpp
-src/sbbdep/pkfab.cpp
 src/sbbdep/pkg.cpp
 src/sbbdep/pkgadmdir.cpp
-src/sbbdep/pkgarchiv.cpp
-src/sbbdep/pkgdestdir.cpp
-src/sbbdep/pkgfile.cpp
 src/sbbdep/pkgname.cpp
-src/sbbdep/pkgonebinlib.cpp
 
 
 )

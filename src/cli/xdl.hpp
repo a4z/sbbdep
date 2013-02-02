@@ -29,7 +29,7 @@ namespace sbbdep{
 
   class Pkg;
 
-  bool handleXDLrequest(Pkg* pkg);
+  bool handleXDLrequest(Pkg& pkg);
 
 
 

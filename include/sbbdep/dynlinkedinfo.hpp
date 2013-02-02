@@ -42,7 +42,7 @@ struct DynLinkedInfo
   std::string soName;
   StringList Needed;
   StringList RunRPaths; 
-  
+  // TODO, they should become vectors..
 };  
 
 

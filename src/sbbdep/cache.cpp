@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <sbbdep/path.hpp>
 #include <sbbdep/pathname.hpp>
 #include <sbbdep/pkgname.hpp>
-#include <sbbdep/pkgfile.hpp>
+#include <sbbdep/pkg.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/stringlist.hpp>
 #include <sbbdep/dynlinkedinfolist.hpp>
@@ -698,8 +698,8 @@ Cache::PersistPgks( const StringVec& pkgfiles , bool owntransaction )
           {
             Path path(pkgfiles[i]) ;
             
-            PkgFile pkfile(path.getURL()) ;
-            if (!pkfile.Load() )
+            Pkg pkfile  = Pkg::create(path.getURL()) ; // TODO re-check this
+            if (pkfile.getType() != PkgType::Installed || not pkfile.Load() )
               {
                 LogError()<< "waring, unable to load pkgfile with path " << path << "\n";  
               }

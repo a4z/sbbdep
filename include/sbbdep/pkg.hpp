@@ -33,43 +33,60 @@ THE SOFTWARE.
 namespace sbbdep {
 
 
+//ok, lets reverse this a
+
+enum class PkgType{
+  Unknown = 0 ,
+  Installed , // var/adm/packages/.. file
+  BinLib , // on file
+  DestDir ,  // make install DESTDIR=$tmp/usr ... as used in build scripts to create dep files
+  Archive // for future
+};
+
+
+
 class Pkg
 {
- 
+
   
 public:  
 
-  
-  Pkg( const PathName& pname );
+  static const StringSet& usualBinDirs(); // need review, see comment in cpp
+  static const StringSet& usualLibDirs(); // need review, see comment in cpp
 
-  virtual ~Pkg() = 0;
+  
+  static Pkg create(PathName pn);
+
+  //will see if the factory method will go into this class...
+  Pkg( const PathName& pname , PkgType type);
+
+//  Pkg( const Pkg& other ) = default;
+//  Pkg& operator=( const Pkg& other )= default;
+//  Pkg( Pkg&& other ) = default;
+//  Pkg& operator=( Pkg&& other )= default;
+  ~Pkg() = default;
   
   const PathName& getPathName() const { return  m_pathname; }  
   
   // if ever required to have a pkg just with file info, split file and dynlink loading
-  bool Load() { 
-    m_floaded = doLoad() ;  
-    return m_floaded ;
-  }
-  
+  bool Load() ;
   bool isLoaded() const { return m_floaded ; }
 
   const DynLinkedInfoList& getDynLinkedInfos() const { return m_dlinfos; } 
   
-  void doTestPrint();  
+  PkgType getType(){return m_type; }
   
 protected:
-  Pkg( const Pkg& other );
-  Pkg& operator=( const Pkg& other );
   
   //needs to be special for each pkg type
-  virtual bool doLoad() = 0;
- 
+  bool doLoadOneBinLib() ;
+  bool doLoadDestDir() ;
+  bool doLoadInstalled() ;
+
   PathName m_pathname; // name  of 
+  PkgType m_type ;
   bool m_floaded ; // files loaded...
 
-  StringSet m_libdirs; //dirs where libs are ( /lib(64) /usr/lib(64) .. ), used for search 
-  StringSet m_bindirs; //dirs where other dynamically linked are ( /(s)bin) /usr/(s)bin /usr/libexec ), used for search
   
   DynLinkedInfoList m_dlinfos;
   

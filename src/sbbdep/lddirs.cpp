@@ -90,6 +90,10 @@ LDDirs::readLdDirs()
 }
 //--------------------------------------------------------------------------------------------------
 
+
+/*
+ * get all directory names that have files with link in an lddir....
+ */
 const StringSet& 
 LDDirs::readLdLinkDirs()
 {

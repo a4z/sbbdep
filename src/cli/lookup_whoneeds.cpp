@@ -25,10 +25,7 @@ THE SOFTWARE.
 #include "lookup.hpp"
 
 #include <sbbdep/pkg.hpp>
-#include <sbbdep/pkgarchiv.hpp>
-#include <sbbdep/pkgdestdir.hpp>
-#include <sbbdep/pkgfile.hpp>
-#include <sbbdep/pkgonebinlib.hpp>
+
 
 #include <iostream>
 #include <string>

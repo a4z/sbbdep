@@ -145,42 +145,26 @@ AppCli::Run(const AppArgs& appargs)
   querypath.makeAbsolute();
   querypath.makeRealPath();
 
-  Pkg* pkg = 0;
-  try
+  Pkg pkg = Pkg::create(querypath);
+  if(pkg.getType() == PkgType::Unknown)
     {
-      pkg = PkFab::get()->createPkg(querypath);
-    }
-  catch (const a4z::Err& e)
-    { //if nothing with dependencies, than simply search for the file in packages..
-      if( querypath.isRegularFile() )
-        { // TODO; check this ./sbbdep -c ~/tmpcache
-          // this uses ~/tmpcache also as query, not just as cache, and continues here ...
-          LogInfo() << "not a file with binary dependencies: " << appargs.getQuery()
-              << "\n try to find other information:\n";
-          try
-            {
-              lookup::fileInPackages(querypath);
-              return 0;
-            }
-          catch (const a4z::Err& e)
-            {
-              LogError() << e << std::endl;
-              return -3;
-            }
+      LogInfo() << "not a file with binary dependencies: " << appargs.getQuery()
+          << "\n try to find other information:\n";
+      try
+        {
+          lookup::fileInPackages(querypath);
+          return 0;
         }
-      else
+      catch (const a4z::Err& e)
         {
           LogError() << e << std::endl;
           return -3;
         }
     }
 
-  // since xdl option was added this is to early here cause for XDL I do only want a file
-  // so I possible load package info for just print an error
-  // not a big deal or problem but can be done better, so -> TODO
   try
     {
-      pkg->Load();
+      pkg.Load();
     }
   catch (const a4z::Err& e)
     {
@@ -188,24 +172,26 @@ AppCli::Run(const AppArgs& appargs)
       return -4;
     }
 
+
+
   if( !appargs.getWhoNeeds() && !appargs.getXDL() )
     {
       DepFileWriter dfw(appargs.getAppendVersions());
       Log::ChannelType lc = WriteAppMsg();
-      dfw.generate_log(*pkg, lc);
+      dfw.generate_log( pkg, lc);
     }
   else if( appargs.getWhoNeeds() && !appargs.getXDL() )
     {
       // todo , if file is give, message that file is ignored or implement this
       DepFileWriter dfw(appargs.getAppendVersions());
       Log::ChannelType lc = WriteAppMsg();
-      dfw.who_requires(*pkg, lc);
+      dfw.who_requires(pkg, lc);
     }
   else if( appargs.getXDL() )
     {
       if( appargs.getWhoNeeds() )
         {
-          if( !lookup::explain_who_needs(*pkg, Log::AppMessage() ) )
+          if( !lookup::explain_who_needs(pkg, Log::AppMessage() ) )
             LogError() << "explain dynamic linked (whoneeds) did not work\n"
                 << "a better error message is in development\n";
         }

@@ -25,10 +25,6 @@ THE SOFTWARE.
 #include "lookup_dependencies.hpp"
 
 #include <sbbdep/pkg.hpp>
-#include <sbbdep/pkgarchiv.hpp>
-#include <sbbdep/pkgdestdir.hpp>
-#include <sbbdep/pkgfile.hpp>
-#include <sbbdep/pkgonebinlib.hpp>
 
 #include <iostream>
 #include <string>
@@ -36,21 +32,6 @@ THE SOFTWARE.
 
 namespace sbbdep {
 
-namespace {
-void keep_todo( Pkg& pkg )
-{
-  std::string pkgtypename ;
-  // and see, oop in this way is ugly, fix this implementation of pkgs TODO
-
-  // todo,  think about add the name into pkg, this code is ugly
-  if ( dynamic_cast<PkgArchiv*>(&pkg) ) pkgtypename = "Archiv" ;
-  else if ( dynamic_cast<PkgDestDir*>(&pkg) ) pkgtypename = "Dir" ;
-  else if ( dynamic_cast<PkgFile*>(&pkg) ) pkgtypename = "Package" ;
-  else if ( dynamic_cast<PkgOneBinLib*>(&pkg) ) pkgtypename = "File" ;
-  else pkgtypename="Unknown Package Type" ;
-
-}
-}
 
 
 
