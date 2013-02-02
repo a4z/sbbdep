@@ -163,8 +163,8 @@ SET ( sbbdepcli_SRC
 ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
 #TODO, sqlite & dl only needed  if a4sqlt3 was build with that requirement ...
-#set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl elf) #macig still used in pkfab..
-set(SBBDEP_REQURIED_LIBS sbbdep ${a4sqlt3_library} ${a4z_library} magic )
+#set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl ) 
+set(SBBDEP_REQURIED_LIBS sbbdep ${a4sqlt3_library} ${a4z_library} )
 
 set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
 
