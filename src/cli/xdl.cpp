@@ -31,7 +31,7 @@ THE SOFTWARE.
 #include <sbbdep/dynlinked.hpp>
 #include <sbbdep/dynlinkedinfo.hpp>
 
-#include <a4sqlt3/sqlparamcommand.hpp>
+#include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/parameters.hpp>
 #include <a4sqlt3/dataset.hpp>
 
@@ -46,11 +46,11 @@ namespace sbbdep
 
 namespace{
 
-class XdlCmd : public a4sqlt3::SqlParamCommand
+class XdlCmd : public a4sqlt3::SqlCommand
 {
 
 public:
-  XdlCmd(const std::string& sql) : a4sqlt3::SqlParamCommand(sql)
+  XdlCmd(const std::string& sql) : a4sqlt3::SqlCommand(sql)
   {
   }//---------------iostream--------------------------------------------------------------------------------
 
@@ -84,8 +84,8 @@ printRequiredBy(DynLinkedInfo& dlinfos)
   XdlCmd cmd(query);
   Cache::getInstance()->DB().CompileCommand(&cmd);
 
-  cmd.Parameters()->at(0)->set(dlinfos.soName);
-  cmd.Parameters()->at(1)->set(dlinfos.arch);
+  cmd.Parameters().at(0).set(dlinfos.soName);
+  cmd.Parameters().at(1).set(dlinfos.arch);
 
   DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
   Cache::getInstance()->DB().Execute(&cmd, ds.get());
@@ -143,8 +143,8 @@ printRequires(DatasetPtr dspkg, Pkg& pkg)
 
   for( auto& soname : dlinfos.Needed )
     {
-      cmd.Parameters()->at(0)->set( soname );
-      cmd.Parameters()->at(1)->set( dlinfos.arch );
+      cmd.Parameters().at(0).set( soname );
+      cmd.Parameters().at(1).set( dlinfos.arch );
       a4sqlt3::Dataset ds;
       Cache::getInstance()->DB().Execute(&cmd, &ds);
 
@@ -206,8 +206,8 @@ printPackageInfo(Pkg& pkg)
       "SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id "
       "WHERE dynlinked.filename = ? AND dynlinked.arch=?;");
   Cache::getInstance()->DB().CompileCommand(&cmd);
-  cmd.Parameters()->at(0)->set( pkg.getPathName() );
-  cmd.Parameters()->at(1)->set( getArch(pkg) );
+  cmd.Parameters().at(0).set( pkg.getPathName() );
+  cmd.Parameters().at(1).set( getArch(pkg) );
 
   DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
   Cache::getInstance()->DB().Execute(&cmd, ds.get());
@@ -252,9 +252,9 @@ WHERE dynlinked.soname=? AND dynlinked.arch=?
 
   XdlCmd cmd(sql) ;
   Cache::getInstance()->DB().CompileCommand(&cmd);
-  cmd.Parameters()->at(0)->set( dlinfos.soName );
-  cmd.Parameters()->at(1)->set( dlinfos.arch );
-  cmd.Parameters()->at(2)->set( pkgname );
+  cmd.Parameters().at(0).set( dlinfos.soName );
+  cmd.Parameters().at(1).set( dlinfos.arch );
+  cmd.Parameters().at(2).set( pkgname );
   DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
   Cache::getInstance()->DB().Execute(&cmd, ds.get());
 

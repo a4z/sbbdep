@@ -24,22 +24,23 @@
 #ifndef SBBDEP_CACHECMDS_HPP_
 #define SBBDEP_CACHECMDS_HPP_
 
-#include <a4sqlt3/sqlparamcommand.hpp>
+#include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/parameters.hpp>
+#include <a4sqlt3/dbvalue.hpp>
 
 
 namespace sbbdep {
 
 
-class CacheCmd : public a4sqlt3::SqlParamCommand
+class CacheCmd : public a4sqlt3::SqlCommand
 {
 
 public:
 
-  CacheCmd( const std::string& sql, a4sqlt3::ParameterTypeList tlist);
+  CacheCmd( const std::string& sql, a4sqlt3::DbValueList tlist);
   virtual ~CacheCmd();
 
-  virtual void Compile() { a4sqlt3::SqlParamCommand::Compile() ;}
+  virtual void Compile() { a4sqlt3::SqlCommand::Compile() ;}
 
 
 };

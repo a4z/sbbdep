@@ -30,8 +30,8 @@ namespace sbbdep {
 using namespace a4sqlt3;
 
 
-CacheCmd::CacheCmd( const std::string& sql , a4sqlt3::ParameterTypeList tlist)
-: SqlParamCommand(sql,tlist)
+CacheCmd::CacheCmd( const std::string& sql , a4sqlt3::DbValueList tlist)
+: SqlCommand(sql,tlist)
 {
 
 }
@@ -49,9 +49,9 @@ CacheCmd::~CacheCmd()
 
 InsertPkg::InsertPkg()
 : CacheCmd(CacheSQL::InsertPkgSQL(),
-    {ParameterType::Text,ParameterType::Text,
-        ParameterType::Text, ParameterType::Text
-        , ParameterType::Int ,ParameterType::Text, ParameterType::Int })
+    {DbValueType::Text,DbValueType::Text,
+        DbValueType::Text, DbValueType::Text
+        , DbValueType::Int ,DbValueType::Text, DbValueType::Int })
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -68,9 +68,9 @@ InsertPkg::~InsertPkg()
 
 InsertDynLinked::InsertDynLinked()
 : CacheCmd(CacheSQL::InsertDynLinkedSQL(),
-    {ParameterType::Int,ParameterType::Text,
-        ParameterType::Text, ParameterType::Text
-        ,ParameterType::Text, ParameterType::Int })
+    {DbValueType::Int,DbValueType::Text,
+        DbValueType::Text, DbValueType::Text
+        ,DbValueType::Text, DbValueType::Int })
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ InsertDynLinked::~InsertDynLinked()
 //--------------------------------------------------------------------------------------------------
 
 InsertRequired::InsertRequired()
-: CacheCmd(CacheSQL::InsertRequiredSQL(),{ParameterType::Int,ParameterType::Text})
+: CacheCmd(CacheSQL::InsertRequiredSQL(),{DbValueType::Int,DbValueType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -100,7 +100,7 @@ InsertRequired::~InsertRequired()
 //--------------------------------------------------------------------------------------------------
 
 InsertRRunPath::InsertRRunPath()
-: CacheCmd(CacheSQL::InsertRRunPathSQL(),{ParameterType::Int,ParameterType::Text, ParameterType::Text})
+: CacheCmd(CacheSQL::InsertRRunPathSQL(),{DbValueType::Int,DbValueType::Text, DbValueType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ InsertRRunPath::~InsertRRunPath()
 //--------------------------------------------------------------------------------------------------
 
 InsertLdDir::InsertLdDir()
-: CacheCmd(CacheSQL::InsertLdDirSQL(),{ParameterType::Text})
+: CacheCmd(CacheSQL::InsertLdDirSQL(),{DbValueType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ InsertLdDir::~InsertLdDir()
 //--------------------------------------------------------------------------------------------------
 
 InsertLdLnkDir::InsertLdLnkDir()
-: CacheCmd(CacheSQL::InsertLdLnkDirSQL(), {ParameterType::Text})
+: CacheCmd(CacheSQL::InsertLdLnkDirSQL(), {DbValueType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ InsertLdLnkDir::~InsertLdLnkDir()
 
 
 DeletePkgByFullName::DeletePkgByFullName()
-:  CacheCmd(CacheSQL::DeletePkgByFullnameSQL(),{ParameterType::Text})
+:  CacheCmd(CacheSQL::DeletePkgByFullnameSQL(),{DbValueType::Text})
 {
 }
 //--------------------------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ DeletePkgByFullName::~DeletePkgByFullName()
 void
 DeletePkgByFullName::setFullName(const std::string& val)
 {
-  Parameters()->Nr(1)->set(val);
+  Parameters().Nr(1).set(val);
 }
 //--------------------------------------------------------------------------------------------------
 

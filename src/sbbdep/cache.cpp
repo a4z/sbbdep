@@ -37,7 +37,7 @@ THE SOFTWARE.
 #include <sbbdep/pkgadmdir.hpp>
 #include <sbbdep/log.hpp>
 
-#include <a4sqlt3/sqlparamcommand.hpp>
+#include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/parameters.hpp>
 #include <a4sqlt3/error.hpp>
 #include <a4sqlt3/columns.hpp>
@@ -171,13 +171,13 @@ public:
   Persist( PkgName& pkgname, DynLinkedInfoList& dllist, int64_t& timestamp)
   {
 
-    m_cmdpkg.Parameters()->Nr(1)->set( pkgname.FullName() ) ;
-    m_cmdpkg.Parameters()->Nr(2)->set( pkgname.Name() ) ;
-    m_cmdpkg.Parameters()->Nr(3)->set( pkgname.Version() ) ;
-    m_cmdpkg.Parameters()->Nr(4)->set( pkgname.Arch() ) ;
-    m_cmdpkg.Parameters()->Nr(5)->set( pkgname.Build().Num() ) ;
-    m_cmdpkg.Parameters()->Nr(6)->set( pkgname.Build().Tag() ) ;
-    m_cmdpkg.Parameters()->Nr(7)->set( timestamp ) ;
+    m_cmdpkg.Parameters().Nr(1).set( pkgname.FullName() ) ;
+    m_cmdpkg.Parameters().Nr(2).set( pkgname.Name() ) ;
+    m_cmdpkg.Parameters().Nr(3).set( pkgname.Version() ) ;
+    m_cmdpkg.Parameters().Nr(4).set( pkgname.Arch() ) ;
+    m_cmdpkg.Parameters().Nr(5).set( pkgname.Build().Num() ) ;
+    m_cmdpkg.Parameters().Nr(6).set( pkgname.Build().Tag() ) ;
+    m_cmdpkg.Parameters().Nr(7).set( timestamp ) ;
 
     m_dbref.Execute(&m_cmdpkg);
     
@@ -186,17 +186,17 @@ public:
     for( DynLinkedInfoList::const_iterator pos=dllist.begin(); pos!=dllist.end();++pos)
       {
         std::string dlhomedir = pos->filename.getDir();
-        m_cmddynlinked.Parameters()->Nr(1)->set( pkgid );
-        m_cmddynlinked.Parameters()->Nr(2)->set( pos->filename.Str() );
-        m_cmddynlinked.Parameters()->Nr(3)->set( dlhomedir );
-        m_cmddynlinked.Parameters()->Nr(4)->set( pos->filename.getBase() );
+        m_cmddynlinked.Parameters().Nr(1).set( pkgid );
+        m_cmddynlinked.Parameters().Nr(2).set( pos->filename.Str() );
+        m_cmddynlinked.Parameters().Nr(3).set( dlhomedir );
+        m_cmddynlinked.Parameters().Nr(4).set( pos->filename.getBase() );
         
         if( pos->soName.size()>0 )
-          m_cmddynlinked.Parameters()->Nr(5)->set( pos->soName );
+          m_cmddynlinked.Parameters().Nr(5).set( pos->soName );
         else
-          m_cmddynlinked.Parameters()->Nr(5)->setNull() ;
+          m_cmddynlinked.Parameters().Nr(5).setNull() ;
         
-        m_cmddynlinked.Parameters()->Nr(6)->set( pos->arch );
+        m_cmddynlinked.Parameters().Nr(6).set( pos->arch );
         
         m_dbref.Execute(&m_cmddynlinked);
         int64_t fileid = m_dbref.getLastInsertRowid() ;
@@ -204,8 +204,8 @@ public:
         StringList::const_iterator needediter= pos->Needed.begin() ;
         for( ; needediter != pos->Needed.end(); ++needediter)
           {
-            m_cmdrequired.Parameters()->Nr(1)->set(fileid) ;
-            m_cmdrequired.Parameters()->Nr(2)->set( *needediter );
+            m_cmdrequired.Parameters().Nr(1).set(fileid) ;
+            m_cmdrequired.Parameters().Nr(2).set( *needediter );
             m_dbref.Execute(&m_cmdrequired);
           }
 
@@ -213,9 +213,9 @@ public:
         StringList::const_iterator rrunpathiter= pos->RunRPaths.begin();
         for( ;rrunpathiter != pos->RunRPaths.end(); ++rrunpathiter)
           {
-            m_cmdrrunpath.Parameters()->Nr(1)->set(fileid) ;
-            m_cmdrrunpath.Parameters()->Nr(2)->set( *rrunpathiter );
-            m_cmdrrunpath.Parameters()->Nr(3)->set( dlhomedir );
+            m_cmdrrunpath.Parameters().Nr(1).set(fileid) ;
+            m_cmdrrunpath.Parameters().Nr(2).set( *rrunpathiter );
+            m_cmdrrunpath.Parameters().Nr(3).set( dlhomedir );
             m_dbref.Execute(&m_cmdrrunpath);
           }        
         
@@ -340,13 +340,13 @@ Cache::checkVersion( int major, int minor, int patchlevel )
   using namespace a4sqlt3;
   auto getDbVersion = [calcDbVersion](CacheDB& db) -> int
     {
-      Dataset ds( {DsFieldType::Int, DsFieldType::Int} );
+      Dataset ds( {DbValueType::Int, DbValueType::Int} );
       db.Execute("SELECT major, minor FROM version", &ds);
       return calcDbVersion(ds.getField(0).getInt(), ds.getField(1).getInt());
     };
   auto getDbAppVersion = [calcFullVersion](CacheDB& db) -> int
     {
-      Dataset ds({DsFieldType::Int, DsFieldType::Int, DsFieldType::Int});
+      Dataset ds({DbValueType::Int, DbValueType::Int, DbValueType::Int});
       db.Execute("SELECT major, minor , patchlevel FROM version", &ds);
       return calcFullVersion(ds.getField(0).getInt(),
           ds.getField(1).getInt(),ds.getField(2).getInt());
@@ -772,14 +772,14 @@ Cache::UpdateLdDirs(bool owntransaction )
   StringSet::const_iterator iterpos= lddirs.getLdDirs().begin() ;
   for(;iterpos!=lddirs.getLdDirs().end(); ++iterpos)
     {
-      cmdlddir.Parameters()->Nr(1)->set(*iterpos);
+      cmdlddir.Parameters().Nr(1).set(*iterpos);
       m_db.Execute(&cmdlddir);    
     }
   
   iterpos= ldlnknames.begin() ;
   for(;iterpos!=ldlnknames.end(); ++iterpos)
     {
-      cmdldlnkdir.Parameters()->Nr(1)->set(*iterpos);
+      cmdldlnkdir.Parameters().Nr(1).set(*iterpos);
       m_db.Execute(&cmdldlnkdir);
     }  
   

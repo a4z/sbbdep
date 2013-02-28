@@ -31,8 +31,9 @@ THE SOFTWARE.
 
 #include <sbbdep/log.hpp>
 
-#include <a4sqlt3/sqlparamcommand.hpp>
+#include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/parameters.hpp>
+#include <a4sqlt3/dbvalue.hpp>
 
 #include <a4sqlt3/rowhandler.hpp>
 #include <a4sqlt3/columns.hpp>
@@ -44,20 +45,20 @@ THE SOFTWARE.
 
 namespace sbbdep {
 // pkfofsoname would be the better name ... ore create these commands as stored command on db...
-class PkOfFile::Cmd : public a4sqlt3::SqlParamCommand
+class PkOfFile::Cmd : public a4sqlt3::SqlCommand
 {
   
 public:
   Cmd() :
-    a4sqlt3::SqlParamCommand(CacheSQL::SearchPgkOfSoNameSQL())
+    a4sqlt3::SqlCommand(CacheSQL::SearchPgkOfSoNameSQL())
   {
   }//-----------------------------------------------------------------------------------------------
 
   void
   setSerachVal( const std::string& soname, int arch  )
   {
-      Parameters()->Nr(1)->set(soname);
-      Parameters()->Nr(2)->set(arch);
+      Parameters().Nr(1).set(soname);
+      Parameters().Nr(2).set(arch);
             
   }//-----------------------------------------------------------------------------------------------
 
@@ -65,20 +66,20 @@ public:
 //--------------------------------------------------------------------------------------------------
 
 
-class PkOfFile::CmdRequiredBy : public a4sqlt3::SqlParamCommand
+class PkOfFile::CmdRequiredBy : public a4sqlt3::SqlCommand
 {
   
 public:
   CmdRequiredBy() :
-    a4sqlt3::SqlParamCommand(CacheSQL::SearchRequiredByLib())
+    a4sqlt3::SqlCommand(CacheSQL::SearchRequiredByLib())
   {
   }//-----------------------------------------------------------------------------------------------
 
   void
   setSerachVal( const std::string& soname, int arch  )
   {
-    Parameters()->Nr(1)->set(soname);
-    Parameters()->Nr(2)->set(arch);
+    Parameters().Nr(1).set(soname);
+    Parameters().Nr(2).set(arch);
             
   }//-----------------------------------------------------------------------------------------------
 
