@@ -15,12 +15,6 @@ chachsql , use const char* and constexpr for fixed strings
 
 create more modules, shrink amount of public headers and move more into private stuff 
 
-dynlinked & dynlinkedinfo -> ElfFile and ElfInfo
-
-ElfFile.open(..)
-ElfInfo ElfFile.getInfo() .. return by value
-open automaitk if not opended, return empty info if problem or not an elf, 
-ElfInfo needs therefore isEmpty call
 
 remove all the std container typedef, use auto where used
 
