@@ -89,8 +89,6 @@ include/sbbdep/log.hpp
 include/sbbdep/lddirs.hpp
 include/sbbdep/path.hpp
 include/sbbdep/pathname.hpp
-include/sbbdep/pathnamelist.hpp
-include/sbbdep/pathnameset.hpp
 
 include/sbbdep/pkg.hpp
 include/sbbdep/pkgadmdir.hpp
