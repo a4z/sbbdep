@@ -170,56 +170,78 @@ public:
   void
   Persist( PkgName& pkgname, DynLinkedInfoList& dllist, int64_t& timestamp)
   {
+    using a4sqlt3::DbValue ;
 
-    m_cmdpkg.Parameters().Nr(1).set( pkgname.FullName() ) ;
-    m_cmdpkg.Parameters().Nr(2).set( pkgname.Name() ) ;
-    m_cmdpkg.Parameters().Nr(3).set( pkgname.Version() ) ;
-    m_cmdpkg.Parameters().Nr(4).set( pkgname.Arch() ) ;
-    m_cmdpkg.Parameters().Nr(5).set( pkgname.Build().Num() ) ;
-    m_cmdpkg.Parameters().Nr(6).set( pkgname.Build().Tag() ) ;
-    m_cmdpkg.Parameters().Nr(7).set( timestamp ) ;
+    // what's going on here:
+    // store the pkg,
+    // to the pkg store all dynlinked infos
+    // to each dynlinked info store Needed list and RunRPaths info
 
-    m_dbref.Execute(&m_cmdpkg);
-    
-    
-    int64_t pkgid = m_dbref.getLastInsertRowid() ;
-    for( DynLinkedInfoList::const_iterator pos=dllist.begin(); pos!=dllist.end();++pos)
+    InsertPkg& m_cmdpkg = this->m_cmdpkg;
+    InsertDynLinked& m_cmddynlinked = this->m_cmddynlinked;
+    InsertRequired& m_cmdrequired = this->m_cmdrequired;
+    InsertRRunPath& m_cmdrrunpath = this->m_cmdrrunpath;
+    CacheDB& m_dbref = this->m_dbref;
+
+
+    auto store_pkg = [&m_dbref, &m_cmdpkg](PkgName& pkgname, int64_t& timestamp) -> int64_t {
+        a4sqlt3::DbValueList param_vals = {
+           DbValue( pkgname.FullName() ) ,
+           DbValue( pkgname.Name() ) ,
+           DbValue( pkgname.Version() ) ,
+           DbValue( pkgname.Arch() ) ,
+           DbValue( pkgname.Build().Num() ) ,
+           DbValue( pkgname.Build().Tag() ) ,
+           DbValue( timestamp )
+        };
+        m_cmdpkg.Parameters().setValues(std::move(param_vals)) ;
+        m_dbref.Execute(&m_cmdpkg);
+        return m_dbref.getLastInsertRowid() ;
+      };
+
+
+    auto store_dynlinked = [&m_dbref, &m_cmddynlinked](int64_t pkgid, const DynLinkedInfo& dli) -> int64_t {
+      a4sqlt3::DbValueList param_vals = {
+         DbValue( pkgid ) ,
+         DbValue( dli.filename.Str() ) ,
+         DbValue( dli.filename.getDir() ) ,
+         DbValue( dli.filename.getBase() ) ,
+          (dli.soName.size()> 0 ? DbValue(dli.soName) : DbValue(a4sqlt3::DbValueType::Null) ) ,
+         DbValue( dli.arch )
+      };
+      m_cmddynlinked.Parameters().setValues(std::move(param_vals)) ;;
+      m_dbref.Execute(&m_cmddynlinked);
+      return m_dbref.getLastInsertRowid() ;
+
+    };
+
+    auto store_needed = [&m_dbref, &m_cmdrequired](int64_t dynlinked_id, const std::string& needed) -> void {
+      m_cmdrequired.Parameters().setValues({DbValue(dynlinked_id), DbValue(needed)}) ;
+      m_dbref.Execute(&m_cmdrequired);
+    };
+
+    auto store_rrunpath = [&m_dbref, &m_cmdrrunpath](int64_t dynlinked_id,
+        const std::string& rrunpath, const std::string& dynlinked_homedir ) -> void {
+      m_cmdrrunpath.Parameters().setValues(
+          {DbValue(dynlinked_id), DbValue(rrunpath), DbValue(dynlinked_homedir)}) ;
+      m_dbref.Execute(&m_cmdrrunpath);
+    };
+
+
+    int64_t pkgid = store_pkg(pkgname, timestamp) ;
+    for(const DynLinkedInfo& dli : dllist)
       {
-        std::string dlhomedir = pos->filename.getDir();
-        m_cmddynlinked.Parameters().Nr(1).set( pkgid );
-        m_cmddynlinked.Parameters().Nr(2).set( pos->filename.Str() );
-        m_cmddynlinked.Parameters().Nr(3).set( dlhomedir );
-        m_cmddynlinked.Parameters().Nr(4).set( pos->filename.getBase() );
-        
-        if( pos->soName.size()>0 )
-          m_cmddynlinked.Parameters().Nr(5).set( pos->soName );
-        else
-          m_cmddynlinked.Parameters().Nr(5).setNull() ;
-        
-        m_cmddynlinked.Parameters().Nr(6).set( pos->arch );
-        
-        m_dbref.Execute(&m_cmddynlinked);
-        int64_t fileid = m_dbref.getLastInsertRowid() ;
-        
-        StringList::const_iterator needediter= pos->Needed.begin() ;
-        for( ; needediter != pos->Needed.end(); ++needediter)
+        int64_t dynlinked_id = store_dynlinked(pkgid, dli) ;
+
+        for( const std::string& needed : dli.Needed )
           {
-            m_cmdrequired.Parameters().Nr(1).set(fileid) ;
-            m_cmdrequired.Parameters().Nr(2).set( *needediter );
-            m_dbref.Execute(&m_cmdrequired);
+            store_needed(dynlinked_id, needed);
           }
 
-        
-        StringList::const_iterator rrunpathiter= pos->RunRPaths.begin();
-        for( ;rrunpathiter != pos->RunRPaths.end(); ++rrunpathiter)
+        for( const std::string& rrunpaht : dli.RunRPaths )
           {
-            m_cmdrrunpath.Parameters().Nr(1).set(fileid) ;
-            m_cmdrrunpath.Parameters().Nr(2).set( *rrunpathiter );
-            m_cmdrrunpath.Parameters().Nr(3).set( dlhomedir );
-            m_dbref.Execute(&m_cmdrrunpath);
-          }        
-        
-        
+            store_rrunpath(dynlinked_id, rrunpaht, dli.filename.getDir());
+          }
       }
     
     
