@@ -22,30 +22,65 @@ THE SOFTWARE.
 */
 
 
-
-#ifndef SBBDEP_DYNLINKEDINFO_HPP_
-#define SBBDEP_DYNLINKEDINFO_HPP_
+#ifndef SBBDEP_ELFFILE_HPP_
+#define SBBDEP_ELFFILE_HPP_
 
 
 #include <string>
-#include <utility>
-
-#include <sbbdep/stringlist.hpp>
+#include <vector>
 #include <sbbdep/pathname.hpp>
 
-namespace sbbdep{
+namespace sbbdep {
 
-struct DynLinkedInfo
+// opens the file and reads the info, if file is n
+class ElfFile
 {
-  PathName filename; 
-  int arch; 
-  std::string soName;
-  StringList Needed;
-  StringList RunRPaths; 
-  // TODO, they should become vectors..
-};  
+  
+public:
+  typedef std::vector<std::string> StringVec;
+  enum Arch { ArchNA = 0, Arch32 = 32 , Arch64 = 64 };
+  enum Type { TypeNA= 0 , Other,  Binary , Library};
+
+  // calls load, catches all exceptions and swallows them
+  // so if arch and type stays NA than either not an elf file or file does not exist
+  ElfFile(const PathName& name) noexcept ;
+  
+  ~ElfFile();
+
+  const PathName& getName() const { return m_name; }
+  
+  Arch getArch() const {return m_arch;}
+
+  Type getType()  const{ return m_type; }  
+  
+  const std::string& soName() const { return m_soName ;}
+  
+  const StringVec& getNeeded() const { return m_needed ; }
+  
+  const StringVec& getRRunPaths() const { return m_rrunpaths ; }
+  
+  bool isBinaryOrLibrary(){ return getType() == ElfFile::Binary || getType() == ElfFile::Library ;}
+
+private:
+  
+
+  PathName m_name;
+  Arch m_arch ;
+  Type m_type ;
+  
+  std::string m_soName;
+  StringVec m_needed;
+  StringVec m_rrunpaths;
+
+  void load();
+ 
+  
+};
+
+// if just the info is required if given path points to a bin or lib file, this is ok
+bool isElfBinOrElfLib(const PathName& pn);
 
 
 }
 
-#endif /* DYNLINKEDINFO_HPP_ */
+#endif /* SBBDEP_DYNLINKED_HPP_ */

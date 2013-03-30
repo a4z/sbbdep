@@ -31,16 +31,14 @@ THE SOFTWARE.
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/stringlist.hpp>
-#include <sbbdep/dynlinkedinfolist.hpp>
+
 #include <sbbdep/lddirs.hpp>
 #include <sbbdep/cachecmds.hpp>
 #include <sbbdep/pkgadmdir.hpp>
 #include <sbbdep/log.hpp>
 
 #include <a4sqlt3/sqlcommand.hpp>
-#include <a4sqlt3/parameters.hpp>
 #include <a4sqlt3/error.hpp>
-#include <a4sqlt3/columns.hpp>
 #include <a4sqlt3/onevalresult.hpp>
 #include <a4sqlt3/dataset.hpp>
 #include <a4sqlt3/error.hpp>
@@ -75,10 +73,10 @@ struct StoreEntry
 {
 
   PkgName m_pkname;
-  DynLinkedInfoList m_dllist;
+  Pkg::DynLinkedFiles m_dllist;
   int64_t m_timestamp; 
 
-  StoreEntry( const PkgName& pkname, const DynLinkedInfoList& dllist, const int64_t&timestamp )
+  StoreEntry( const PkgName& pkname, const Pkg::DynLinkedFiles& dllist, const int64_t&timestamp )
   :  m_pkname(pkname), m_dllist(dllist) , m_timestamp(timestamp)
   {
   }//-----------------------------------------------------------------------------------------------  
@@ -168,7 +166,7 @@ public:
   
   
   void
-  Persist( PkgName& pkgname, DynLinkedInfoList& dllist, int64_t& timestamp)
+  Persist( PkgName& pkgname, Pkg::DynLinkedFiles& dllist, int64_t& timestamp)
   {
     using a4sqlt3::DbValue ;
 
@@ -200,14 +198,14 @@ public:
       };
 
 
-    auto store_dynlinked = [&m_dbref, &m_cmddynlinked](int64_t pkgid, const DynLinkedInfo& dli) -> int64_t {
+    auto store_dynlinked = [&m_dbref, &m_cmddynlinked](int64_t pkgid, const ElfFile& elf) -> int64_t {
       a4sqlt3::DbValueList param_vals = {
          DbValue( pkgid ) ,
-         DbValue( dli.filename.Str() ) ,
-         DbValue( dli.filename.getDir() ) ,
-         DbValue( dli.filename.getBase() ) ,
-          (dli.soName.size()> 0 ? DbValue(dli.soName) : DbValue(a4sqlt3::DbValueType::Null) ) ,
-         DbValue( dli.arch )
+         DbValue( elf.getName().Str() ) ,
+         DbValue( elf.getName().getDir() ) ,
+         DbValue( elf.getName().getBase() ) ,
+          (elf.soName().size()> 0 ? DbValue(elf.soName()) : DbValue(a4sqlt3::DbValueType::Null) ) ,
+         DbValue( elf.getArch() )
       };
       m_cmddynlinked.Parameters().setValues(std::move(param_vals)) ;;
       m_dbref.Execute(&m_cmddynlinked);
@@ -229,18 +227,18 @@ public:
 
 
     int64_t pkgid = store_pkg(pkgname, timestamp) ;
-    for(const DynLinkedInfo& dli : dllist)
+    for(const ElfFile& elf : dllist)
       {
-        int64_t dynlinked_id = store_dynlinked(pkgid, dli) ;
+        int64_t dynlinked_id = store_dynlinked(pkgid, elf) ;
 
-        for( const std::string& needed : dli.Needed )
+        for( const std::string& needed : elf.getNeeded() )
           {
             store_needed(dynlinked_id, needed);
           }
 
-        for( const std::string& rrunpaht : dli.RunRPaths )
+        for( const std::string& rrunpaht : elf.getRRunPaths() )
           {
-            store_rrunpath(dynlinked_id, rrunpaht, dli.filename.getDir());
+            store_rrunpath(dynlinked_id, rrunpaht, elf.getName().getDir());
           }
       }
     
@@ -729,7 +727,7 @@ Cache::PersistPgks( const StringVec& pkgfiles , bool owntransaction )
               {  
                 StoreEntry* se = 
                     new StoreEntry( pkfile.getPathName().getBase(), 
-                        pkfile.getDynLinkedInfos() ,
+                        pkfile.getDynLinked() ,
                         path.getLastModificationTime()) ;
                 collector.collect(se) ;
               }

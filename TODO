@@ -19,6 +19,6 @@ create more modules, shrink amount of public headers and move more into private 
 remove all the std container typedef, use auto where used
 
 
-
+merge lddirs with all other pathname stuff to have all on one place
 
  

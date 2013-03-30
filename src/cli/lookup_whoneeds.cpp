@@ -49,19 +49,19 @@ bool who_needs(Pkg& pkg , Log::ChannelType out, bool addVersion)
 {
   // check, if got a filename, if this is a ldpath stuff or public or absolut no known path..
 
-  for(const DynLinkedInfo& dli : pkg.getDynLinkedInfos())
+  for(const ElfFile& elf : pkg.getDynLinked())
     {
-      if(dli.soName.empty())
+      if(elf.soName().empty())
         continue; // nothing to do if this not a so file
 
       // ok, it is a so, does it exist more than once on the system
       // is it in a public findable place
       // who finds it and who may prefere an ohter one for eg within own package or via rpath..
 
-      std::string indir = dli.filename.getDir();
+      std::string indir = elf.getName().getDir();
       // check if this lib is public findable or more a private stuff of a package
       // this will be complecated if ldusr dir is used...
-      if( isPublicLib(indir, dli.soName) )
+      if( isPublicLib(indir, elf.soName()) )
         {
 
         }

@@ -28,12 +28,13 @@ THE SOFTWARE.
 
 #include <sbbdep/pathname.hpp>
 #include <sbbdep/stringset.hpp>
-#include <sbbdep/dynlinkedinfolist.hpp>
+#include <sbbdep/elffile.hpp>
+
+#include <vector>
 
 namespace sbbdep {
 
 
-//ok, lets reverse this a
 
 enum class PkgType{
   Unknown = 0 ,
@@ -51,6 +52,9 @@ class Pkg
   
 public:  
 
+  typedef std::vector<ElfFile> DynLinkedFiles;
+
+  // TODO, merge this into something like SpecialDirs together with lddir
   static const StringSet& usualBinDirs(); // need review, see comment in cpp
   static const StringSet& usualLibDirs(); // need review, see comment in cpp
 
@@ -72,7 +76,7 @@ public:
   bool Load() ;
   bool isLoaded() const { return m_floaded ; }
 
-  const DynLinkedInfoList& getDynLinkedInfos() const { return m_dlinfos; } 
+  const DynLinkedFiles& getDynLinked() const { return m_dlfiles; }
   
   PkgType getType(){return m_type; }
   
@@ -88,7 +92,7 @@ protected:
   bool m_floaded ; // files loaded...
 
   
-  DynLinkedInfoList m_dlinfos;
+  DynLinkedFiles m_dlfiles;
   
   
 };

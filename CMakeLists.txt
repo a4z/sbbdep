@@ -80,9 +80,9 @@ include/sbbdep/cachecmds.hpp
 include/sbbdep/cachedb.hpp
 include/sbbdep/cachesql.hpp
 include/sbbdep/dircontent.hpp
-include/sbbdep/dynlinked.hpp
-include/sbbdep/dynlinkedinfo.hpp
-include/sbbdep/dynlinkedinfolist.hpp
+
+include/sbbdep/elffile.hpp
+
 include/sbbdep/error.hpp
 
 include/sbbdep/log.hpp
@@ -111,7 +111,9 @@ src/sbbdep/cachecmds.cpp
 src/sbbdep/cachedb.cpp
 src/sbbdep/cachesql.cpp
 src/sbbdep/dircontent.cpp
-src/sbbdep/dynlinked.cpp
+
+src/sbbdep/elffile.cpp
+
 src/sbbdep/lddirs.cpp
 src/sbbdep/log.cpp
 src/sbbdep/path.cpp

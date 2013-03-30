@@ -22,111 +22,90 @@ THE SOFTWARE.
 */
 
 
-#include <sbbdep/dynlinked.hpp>
+#include <sbbdep/elffile.hpp>
 #include <sbbdep/log.hpp>
-
-//#include <iostream>
-
-// with elfuitls instead of lib elf this may fail on other dists,
-// would be.. #include <gelf.h> make this via make, 
-//#include <libelf/gelf.h>
-//#include <libelf/libelf.h>
-
-//#include <fcntl.h>
 
 #include <elfio/elfio.hpp>
 
-#include <sbbdep/path.hpp>
-#include <boost/algorithm/string/replace.hpp>
-
-#include <a4z/error.hpp>
 
 namespace sbbdep {
 
 
-DynLinked::DynLinked() :
-  m_elfreader(), m_filename(), m_arch(ArchNA), m_type(TypeNA)
+ElfFile::ElfFile(const PathName& name) noexcept
+  : m_name(name)
+  , m_arch(ArchNA)
+  , m_type(TypeNA)
+  , m_soName()
+  , m_needed()
+  , m_rrunpaths()
 {
-
-}
-//--------------------------------------------------------------------------------------------------
-
-
-DynLinked::~DynLinked()
-{
-  m_elfreader.reset(nullptr);
-}
-//--------------------------------------------------------------------------------------------------
-
-
-bool
-DynLinked::Open( const std::string& filename )
-{
-  //reset all values
-  Close();
-  
-  m_filename = filename;
-  
-  m_elfreader.reset(new ELFIO::elfio() ) ;
-
-  if ( not m_elfreader->load( m_filename ) ) {
-      return false; // TODO , not an elf
+  try
+  {
+      load();
+  }
+  catch(...)
+  {
+      ;
   }
 
-  int elfclass = m_elfreader->get_class();
-  if (elfclass == ELFCLASSNONE) throw a4z::ErrorNeverReach("should already have returned false");
-  else if (elfclass == ELFCLASS32) m_arch = Arch32;
-  else if (elfclass == ELFCLASS64) m_arch = Arch64;
-  else throw a4z::ErrorNeverReach("unknown arch should not happen");
+}
+//--------------------------------------------------------------------------------------------------
 
 
-  ELFIO::Elf_Half type = m_elfreader->get_type();
-
-  if (type == ET_NONE) m_type = TypeNA;
-  else if (type == ET_EXEC) m_type = Binary;
-  else if (type == ET_DYN) m_type = Library;
-  else m_type=Other;
-
-  return m_type==Binary || m_type == Library;
-
+ElfFile::~ElfFile()
+{
 
 }
 //--------------------------------------------------------------------------------------------------
 
 void
-DynLinked::Close()
-{
-  m_elfreader.reset(nullptr);
-  m_arch = ArchNA;
-  m_type = TypeNA;
-  m_filename.clear();
-  m_errmsg.clear();
-}
-//--------------------------------------------------------------------------------------------------
-
-bool
-DynLinked::getInfos(DynLinkedInfo& info) const
+ElfFile::load()
 {
 
-  if( not m_elfreader )
-    throw a4z::ErrorTodo("reader not open");
+  ELFIO::elfio elfreader;
+
+  if ( not elfreader.load( m_name ) ) {
+      return;
+  }
+
+  int elfclass = elfreader.get_class();
+  if (elfclass == ELFCLASSNONE)
+    throw a4z::ErrorNeverReach("should already have returned false");
+  else if (elfclass == ELFCLASS32)
+    m_arch = Arch32;
+  else if (elfclass == ELFCLASS64)
+    m_arch = Arch64;
+  else
+    throw a4z::ErrorNeverReach("unknown arch should not happen");
+
+
+  ELFIO::Elf_Half type = elfreader.get_type();
+
+  if (type == ET_NONE)
+    m_type = TypeNA;
+  else if (type == ET_EXEC)
+    m_type = Binary;
+  else if (type == ET_DYN)
+    m_type = Library;
+  else
+    m_type=Other;
+
 
   if( !( m_type == Binary || m_type == Library ) )
-    return false;
+    return ;
 
-  info.filename = m_filename;
-  info.arch = m_arch;
 
-  ELFIO::Elf_Half n = m_elfreader->sections.size();
+
+  ELFIO::Elf_Half n = elfreader.sections.size();
   for(ELFIO::Elf_Half i = 0; i < n; ++i)
     { // For all sections
-      ELFIO::section* sec = m_elfreader->sections[i];
+      ELFIO::section* sec = elfreader.sections[i];
       if( SHT_DYNAMIC == sec->get_type() )
         {
-          ELFIO::dynamic_section_accessor dynamic(*m_elfreader, sec);
+          ELFIO::dynamic_section_accessor dynamic(elfreader, sec);
 
           if( not dynamic.get_entries_num() > 0 )
-            return false;
+            return ;
 
           for(ELFIO::Elf_Xword i = 0; i < dynamic.get_entries_num(); ++i)
             {
@@ -137,11 +116,11 @@ DynLinked::getInfos(DynLinkedInfo& info) const
 
               if( tag == DT_NEEDED )
                 {
-                  info.Needed.push_back(std::string(val));
+                  m_needed.push_back(std::string(val));
                 }
               else if( tag == DT_SONAME )
                 {
-                  info.soName = val;
+                  m_soName = val;
                 }
               else if( tag == DT_RPATH )
                 {
@@ -151,14 +130,14 @@ DynLinked::getInfos(DynLinkedInfo& info) const
                       spos != epos && spos != pathes.size(); epos = pathes.find(":", spos))
                     {
                       std::string rpath = pathes.substr(spos, epos - spos);
-                      info.RunRPaths.push_back(rpath);
+                      m_rrunpaths.push_back(rpath);
                       spos = epos == std::string::npos ? std::string::npos : epos + 1;
                     }
 
                 }
               else if( tag == DT_RUNPATH )
                 { // assume that runpath is always after rpath
-                  info.RunRPaths.clear();
+                  m_rrunpaths.clear();
 
                   std::string pathes = val;
 
@@ -166,7 +145,7 @@ DynLinked::getInfos(DynLinkedInfo& info) const
                       spos != epos && spos != pathes.size(); epos = pathes.find(":", spos))
                     {
                       std::string rpath = pathes.substr(spos, epos - spos);
-                      info.RunRPaths.push_back(rpath);
+                      m_rrunpaths.push_back(rpath);
                       spos = epos == std::string::npos ? std::string::npos : epos + 1;
                     }
 
@@ -178,16 +157,36 @@ DynLinked::getInfos(DynLinkedInfo& info) const
                 }
             }
 
-          return true;
+          return ;
 
         }
     }
 
-  return false;
 
 }
 //--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
+
+bool isElfBinOrElfLib(const PathName& pn)
+{
+  ELFIO::elfio elfreader;
+
+  if ( not elfreader.load( pn ) ) {
+      return false;
+  }
+
+  bool retval = false;
+  int elfclass = elfreader.get_class();
+  if( elfclass == ELFCLASS32 || elfclass == ELFCLASS64 )
+    {
+      ELFIO::Elf_Half type = elfreader.get_type();
+      if(type == ET_EXEC || type == ET_DYN)
+        retval = true;
+    }
+
+  return retval;
+}
 
 
 

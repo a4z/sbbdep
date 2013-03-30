@@ -24,7 +24,7 @@
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/pkgadmdir.hpp>
-#include <sbbdep/dynlinked.hpp>
+
 #include <sbbdep/log.hpp>
 
 #include <fstream>
@@ -82,8 +82,7 @@ Pkg::create(PathName pn)
           return Pkg(pn, PkgType::Installed);
         }
 
-      DynLinked dl;
-      if( dl.Open(path.getURL()) )
+      if( isElfBinOrElfLib(path) )
         {
           return Pkg(pn, PkgType::BinLib);
         }
@@ -134,13 +133,10 @@ Pkg::doLoadOneBinLib()
   Path p(m_pathname);
   p.makeRealPath();
 
-  DynLinked dl;
-  if( dl.Open(p.getURL()) )
-    {
-      DynLinkedInfo dlinfo;
-      if( dl.getInfos(dlinfo) )
-        m_dlinfos.push_back(dlinfo);
-    }
+  ElfFile elfile(p);
+  if( elfile.isBinaryOrLibrary() )
+    m_dlfiles.push_back(elfile);
+
 
   return true;
 }
@@ -168,13 +164,9 @@ Pkg::doLoadDestDir()
           }
         else if (path.isRegularFile())
           {
-            DynLinked dynlinked;
-            if(not dynlinked.Open(path.getURL()))
-              continue;
-
-            DynLinkedInfo info;
-            if(dynlinked.getInfos(info))
-              this->m_dlinfos.push_back(info);
+            ElfFile elfile(path);
+            if( elfile.isBinaryOrLibrary() )
+              m_dlfiles.push_back(elfile);
           }
       }
   };
@@ -227,13 +219,9 @@ Pkg::doLoadInstalled()
         if ( !p.isValid() ) LogInfo() << "Note: indexing file " << p << ": file not found\n" ;
       }
       {
-        DynLinked dynlinked;
-        if( dynlinked.Open( p.getURL() ) )
-          {
-            DynLinkedInfo dlinfo;
-            if ( dynlinked.getInfos( dlinfo ) )
-              this->m_dlinfos.push_back(dlinfo);
-          }
+        ElfFile elfile(p);
+        if( elfile.isBinaryOrLibrary() )
+          m_dlfiles.push_back(elfile);
       }
 
   };

@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/log.hpp>
-#include <sbbdep/dynlinked.hpp>
+#include <sbbdep/elffile.hpp>
 
 #include <fstream>
 #include <string>
@@ -99,9 +99,7 @@ LDDirs::readLdLinkDirs()
 {
   m_ldlnkdirs.clear();
   if(m_lddirs.size()== 0 )readLdDirs();
-  
-  DynLinked dynlinked;
-  
+
   for (StringSet::const_iterator pos=m_lddirs.begin(); pos!=m_lddirs.end(); ++pos)
     {
       DirContent dir(*pos) ;
@@ -123,14 +121,8 @@ LDDirs::readLdLinkDirs()
           if ( path.isLink() )
             {
               path.makeRealPath();
-              if (path.isRegularFile())
-                {
-                  if ( dynlinked.Open( path ) && dynlinked.getType()==DynLinked::Library )
-                    {
-                      m_ldlnkdirs.insert(path.getDir());
-                    }
-                  dynlinked.Close();
-                }
+              if (path.isRegularFile() && isElfBinOrElfLib( path ) )
+                m_ldlnkdirs.insert(path.getDir());
             }
           
         }      

@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include "pkoffile.hpp"
 
 #include <sbbdep/pkg.hpp>
-#include <sbbdep/dynlinkedinfolist.hpp>
+#include <sbbdep/elffile.hpp>
 
 #include <sbbdep/stringlist.hpp>
 #include <sbbdep/stringset.hpp>
@@ -108,17 +108,18 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
   
   LibInfoSet requiresInfo , providesInfo ;
   
-  DynLinkedInfoList::const_iterator cIter = pkg.getDynLinkedInfos().begin();
-  for( ; cIter != pkg.getDynLinkedInfos().end(); ++cIter)
+  for(const ElfFile& elf : pkg.getDynLinked())
     {
-      for(StringList::const_iterator pos = cIter->Needed.begin(); pos != cIter->Needed.end(); ++pos)
+      for(const std::string& needed : elf.getNeeded())
         {
-          requiresInfo.insert(std::make_pair(*pos,cIter->arch)) ;
+          requiresInfo.insert(std::make_pair(needed,elf.getArch())) ;
         }
       
-      if ( cIter->soName.size() ) providesInfo.insert(std::make_pair(cIter->soName,cIter->arch)) ;
+      if ( elf.soName().size() )
+        providesInfo.insert(std::make_pair(elf.soName(),elf.getArch())) ;
     }
   
+
   // remove libs that are within this pkg
   for (LibInfoSet::iterator pos = providesInfo.begin(); pos != providesInfo.end(); ++pos)
     {
@@ -176,13 +177,16 @@ DepFileWriter::who_requires(const Pkg& pkg, Log::ChannelType& outstm)
   
   PkOfFile searcher;
   
-  DynLinkedInfoList::const_iterator dliIter = pkg.getDynLinkedInfos().begin();
-  for( ; dliIter != pkg.getDynLinkedInfos().end(); ++dliIter)
-    {  
-      StringList result;
-      searcher.searchRequiredBy( dliIter->soName, dliIter->arch , result) ;
-      requiredby.insert(result.begin(), result.end());
+  for(const ElfFile& elf: pkg.getDynLinked())
+    {
+      if(elf.soName().size()>0)
+        {
+          StringList result;
+          searcher.searchRequiredBy( elf.soName(), elf.getArch() , result) ;
+          requiredby.insert(result.begin(), result.end());
+        }
     }
+
   
   requiredby.erase( pkg.getPathName().getBase() ) ;
   

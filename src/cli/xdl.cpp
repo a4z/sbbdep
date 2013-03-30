@@ -28,8 +28,8 @@ THE SOFTWARE.
 #include <sbbdep/cache.hpp>
 #include <sbbdep/cachedb.hpp>
 #include <sbbdep/cachesql.hpp>
-#include <sbbdep/dynlinked.hpp>
-#include <sbbdep/dynlinkedinfo.hpp>
+
+#include <sbbdep/elffile.hpp>
 
 #include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/parameters.hpp>
@@ -60,11 +60,10 @@ public:
 
 int getArch(Pkg& pkg)
 {
-  if(pkg.getDynLinkedInfos().size() != 1)
+  if(pkg.getDynLinked().size() != 1)
     return 0;
 
-
-  return pkg.getDynLinkedInfos().begin()->arch;
+  return pkg.getDynLinked().begin()->getArch();
 
 }
 
@@ -73,8 +72,11 @@ typedef std::shared_ptr<a4sqlt3::Dataset> DatasetPtr;
 
 
 void
-printRequiredBy(DynLinkedInfo& dlinfos)
+printRequiredBy(ElfFile& elf)
 {
+
+  if(elf.getType() != ElfFile::Library)
+    return ;
 
   std::string query = CacheSQL::SearchRequiredByLib();
   std::string toreplace = ";";
@@ -84,8 +86,8 @@ printRequiredBy(DynLinkedInfo& dlinfos)
   XdlCmd cmd(query);
   Cache::getInstance()->DB().CompileCommand(&cmd);
 
-  cmd.Parameters().at(0).set(dlinfos.soName);
-  cmd.Parameters().at(1).set(dlinfos.arch);
+  cmd.Parameters().at(0).set(elf.soName());
+  cmd.Parameters().at(1).set(elf.getArch());
 
   DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
   Cache::getInstance()->DB().Execute(&cmd, ds.get());
@@ -126,7 +128,7 @@ printRequires(DatasetPtr dspkg, Pkg& pkg)
   XdlCmd cmd(sql);
   Cache::getInstance()->DB().CompileCommand(&cmd);
 
-  DynLinkedInfo dlinfos = *(pkg.getDynLinkedInfos().begin()) ;
+  ElfFile elf = *(pkg.getDynLinked().begin()) ;
   typedef std::map<std::string , std::string> DepMapType;
   DepMapType depmap , ownmap , similarmap;
   StringList notfound  ;
@@ -141,10 +143,10 @@ printRequires(DatasetPtr dspkg, Pkg& pkg)
         findIter->second+=",  " + pkgname;
     };
 
-  for( auto& soname : dlinfos.Needed )
+  for( auto& soname : elf.getNeeded() )
     {
       cmd.Parameters().at(0).set( soname );
-      cmd.Parameters().at(1).set( dlinfos.arch );
+      cmd.Parameters().at(1).set( elf.getArch() );
       a4sqlt3::Dataset ds;
       Cache::getInstance()->DB().Execute(&cmd, &ds);
 
@@ -228,12 +230,12 @@ printPackageInfo(Pkg& pkg)
 
 }
 
-void printSoInfo(DatasetPtr dspkg, const DynLinkedInfo& dlinfos )
+void printSoInfo(DatasetPtr dspkg, const ElfFile& elf )
 {
-  if(dlinfos.soName.empty())
+  if(elf.soName().empty())
     return;
 
-  WriteAppMsg() << "link name is: " << dlinfos.soName << std::endl;
+  WriteAppMsg() << "link name is: " << elf.soName() << std::endl;
 
   std::string pkgname = dspkg->npos() ? "" : dspkg->getField(0).asString();
 
@@ -252,8 +254,8 @@ WHERE dynlinked.soname=? AND dynlinked.arch=?
 
   XdlCmd cmd(sql) ;
   Cache::getInstance()->DB().CompileCommand(&cmd);
-  cmd.Parameters().at(0).set( dlinfos.soName );
-  cmd.Parameters().at(1).set( dlinfos.arch );
+  cmd.Parameters().at(0).set( elf.soName() );
+  cmd.Parameters().at(1).set( elf.getArch() );
   cmd.Parameters().at(2).set( pkgname );
   DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
   Cache::getInstance()->DB().Execute(&cmd, ds.get());
@@ -292,9 +294,9 @@ handleXDLrequest(Pkg& pkg)
   DatasetPtr ds_package = printPackageInfo(pkg);
 
   //binlib pkg must have exactly one info ....
-  DynLinkedInfo dlinfos = *(pkg.getDynLinkedInfos().begin() );
+  ElfFile elf = *(pkg.getDynLinked().begin() );
 
-  printSoInfo(ds_package, dlinfos); // if nothing to do, func will do nothing
+  printSoInfo(ds_package, elf); // if nothing to do, func will do nothing
   printRequires(ds_package, pkg);
 
   // TODO , can I change the dyn linked info list to a vector without side effects ?
