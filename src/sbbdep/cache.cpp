@@ -51,6 +51,7 @@ THE SOFTWARE.
 #include <sstream>
 #include <iostream>
 
+#include <omp.h>
 
 
 namespace sbbdep {
@@ -151,6 +152,7 @@ public:
       {
         try
           {
+            LogInfo() << "save " << (*pos)->m_pkname << std::endl;
             Persist((*pos)->m_pkname, (*pos)->m_dllist , (*pos)->m_timestamp);
           }
         catch ( const a4z::Err& e )
@@ -297,9 +299,9 @@ Cache::Cache( const std::string& dbname ) :
       try
         {
           m_db.Create();
-          m_db.Close();
-          m_db.Open(); 
-          CreateSchema();
+          //m_db.Close();
+          //m_db.Open();
+          //CreateSchema();
           
           m_isnew = true;
         }
@@ -329,96 +331,8 @@ Cache::~Cache()
 void
 Cache::checkVersion( int major, int minor, int patchlevel )
 {
-    {
-      std::string sql = "select count(*) from sqlite_master where name='version';";
-      a4sqlt3::OneValResult<int> rc;
-      m_db.Execute(sql, &rc);
-      if(!rc.isValid())
-        throw a4z::ErrorTodo();
-
-      if( rc.Val() != 1 )
-        {
-          if( rc.Val() > 1 )
-            {
-              LogError() << "more than one entry in version table, confused and can not continue\n";
-              throw a4z::ErrorTodo();
-            }
-          m_db.Execute(CacheSQL::CreateVersion(0, 1, 0)); // set default to 1, so update steps gi from one.
-        }
-
-    }
-
-  // get db schema version from v
-  auto calcDbVersion = [](int ma, int mi ) noexcept -> int
-    {
-      return (100000 + ma * 10000) + (1000 + mi * 100);
-    };
-  auto calcFullVersion = [](int ma, int mi, int pl ) noexcept -> int
-    {
-      return (100000 + ma * 10000) + (1000 + mi * 100) + pl;
-    };
-  using namespace a4sqlt3;
-  auto getDbVersion = [calcDbVersion](CacheDB& db) -> int
-    {
-      Dataset ds( {DbValueType::Int, DbValueType::Int} );
-      db.Execute("SELECT major, minor FROM version", &ds);
-      return calcDbVersion(ds.getField(0).getInt(), ds.getField(1).getInt());
-    };
-  auto getDbAppVersion = [calcFullVersion](CacheDB& db) -> int
-    {
-      Dataset ds({DbValueType::Int, DbValueType::Int, DbValueType::Int});
-      db.Execute("SELECT major, minor , patchlevel FROM version", &ds);
-      return calcFullVersion(ds.getField(0).getInt(),
-          ds.getField(1).getInt(),ds.getField(2).getInt());
-    };
-
-
-  if( calcFullVersion(major, minor, patchlevel) == getDbAppVersion(m_db) )
-    return ;
-
-
-  int app_dbversion = calcDbVersion(major, minor);
-  int db_dbversion = getDbVersion(m_db);
-
-  while( db_dbversion < app_dbversion )
-    {
-      if( db_dbversion ==  calcDbVersion(0, 1) )
-        {
-          LogInfo()<< "updateing db schema form 0.1 to 0.2" << std::endl;
-          Transaction transaction(m_db);
-          m_db.Execute("ALTER TABLE rrunpath ADD COLUMN lddir TEXT;");
-          std::string sql="update rrunpath "
-              "set lddir = mkRealPath("
-              "replaceOrigin(ldpath,(SELECT dirname FROM dynlinked WHERE id=dynlinked_id))"
-              ") ;" ;
-          m_db.Execute(sql);
-          m_db.Execute("UPDATE version set major=0, minor=2, patchlevel=0;");
-          transaction.commit();
-        }
-//      // for the future
-//      else if( db_dbversion ==  calcDbVersion(0, 2) )
-//        {
-//          // update form 0.2.x to 0.3.x
-//        }
-      else
-        throw a4z::ErrorTodo("Cache version update failed in compare version number");
-
-
-      db_dbversion = getDbVersion(m_db);
-   }
-
-
-  if( calcFullVersion(major, minor, patchlevel) > getDbAppVersion(m_db) )
-    {
-      std::stringstream ss;
-      ss << "UPDATE version set patchlevel=" << patchlevel << ";" ;
-      m_db.Execute(ss.str());
-    }
-
-#ifdef DEBUG
-  if( calcFullVersion(major, minor, patchlevel) != getDbAppVersion(m_db) )
-    throw a4z::ErrorNeverReach("version update incorrect");
-#endif
+  m_db.checkVersion(major, minor, patchlevel);
+  return;
 
 }
 //--------------------------------------------------------------------------------------------------
@@ -432,7 +346,7 @@ Cache::doSync()
       Log::Info() << "create cache (" << m_db.Name() <<")" << std::endl;
       CreateData();
       // create indexes after first data
-      CreateIndexes() ; 
+      //CreateIndexes() ;
     }
   else
     {
@@ -552,7 +466,7 @@ Cache::SyncData()
   // get what is not present in db but in fs for insert
   // get files with newer date and existing name for handling reinstalled pkgs
   
-
+  LogInfo() << "search for changes" << std::endl;
   StringSet allpkgfiles; // all pks in file system
   StringSet allpkgindb; // all pks in the db
   StringSet newpkgs; // // all pks in file system with a newer date as the lastest known date
@@ -607,6 +521,8 @@ Cache::SyncData()
   StringList toinsertList;
   StringList reinstalledList;
 
+  LogInfo() << "detect changes"<< std::endl;
+
 #pragma omp parallel sections
     {
 #pragma omp section
@@ -632,7 +548,7 @@ Cache::SyncData()
 
     } //omp sections
 
-  
+
   // for indexing full path is needed, so create a list of all new pkgs with the full path
   StringVec allinserts;
   auto fullpathname = [&pkg_adm_dir](std::string& s) ->std::string
@@ -645,7 +561,14 @@ Cache::SyncData()
   std::transform(reinstalledList.begin(), reinstalledList.end(),
       std::back_insert_iterator<StringVec>(allinserts), fullpathname );
 
+  LogInfo() << "apply changes "<< std::endl;
 
+  StringVec allremoves;  ;
+  allremoves.insert(allremoves.end(), toremoveList.begin(), toremoveList.end()) ;
+  allremoves.insert(allremoves.end(), reinstalledList.begin(), reinstalledList.end()) ;
+  m_db.updateData( allremoves , allinserts ) ;
+
+/*
   m_db.Execute("BEGIN TRANSACTION");
 
   if(toremoveList.size()> 0)
@@ -660,7 +583,7 @@ Cache::SyncData()
   UpdateLdDirs(false);
 
   m_db.Execute("COMMIT TRANSACTION");
-
+*/
   //--------------------
   // from here only info generation about what happened within sync..
   //--------------------
@@ -724,9 +647,10 @@ Cache::PersistPgks( const StringVec& pkgfiles , bool owntransaction )
                 LogError()<< "waring, unable to load pkgfile with path " << path << "\n";  
               }
             else
-              {  
+              {
+                LogInfo() << omp_get_thread_num() << "indexing " << pkfile.getPath().getBase() << std::endl;
                 StoreEntry* se = 
-                    new StoreEntry( pkfile.getPathName().getBase(), 
+                    new StoreEntry( pkfile.getPath().getBase(),
                         pkfile.getDynLinked() ,
                         path.getLastModificationTime()) ;
                 collector.collect(se) ;
@@ -735,6 +659,7 @@ Cache::PersistPgks( const StringVec& pkgfiles , bool owntransaction )
   
  
   if(owntransaction)m_db.Execute("BEGIN TRANSACTION");
+  LogInfo() << "persist indexed packages" << std::endl;
   tmpStore.Persist();
   if(owntransaction)m_db.Execute("COMMIT;");
   
@@ -754,6 +679,7 @@ Cache::DeletePgks( const StringList& pkgnames, bool owntransaction)
   
   for (StringList::const_iterator pos = pkgnames.begin(); pos != pkgnames.end(); ++pos)
     {
+      LogInfo() << "remove info from package" << *pos << std::endl;
       cmd_delpkg.setFullName(*pos) ;
       cmd_delpkg.Run();
     }

@@ -208,7 +208,7 @@ printPackageInfo(Pkg& pkg)
       "SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id "
       "WHERE dynlinked.filename = ? AND dynlinked.arch=?;");
   Cache::getInstance()->DB().CompileCommand(&cmd);
-  cmd.Parameters().at(0).set( pkg.getPathName() );
+  cmd.Parameters().at(0).set( pkg.getPath() );
   cmd.Parameters().at(1).set( getArch(pkg) );
 
   DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
@@ -216,7 +216,7 @@ printPackageInfo(Pkg& pkg)
 
   if(ds->getRowCount()==0)
     {
-      WriteAppMsg() << pkg.getPathName() << " not in a known package" << std::endl ;
+      WriteAppMsg() << pkg.getPath() << " not in a known package" << std::endl ;
     }
   else
     {
@@ -281,12 +281,12 @@ handleXDLrequest(Pkg& pkg)
 
 
 
-  WriteAppMsg() << "Absolute path: " << pkg.getPathName() << std::endl ;
+  WriteAppMsg() << "Absolute path: " << pkg.getPath() << std::endl ;
 
 
   if ( getArch(pkg) == 0 )
     {
-      LogError()<< "unable to get ARCH of " << pkg.getPathName() << std::endl;
+      LogError()<< "unable to get ARCH of " << pkg.getPath() << std::endl;
       return false;
     }
 

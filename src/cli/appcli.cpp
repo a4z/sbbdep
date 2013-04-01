@@ -71,7 +71,7 @@ prepairCache(bool syncflag)
         }
     }
 
-  try
+  try // TODO in new implementation this will be automatically called at open db
     { //us major minor combination to see if schema has changed in an way that it needs to be re-created
       Cache::get()->checkVersion(
           sbbdep::MAJOR_VERSION,

@@ -26,7 +26,7 @@ THE SOFTWARE.
 #define SBBDEP_PKG_HPP_
 
 
-#include <sbbdep/pathname.hpp>
+#include <sbbdep/path.hpp>
 #include <sbbdep/stringset.hpp>
 #include <sbbdep/elffile.hpp>
 
@@ -59,10 +59,8 @@ public:
   static const StringSet& usualLibDirs(); // need review, see comment in cpp
 
   
-  static Pkg create(PathName pn);
+  static Pkg create(Path pn);
 
-  //will see if the factory method will go into this class...
-  Pkg( const PathName& pname , PkgType type);
 
 //  Pkg( const Pkg& other ) = default;
 //  Pkg& operator=( const Pkg& other )= default;
@@ -70,7 +68,7 @@ public:
 //  Pkg& operator=( Pkg&& other )= default;
   ~Pkg() = default;
   
-  const PathName& getPathName() const { return  m_pathname; }  
+  const Path& getPath() const { return  m_path; }
   
   // if ever required to have a pkg just with file info, split file and dynlink loading
   bool Load() ;
@@ -81,13 +79,17 @@ public:
   PkgType getType(){return m_type; }
   
 protected:
+
+  //will see if the factory method will go into this class...
+  Pkg( const Path&& pname , PkgType type);
+
   
   //needs to be special for each pkg type
   bool doLoadOneBinLib() ;
   bool doLoadDestDir() ;
   bool doLoadInstalled() ;
 
-  PathName m_pathname; // name  of 
+  const Path m_path; // name  of
   PkgType m_type ;
   bool m_floaded ; // files loaded...
 

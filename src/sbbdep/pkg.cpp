@@ -54,10 +54,10 @@ Pkg::usualLibDirs()
 // former pkg fab, try to work without fmagic, should work, ...
 // will possily change in future
 Pkg
-Pkg::create(PathName pn)
+Pkg::create(Path path)
 {
 
-  Path path(pn);
+
   if( !path.isAbsolute() )
     {
       path.makeAbsolute();
@@ -69,7 +69,7 @@ Pkg::create(PathName pn)
   // it is possible senseless and will take a long time , put there is no problem
   if( path.isFolder() )
     {
-      return Pkg(pn, PkgType::DestDir);
+      return Pkg(std::move(path), PkgType::DestDir);
     }
 
   if( path.isRegularFile() )
@@ -79,22 +79,22 @@ Pkg::create(PathName pn)
       admpath.makeRealPath();
       if( path.getDir() == admpath.getURL() )
         {
-          return Pkg(pn, PkgType::Installed);
+          return Pkg(std::move(path), PkgType::Installed);
         }
 
       if( isElfBinOrElfLib(path) )
         {
-          return Pkg(pn, PkgType::BinLib);
+          return Pkg(std::move(path), PkgType::BinLib);
         }
 
     }
 
-  return Pkg(pn, PkgType::Unknown);
+  return Pkg(std::move(path), PkgType::Unknown);
 
 }
 
-Pkg::Pkg(const PathName& pname, PkgType type)
-    : m_pathname(pname), m_type(type), m_floaded(false)
+Pkg::Pkg(const Path&& pname, PkgType type)
+    : m_path(pname), m_type(type), m_floaded(false)
 {
 
 }
@@ -130,10 +130,8 @@ Pkg::Load()
 bool
 Pkg::doLoadOneBinLib()
 {
-  Path p(m_pathname);
-  p.makeRealPath();
 
-  ElfFile elfile(p);
+  ElfFile elfile(m_path);
   if( elfile.isBinaryOrLibrary() )
     m_dlfiles.push_back(elfile);
 
@@ -173,7 +171,7 @@ Pkg::doLoadDestDir()
 
   auto dirhandler = [this, checkdir](const std::string& dirname)
     {
-    Path path(this->m_pathname.getURL() + "/" + dirname);
+    Path path(this->m_path.getURL() + "/" + dirname);
     path.makeRealPath(); // remove // .. dir//usr/ ..
     if (path.isFolder())
       checkdir(path.getURL());
@@ -228,7 +226,7 @@ Pkg::doLoadInstalled()
 
 
   //open the file,
-  std::ifstream ins( m_pathname.getURL().c_str() );
+  std::ifstream ins( m_path.getURL().c_str() );
   if ( !ins.good())
     return false;
 
@@ -257,7 +255,7 @@ Pkg::doLoadInstalled()
         }
       catch( const a4z::Err& e )
         {
-          LogError() << e << " (readpkg " << m_pathname.getURL() << " line:"<< line << ")\n";
+          LogError() << e << " (readpkg " << m_path.getURL() << " line:"<< line << ")\n";
         }
     }
 

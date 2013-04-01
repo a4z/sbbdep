@@ -152,7 +152,7 @@ DepFileWriter::generate(const Pkg& pkg, std::ostream& outstm)
 
   for (StringSet::iterator pos = notfound.begin();pos != notfound.end();++pos )
     {
-      LogError()<< pkg.getPathName() <<" ! not found: " << *pos <<"\n" ;
+      LogError()<< pkg.getPath() <<" ! not found: " << *pos <<"\n" ;
     }
   
 }
@@ -188,7 +188,7 @@ DepFileWriter::who_requires(const Pkg& pkg, Log::ChannelType& outstm)
     }
 
   
-  requiredby.erase( pkg.getPathName().getBase() ) ;
+  requiredby.erase( pkg.getPath().getBase() ) ;
   
 
   std::string seperator;

@@ -86,8 +86,8 @@ bool who_needs(Pkg& pkg , Log::ChannelType out, bool addVersion)
 bool explain_who_needs(Pkg& pkg , Log::ChannelType out)
 {
   // ok, got a file ....
-  PathName dirname = pkg.getPathName().getDir();
-  std::string filename = pkg.getPathName().getBase();
+  PathName dirname = pkg.getPath().getDir();
+  std::string filename = pkg.getPath().getBase();
 
   // who needs the link name of this file,
   // where do I get the link name from  ? ..

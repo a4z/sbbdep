@@ -148,9 +148,18 @@ std::string
 CacheSQL::CreateIndexes()
 {
   return R"~(
-  create index  idx_required_needed on required(needed);
+  create index  idx_pkgs_fullname on pkgs(fullname); 
+  
   create index  idx_dynlinked_soname on dynlinked(soname);
+  create index  idx_dynlinked_pkg_id on dynlinked(pkg_id);
   create index  idx_dynlinked_dirname on dynlinked(dirname);
+
+  create index  idx_required_dynlinked_id on required(dynlinked_id);
+  create index  idx_required_needed on required(needed);
+
+  create index  idx_rrunpath_dynlinked_id on rrunpath(dynlinked_id);
+  
+
 )~";
 }
 //--------------------------------------------------------------------------------------------------

@@ -54,7 +54,7 @@ public:
   
   void doSync();
   
-  bool isNew() { return m_isnew; }
+  bool isNew() { return m_db.isNew(); }
   
   CacheDB& DB() { return m_db ;}
   

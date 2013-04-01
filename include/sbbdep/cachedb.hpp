@@ -30,12 +30,44 @@ THE SOFTWARE.
 #include <a4sqlt3/database.hpp>
 
 
+
+
 namespace sbbdep {
 
 
 class CacheDB : public a4sqlt3::Database 
 {
 public:
+
+  class Transaction{
+    a4sqlt3::Database& m_db;
+    bool m_commited;
+
+  public:
+    Transaction(a4sqlt3::Database& db)
+    : m_db(db), m_commited(false)
+    {
+      m_db.Execute("BEGIN TRANSACTION");
+    }
+    ~Transaction()
+    {
+      if(!m_commited) m_db.Execute("ROLLBACK TRANSACTION");
+    }
+
+    Transaction(const Transaction&) = delete;
+    Transaction(Transaction&&) = delete; //could do this, other commit to true that nothing is executed
+    Transaction& operator=(const Transaction&) = delete;
+    Transaction& operator=(Transaction&&) = delete;
+
+
+    void commit()
+    {
+      m_db.Execute("COMMIT TRANSACTION"); m_commited = true ;
+    }
+  };
+
+
+
   // ~/sbbdep.cache bzw noch anpassen  
   CacheDB();
   
@@ -46,8 +78,24 @@ public:
   // don't forget , SQLITE_OPEN_READWRITE no mtx
   bool Open() ;
   
+  bool Create();
+
   // TODO , put the db version / schema check here ...
   
+  bool isNew() { return m_isNew; }
+
+  //us major minor combination to see if schema has changed in an way that it needs to be re-created
+  void checkVersion( int major, int minor, int patchlevel );
+
+  //  toremove is full pkg name, toinsert is path to adm name
+  void updateData(const std::vector<std::string>& toremove, const std::vector<std::string>& toinsert);
+
+private:
+    bool m_isNew;
+
+
+
+
 };
 
 }
