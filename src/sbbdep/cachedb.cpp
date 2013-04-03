@@ -410,6 +410,17 @@ CacheDB::updateData(const std::vector<std::string>& toremove, const std::vector<
       }
 
       // check if something left to do
+      { // here no lock should be required anymor cause if monitor is not running, no producers..
+        std::vector<Pkg> pkgs;
+        std::swap(pkgs, mqdata.pkgs);
+        for(Pkg& pkg : pkgs)
+          {
+            dbaction.Store(
+                PkgName(pkg.getPath().getBase()),
+                pkg.getDynLinked(),
+                pkg.getPath().getLastModificationTime()) ;
+          }
+      }
   };
 
   struct WorkerData

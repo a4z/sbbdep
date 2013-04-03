@@ -21,4 +21,4 @@ remove all the std container typedef, use auto where used
 
 merge lddirs with all other pathname stuff to have all on one place
 
- 
+for sync, check latest date of /var/adm/removed_packages if anything is newer there

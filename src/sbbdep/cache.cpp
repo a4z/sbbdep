@@ -438,7 +438,8 @@ Cache::CreateData()
   };
   pkg_adm_dir.apply(newfiles_cb) ;
 
-
+  m_db.updateData(StringVec(), pkgnamevec);
+  return;
 
   // TODO , think about how to use such a scope guard in future...
   // TODO "PRAGMA journal_mode = OFF" and "PRAGMA synchronous = OFF"
