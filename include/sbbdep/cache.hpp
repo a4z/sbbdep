@@ -63,20 +63,14 @@ public:
   void checkVersion( int major, int minor, int patchlevel );
 
 private:
-  void CreateSchema();
-  void CreateIndexes();  
   
   void CreateData();
   
   void SyncData();
-  //needs full path name /var/adm/packages/....
-  void PersistPgks( const StringVec& pkgfiles, bool owntransaction= true);
-  //needs full  name pkgname-verions-arch-build...
-  void DeletePgks( const StringList& pkgfiles, bool owntransaction= true);
+
   void UpdateLdDirs(bool owntransaction= true); 
   
   CacheDB m_db;
-  bool m_isnew; 
 
     
   

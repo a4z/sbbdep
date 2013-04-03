@@ -90,6 +90,10 @@ public:
   //  toremove is full pkg name, toinsert is path to adm name
   void updateData(const std::vector<std::string>& toremove, const std::vector<std::string>& toinsert);
 
+  void updateLdDirs(const std::vector<std::string>& lddirs, const std::vector<std::string>& ldlinkdirs);
+
+
+  int64_t getLatestPkgTimeStamp();
 private:
     bool m_isNew;
 

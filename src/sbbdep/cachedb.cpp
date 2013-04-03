@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgname.hpp>
 #include <sbbdep/config.hpp> // generated
-#include <sbbdep/cachecmds.hpp>
+
 
 #include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/dataset.hpp>
@@ -51,23 +51,53 @@ namespace sbbdep {
 class DbAction
 {
 
-  InsertPkg m_cmdpkg;
-  InsertDynLinked m_cmddynlinked;
-  InsertRequired m_cmdrequired;
-  InsertRRunPath m_cmdrrunpath;
-  DeletePkgByFullName m_cmddelpkg;
+  a4sqlt3::SqlCommand* m_cmdpkg;
+  a4sqlt3::SqlCommand* m_cmddynlinked;
+  a4sqlt3::SqlCommand* m_cmdrequired;
+  a4sqlt3::SqlCommand* m_cmdrrunpath;
+  a4sqlt3::SqlCommand* m_cmddelpkg;
   CacheDB& m_dbref;
 
 
 public:
-  DbAction( CacheDB& dbref ) :
-    m_cmdpkg(), m_cmddynlinked(), m_cmdrequired() , m_cmddelpkg(), m_dbref(dbref)
+  DbAction( CacheDB& dbref )
+  : m_cmdpkg(nullptr)
+  , m_cmddynlinked(nullptr), m_cmdrequired(nullptr)
+  , m_cmdrrunpath(nullptr),  m_cmddelpkg(nullptr)
+  , m_dbref(dbref)
   {
-    m_dbref.CompileCommand(&m_cmdpkg);
-    m_dbref.CompileCommand(&m_cmddynlinked);
-    m_dbref.CompileCommand(&m_cmdrequired);
-    m_dbref.CompileCommand(&m_cmdrrunpath);
-    m_dbref.CompileCommand(&m_cmddelpkg);
+    using namespace a4sqlt3;
+
+    if(!(m_cmdpkg=m_dbref.getCommand("cmdpkg"))) {
+      m_cmdpkg = m_dbref.createStoredCommand("cmdpkg", CacheSQL::InsertPkgSQL(),
+          { DbValueType::Text, DbValueType::Text, DbValueType::Text,
+              DbValueType::Text, DbValueType::Int,
+              DbValueType::Text, DbValueType::Int } ) ;
+    }
+
+    if(!(m_cmddynlinked=m_dbref.getCommand("cmddynlinked"))) {
+        m_cmddynlinked = m_dbref.createStoredCommand("cmddynlinked", CacheSQL::InsertDynLinkedSQL(),
+            {DbValueType::Int,DbValueType::Text,
+                DbValueType::Text, DbValueType::Text
+                ,DbValueType::Text, DbValueType::Int } );
+    }
+
+    if(!(m_cmdrequired=m_dbref.getCommand("cmdrequired"))) {
+        m_cmdrequired = m_dbref.createStoredCommand("cmdrequired", CacheSQL::InsertRequiredSQL(),
+            {DbValueType::Int,DbValueType::Text});
+    }
+
+    if(!(m_cmdrrunpath=m_dbref.getCommand("cmdrrunpath"))) {
+        m_cmdrrunpath = m_dbref.createStoredCommand("cmdrrunpath", CacheSQL::InsertRRunPathSQL(),
+            {DbValueType::Int,DbValueType::Text, DbValueType::Text});
+    }
+
+    if(!(m_cmddelpkg=m_dbref.getCommand("cmddelpkg"))) {
+        m_cmddelpkg = m_dbref.createStoredCommand("cmddelpkg", CacheSQL::DeletePkgByFullnameSQL(),
+            {DbValueType::Text});
+    }
+
+
   }//-----------------------------------------------------------------------------------------------
 
 
@@ -85,14 +115,9 @@ public:
     // to each dynlinked info store Needed list and RunRPaths info
 
     // instead of capture this and writing always this->bla , for now ....
-    InsertPkg& m_cmdpkg = this->m_cmdpkg;
-    InsertDynLinked& m_cmddynlinked = this->m_cmddynlinked;
-    InsertRequired& m_cmdrequired = this->m_cmdrequired;
-    InsertRRunPath& m_cmdrrunpath = this->m_cmdrrunpath;
-    CacheDB& m_dbref = this->m_dbref;
 
 
-    auto store_pkg = [&m_dbref, &m_cmdpkg](const PkgName& pkgname, const int64_t& timestamp) -> int64_t {
+    auto store_pkg = [this](const PkgName& pkgname, const int64_t& timestamp) -> int64_t {
         a4sqlt3::DbValueList param_vals = {
            DbValue( pkgname.FullName() ) ,
            DbValue( pkgname.Name() ) ,
@@ -102,13 +127,13 @@ public:
            DbValue( pkgname.Build().Tag() ) ,
            DbValue( timestamp )
         };
-        m_cmdpkg.Parameters().setValues(std::move(param_vals)) ;
-        m_dbref.Execute(&m_cmdpkg);
-        return m_dbref.getLastInsertRowid() ;
+        this->m_cmdpkg->Parameters().setValues(std::move(param_vals)) ;
+        this->m_dbref.Execute(this->m_cmdpkg);
+        return this->m_dbref.getLastInsertRowid() ;
       };
 
 
-    auto store_dynlinked = [&m_dbref, &m_cmddynlinked](int64_t pkgid, const ElfFile& elf) -> int64_t {
+    auto store_dynlinked = [this](int64_t pkgid, const ElfFile& elf) -> int64_t {
       a4sqlt3::DbValueList param_vals = {
          DbValue( pkgid ) ,
          DbValue( elf.getName().Str() ) ,
@@ -117,22 +142,22 @@ public:
           (elf.soName().size()> 0 ? DbValue(elf.soName()) : DbValue(a4sqlt3::DbValueType::Null) ) ,
          DbValue( elf.getArch() )
       };
-      m_cmddynlinked.Parameters().setValues(std::move(param_vals)) ;;
-      m_dbref.Execute(&m_cmddynlinked);
-      return m_dbref.getLastInsertRowid() ;
+      this->m_cmddynlinked->Parameters().setValues(std::move(param_vals)) ;;
+      this->m_dbref.Execute(this->m_cmddynlinked);
+      return this->m_dbref.getLastInsertRowid() ;
 
     };
 
-    auto store_needed = [&m_dbref, &m_cmdrequired](int64_t dynlinked_id, const std::string& needed) -> void {
-      m_cmdrequired.Parameters().setValues({DbValue(dynlinked_id), DbValue(needed)}) ;
-      m_dbref.Execute(&m_cmdrequired);
+    auto store_needed = [this](int64_t dynlinked_id, const std::string& needed) -> void {
+      this->m_cmdrequired->Parameters().setValues({DbValue(dynlinked_id), DbValue(needed)}) ;
+      this->m_dbref.Execute(this->m_cmdrequired);
     };
 
-    auto store_rrunpath = [&m_dbref, &m_cmdrrunpath](int64_t dynlinked_id,
+    auto store_rrunpath = [this](int64_t dynlinked_id,
         const std::string& rrunpath, const std::string& dynlinked_homedir ) -> void {
-      m_cmdrrunpath.Parameters().setValues(
+      this->m_cmdrrunpath->Parameters().setValues(
           {DbValue(dynlinked_id), DbValue(rrunpath), DbValue(dynlinked_homedir)}) ;
-      m_dbref.Execute(&m_cmdrrunpath);
+      this->m_dbref.Execute(this->m_cmdrrunpath);
     };
 
 
@@ -158,8 +183,8 @@ public:
   void Remove(const std::string& fullname)
   {
     LogInfo()<< "delete " << fullname << std::endl;
-    m_cmddelpkg.setFullName(fullname) ;
-    m_cmddelpkg.Run();
+    m_cmddelpkg->Parameters().Nr(1).set(fullname) ;
+    m_cmddelpkg->Run();
   }
 
 };
@@ -501,8 +526,58 @@ CacheDB::updateData(const std::vector<std::string>& toremove, const std::vector<
 }
 //--------------------------------------------------------------------------------------------------
 
+void
+CacheDB::updateLdDirs(const std::vector<std::string>& lddirs, const std::vector<std::string>& ldlinkdirs)
+{
+  using namespace a4sqlt3;
 
+
+
+  SqlCommand* cmdlddir = getCommand("cmdlddir");
+  if(not cmdlddir){
+      cmdlddir = createStoredCommand("cmdlddir",
+          CacheSQL::InsertLdDirSQL(),{DbValueType::Text});
+  }
+
+  SqlCommand* cmdldlnkdir = getCommand("cmdldlnkdir");
+  if(not cmdldlnkdir){
+      cmdldlnkdir = createStoredCommand("cmdldlnkdir",
+          CacheSQL::InsertLdLnkDirSQL(), {DbValueType::Text});
+  }
+
+  Transaction transaction(*this);
+
+  Execute("DELETE FROM lddirs;");
+  Execute("DELETE FROM ldlnkdirs;");
+
+
+  for(const std::string val : lddirs)
+    {
+      cmdlddir->Parameters().Nr(1).set(val);
+      Execute(cmdlddir);
+    }
+
+  for(const std::string val : ldlinkdirs)
+    {
+      cmdldlnkdir->Parameters().Nr(1).set(val);
+      Execute(cmdldlnkdir);
+    }
+  transaction.commit();
+}
 //--------------------------------------------------------------------------------------------------
+
+int64_t
+CacheDB::getLatestPkgTimeStamp()
+{
+  a4sqlt3::OneValResult< int64_t > maxTimeStamp;
+  Execute(CacheSQL::MaxPkgTimeStamp(), &maxTimeStamp);
+  // TODO, if maxTimeStamp is not valid,
+  // throw should never happen or does not matter cause will be 0 and thats ok
+
+  return maxTimeStamp.Val() ;
+
+}
+
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 } // ns
