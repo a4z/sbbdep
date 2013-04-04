@@ -87,7 +87,7 @@ public:
   /// returns if path is a regular file
   bool isRegularFile() const { return m_type == ISREG ; } //;
   
-  /// returns if path is a foler
+  /// returns if path is a folder
   bool isFolder() const { return m_type == ISDIR ; } // ;
   
   /// returns if path is a link
