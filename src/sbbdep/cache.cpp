@@ -283,6 +283,7 @@ Cache::SyncData()
   allremoves.insert(allremoves.end(), reinstalledList.begin(), reinstalledList.end()) ;
 
   m_db.updateData( allremoves , allinserts ) ;
+  UpdateLdDirs(true) ;
 
 
   //--------------------
@@ -348,7 +349,7 @@ Cache::UpdateLdDirs(bool owntransaction )
   
   
   m_db.updateLdDirs(
-      StringVec(lddirs.getLdLnkDirs().begin(), lddirs.getLdLnkDirs().end())
+      StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end())
      , StringVec(ldlnknames.begin(), ldlnknames.end())  );
   
   

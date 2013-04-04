@@ -531,6 +531,7 @@ CacheDB::updateLdDirs(const std::vector<std::string>& lddirs, const std::vector<
 {
   using namespace a4sqlt3;
 
+  LogInfo() << "update lddirs\n";
 
 
   SqlCommand* cmdlddir = getCommand("cmdlddir");
