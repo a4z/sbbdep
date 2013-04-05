@@ -87,8 +87,10 @@ public:
   //us major minor combination to see if schema has changed in an way that it needs to be re-created
   void checkVersion( int major, int minor, int patchlevel );
 
-  //  toremove is full pkg name, toinsert is path to adm name
-  void updateData(const std::vector<std::string>& toremove, const std::vector<std::string>& toinsert);
+
+  using StringVec = std::vector<std::string>;
+
+  void updateData(const StringVec& toremove, const StringVec& toinsert);
 
   void updateLdDirs(const std::vector<std::string>& lddirs, const std::vector<std::string>& ldlinkdirs);
 

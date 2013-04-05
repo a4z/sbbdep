@@ -182,7 +182,7 @@ public:
 
   void Remove(const std::string& fullname)
   {
-    LogInfo()<< "delete " << fullname << std::endl;
+    LogInfo()<< "clear " << fullname << std::endl;
     m_cmddelpkg->Parameters().Nr(1).set(fullname) ;
     m_cmddelpkg->Run();
   }
@@ -395,34 +395,41 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
 //--------------------------------------------------------------------------------------------------
 
 void
-CacheDB::updateData(const std::vector<std::string>& toremove, const std::vector<std::string>& toinsert)
+CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 {
 
-  struct MqMonitor
+
+  struct ToStoreData
   {
     std::mutex mtx;
     std::condition_variable condition;
+    bool newdata{false} ;
 
     std::atomic_bool running{false};
-    std::atomic_bool newdata{false} ;
-  };
 
-  struct MqData
-  { // must be protected via mqmonitor
     std::vector<Pkg> pkgs;
+
+
+    void add(const Pkg pkg) {
+      std::unique_lock<std::mutex> lock(mtx);
+      pkgs.push_back(pkg);
+      newdata = true;
+      condition.notify_one();
+    }
+
   };
 
-  auto persiter =[this](MqMonitor& monitor, MqData& mqdata, DbAction& dbaction){
+  auto persiter =[this](ToStoreData& tostore, DbAction& dbaction){
 
-    while ( monitor.running )
+    while ( tostore.running )
       {
-        std::unique_lock<std::mutex> lock(monitor.mtx);
-        while (not monitor.newdata)
-            monitor.condition.wait( lock );
+        std::unique_lock<std::mutex> lock(tostore.mtx);
+        while (not tostore.newdata)
+          tostore.condition.wait( lock );
 
         std::vector<Pkg> pkgs;
-        std::swap(pkgs, mqdata.pkgs);
-        monitor.newdata = false;
+        std::swap(pkgs, tostore.pkgs);
+        tostore.newdata = false;
         lock.unlock();
 
         for(Pkg& pkg : pkgs)
@@ -437,7 +444,7 @@ CacheDB::updateData(const std::vector<std::string>& toremove, const std::vector<
       // check if something left to do
       { // here no lock should be required anymor cause if monitor is not running, no producers..
         std::vector<Pkg> pkgs;
-        std::swap(pkgs, mqdata.pkgs);
+        std::swap(pkgs, tostore.pkgs);
         for(Pkg& pkg : pkgs)
           {
             dbaction.Store(
@@ -448,23 +455,37 @@ CacheDB::updateData(const std::vector<std::string>& toremove, const std::vector<
       }
   };
 
-  struct WorkerData
-  {
+
+  class ToIndexData{
     std::mutex mtx;
-    std::queue<std::string> pkgnames;
+    StringVec::const_iterator current;
+    StringVec::const_iterator endpos;
+
+  public:
+    ToIndexData(const StringVec& data): current(data.begin()), endpos(data.end()) {}
+
+    // as long as string not empty we can do something
+    std::string pop(){
+
+      std::unique_lock<std::mutex> lock(mtx);
+
+      if( current == endpos )
+        return std::string();
+
+      std::string retval(*current);
+      ++current;
+      return retval;
+    }
   };
 
-  auto indexer = [this](WorkerData& wkdata, MqData& mqdata, MqMonitor& monitor){
+  auto indexer = [this](ToIndexData& toindex, ToStoreData& tostore){
 
     for(;;)
       {
-        std::unique_lock<std::mutex> lock(wkdata.mtx);
-        if(wkdata.pkgnames.size()==0)
-          break;
+        std::string pkgpath = toindex.pop();
 
-        std::string pkgpath = wkdata.pkgnames.front();
-            wkdata.pkgnames.pop();
-        lock.unlock();
+        if(pkgpath.empty())
+          break;
 
         Path path(pkgpath);
         Pkg pkg  = Pkg::create( path );
@@ -473,10 +494,7 @@ CacheDB::updateData(const std::vector<std::string>& toremove, const std::vector<
         if (pkg.getType() != PkgType::Installed || not pkg.Load() )
           continue;
 
-        std::unique_lock<std::mutex> monitorlock(monitor.mtx);
-        mqdata.pkgs.push_back(pkg);
-        monitor.newdata = true;
-        monitor.condition.notify_one();
+        tostore.add(pkg);
 
       }
 
@@ -494,32 +512,34 @@ CacheDB::updateData(const std::vector<std::string>& toremove, const std::vector<
       });
 
 
-  MqMonitor monitor;
-  monitor.running = true ;
-  MqData mqdata;
-  WorkerData wkdata;
-  for(auto& val : toinsert) wkdata.pkgnames.emplace(val);
+  ToStoreData tostore;
+  tostore.running = true ;
 
-  std::thread indexer1(indexer , std::ref(wkdata), std::ref(mqdata), std::ref(monitor) );
-  std::thread indexer2(indexer,  std::ref(wkdata), std::ref(mqdata), std::ref(monitor) );
+  ToIndexData toindex(toinsert);
+
+  std::thread indexer1(indexer , std::ref(toindex), std::ref(tostore) );
+  std::thread indexer2(indexer,  std::ref(toindex), std::ref(tostore) );
 
   if(delwork.joinable())
     delwork.join();
 
-  std::thread storework(persiter, std::ref(monitor), std::ref(mqdata), std::ref(dbaction));
+  std::thread storework(persiter, std::ref(tostore), std::ref(dbaction));
 
   indexer1.join();
   indexer2.join();
 
 
   {
-    std::unique_lock<std::mutex> monitorlock(monitor.mtx);
-    monitor.newdata = true;
-    monitor.condition.notify_one();
-    monitor.running = false;
+    std::unique_lock<std::mutex> monitorlock(tostore.mtx);
+    tostore.newdata = true;
+    tostore.condition.notify_one();
+    tostore.running = false;
+    tostore.condition.notify_one(); // just to be sure to not run into troubles
   }
 
   storework.join();
+
+  LogInfo() << "persist new information to disk\n";
 
   transaction.commit();
 
