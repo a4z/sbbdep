@@ -255,6 +255,8 @@ Cache::SyncData()
   lddirs.getLdLnkDirs();
   // TODO , check for putting this in the background at the begin of this function
   // or some other speed up, this takes somehow to much time...
+  
+  // TODO if nothing changed, skip the ld part (and the update call)
 
   LogInfo() << "apply changes "<< std::endl;
 
