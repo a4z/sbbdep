@@ -26,52 +26,28 @@ THE SOFTWARE.
 
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/path.hpp>
-#include <sbbdep/pathname.hpp>
 #include <sbbdep/pkgname.hpp>
-#include <sbbdep/pkg.hpp>
+
 #include <sbbdep/error.hpp>
-#include <sbbdep/stringlist.hpp>
+
 
 #include <sbbdep/lddirs.hpp>
 #include <sbbdep/pkgadmdir.hpp>
 #include <sbbdep/log.hpp>
 
-#include <a4sqlt3/sqlcommand.hpp>
-#include <a4sqlt3/error.hpp>
-#include <a4sqlt3/onevalresult.hpp>
-#include <a4sqlt3/dataset.hpp>
+
+#include <a4sqlt3/columns.hpp>
 #include <a4sqlt3/error.hpp>
 
-#include <list>
 #include <vector>
 #include <set>
 #include <algorithm>
-#include <iterator>
-#include <sstream>
-#include <iostream>
 
-#include <omp.h>
+
 
 
 namespace sbbdep {
 
-namespace {
-// some helpers
-//--------------------------------------------------------------------------------------------------
-
-using namespace sbbdep;
-
-struct Transaction{
-  CacheDB& m_db;   bool m_commited;
-  Transaction(CacheDB& db): m_db(db), m_commited(false){m_db.Execute("BEGIN TRANSACTION");}
-  ~Transaction(){ if(!m_commited) m_db.Execute("ROLLBACK TRANSACTION");}
-  void commit(){ m_db.Execute("COMMIT TRANSACTION"); m_commited = true ; }
-};
-
-
-}
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
 
 
 Cache::Cache( const std::string& dbname ) :
@@ -114,14 +90,6 @@ Cache::~Cache()
 //--------------------------------------------------------------------------------------------------
 
 
-void
-Cache::checkVersion( int major, int minor, int patchlevel )
-{
-  m_db.checkVersion(major, minor, patchlevel);
-  return;
-
-}
-//--------------------------------------------------------------------------------------------------
 
 void
 Cache::doSync()
@@ -138,14 +106,7 @@ Cache::doSync()
       SyncData();
     }
  
-  /*
-   * not to me, currently there are 3 transactions
-   * on inserting new pkgs, whenn called PersistPgks()
-   * remove pkgs what is currently withing SyncData() 
-   * and the lddir creation is also a transaction
-   * TODO clean this up a little bit , 
-   * eg stripe out deleting into an own funciton ....
-   */
+
   
   
 }
@@ -165,9 +126,17 @@ Cache::CreateData()
   };
   pkg_adm_dir.apply(newfiles_cb) ;
 
-  m_db.updateData(StringVec(), pkgnamevec);
+  LDDirs lddirs;
+  LogInfo() << "searching for links"<< std::endl;
+  lddirs.getLdLnkDirs();
 
-  UpdateLdDirs(true) ;
+
+  m_db.updateData(StringVec(), pkgnamevec  ,
+      StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end()) ,
+      StringVec(lddirs.getLdLnkDirs().begin(), lddirs.getLdLnkDirs().end())
+  );
+
+
 
   
 }
@@ -236,7 +205,6 @@ Cache::SyncData()
   StringList toinsertList;
   StringList reinstalledList;
 
-  LogInfo() << "detect changes"<< std::endl;
 
 #pragma omp parallel sections
     {
@@ -276,14 +244,25 @@ Cache::SyncData()
   std::transform(reinstalledList.begin(), reinstalledList.end(),
       std::back_insert_iterator<StringVec>(allinserts), fullpathname );
 
-  LogInfo() << "apply changes "<< std::endl;
 
   StringVec allremoves;  ;
   allremoves.insert(allremoves.end(), toremoveList.begin(), toremoveList.end()) ;
   allremoves.insert(allremoves.end(), reinstalledList.begin(), reinstalledList.end()) ;
 
-  m_db.updateData( allremoves , allinserts ) ;
-  UpdateLdDirs(true) ;
+  LDDirs lddirs;
+  // force pre-loading
+  LogInfo() << "searching for links"<< std::endl;
+  lddirs.getLdLnkDirs();
+  // TODO , check for putting this in the background at the begin of this function
+  // or some other speed up, this takes somehow to much time...
+
+  LogInfo() << "apply changes "<< std::endl;
+
+  m_db.updateData( allremoves , allinserts ,
+      StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end()) ,
+      StringVec(lddirs.getLdLnkDirs().begin(), lddirs.getLdLnkDirs().end())
+      ) ;
+
 
 
   //--------------------
@@ -331,29 +310,6 @@ Cache::SyncData()
 //--------------------------------------------------------------------------------------------------
 
 
-
-void 
-Cache::UpdateLdDirs(bool owntransaction )
-{
- 
-  
-  LDDirs lddirs; 
-  lddirs.readLdDirs()  ;
-  lddirs.readLdLinkDirs() ;
- 
-  StringSet ldlnknames ;
-  
-  std::set_difference(lddirs.getLdLnkDirs().begin(), lddirs.getLdLnkDirs().end(), 
-      lddirs.getLdDirs().begin(), lddirs.getLdDirs().end(),
-      std::inserter(ldlnknames, ldlnknames.begin()));  
-  
-  
-  m_db.updateLdDirs(
-      StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end())
-     , StringVec(ldlnknames.begin(), ldlnknames.end())  );
-  
-  
-}
 //--------------------------------------------------------------------------------------------------
 
 } // ns

@@ -97,6 +97,9 @@ LDDirs::readLdDirs()
 const StringSet& 
 LDDirs::readLdLinkDirs()
 {
+  if(m_lddirs.empty()) // ensure loading cause need it later to filter what already exists
+    readLdDirs();
+
   m_ldlnkdirs.clear();
   if(m_lddirs.size()== 0 )readLdDirs();
 
@@ -120,9 +123,16 @@ LDDirs::readLdLinkDirs()
           Path path(dir.getDirName() + "/" + contend);
           if ( path.isLink() )
             {
+              std::string orig = path.Str();
               path.makeRealPath();
-              if (path.isRegularFile() && isElfBinOrElfLib( path ) )
-                m_ldlnkdirs.insert(path.getDir());
+              if (path.isRegularFile() && isElfLib( path ) )
+                { // filter out what is a regular ld dir
+                  if(m_lddirs.find(path.getDir())== m_lddirs.end())
+                    m_ldlnkdirs.insert(path.getDir());
+
+                  if(path.getDir()=="/usr/bin" || path.getDir()=="/usr/sbin")
+                    LogInfo()<<"in bin: " << orig << "->" << path.getURL() << std::endl;
+                }
             }
           
         }      

@@ -189,6 +189,27 @@ bool isElfBinOrElfLib(const PathName& pn)
 }
 
 
+bool isElfLib(const PathName& pn)
+{
+  ELFIO::elfio elfreader;
+
+  if ( not elfreader.load( pn ) ) {
+      return false;
+  }
+
+  bool retval = false;
+  int elfclass = elfreader.get_class();
+  if( elfclass == ELFCLASS32 || elfclass == ELFCLASS64 )
+    {
+      ELFIO::Elf_Half type = elfreader.get_type();
+      if (type == ET_DYN)
+        retval = true;
+    }
+
+  return retval;
+}
+
+
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------

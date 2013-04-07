@@ -1,6 +1,6 @@
 
 
-#include <a4z/testsuitebuilder.hpp>
+#include <a4z/testpack.hpp>
 
 #include <sbbdep/pkgname.hpp>
 
@@ -10,7 +10,10 @@ namespace sbbdep {
 namespace test_pkname {
 
 
-struct PkNameSuite : public a4z::TestSuiteBuilder< >
+A4Z_NAMETYPE(pkgname) ;
+
+
+struct PkNameSuite : public a4z::TestPack<PkNameSuite, pkgname>
 {
 
   static void PrintInfo(const sbbdep::PkgName& pkn)
@@ -73,15 +76,16 @@ struct PkNameSuite : public a4z::TestSuiteBuilder< >
     
   }
 
-  
-  void
-  assembleCases()
+
+
+
+  void assemble(Binder& addcase)
   {
-    A4Z_TEST_ADDCASEFUNC( RunDefault );
+    addcase(NAME_CALL(RunDefault)) ;
   }
   
 };
-A4Z_TEST_CHECK_IN ( PkNameSuite , pkname );
+A4Z_ADD_PACK(PkNameSuite) ;
 
 }
 }

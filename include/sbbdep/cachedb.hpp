@@ -90,16 +90,17 @@ public:
 
   using StringVec = std::vector<std::string>;
 
-  void updateData(const StringVec& toremove, const StringVec& toinsert);
+  void updateData(const StringVec& toremove, const StringVec& toinsert,
+      const StringVec& lddirs, const StringVec& ldlinkdirs);
 
-  void updateLdDirs(const std::vector<std::string>& lddirs, const std::vector<std::string>& ldlinkdirs);
+
 
 
   int64_t getLatestPkgTimeStamp();
 private:
     bool m_isNew;
 
-
+    void updateLdDirs(const StringVec& lddirs, const StringVec& ldlinkdirs);
 
 
 };

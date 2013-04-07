@@ -21,3 +21,5 @@ remove all the std container typedef, use auto where used
 
 merge lddirs with all other pathname stuff to have all on one place
 
+todo, review error.hpp , use new style and check what's needed
+check dircontent open if it wouldn't be better to return ture false

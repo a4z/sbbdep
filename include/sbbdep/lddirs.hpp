@@ -37,13 +37,16 @@ public:
   LDDirs();
   ~LDDirs();
   
-  const StringSet& getLdDirs() const { return m_lddirs;} 
-  const StringSet& getLdLnkDirs() const { return m_ldlnkdirs;}
+  const StringSet& getLdDirs()  { if (m_lddirs.size()==0) readLdDirs(); return m_lddirs;}
+  const StringSet& getLdLnkDirs() { if (m_ldlnkdirs.size()==0) readLdLinkDirs(); return m_ldlnkdirs;}
   
+
+private:
+
   const StringSet& readLdDirs();
   const StringSet& readLdLinkDirs();
   
-private:
+
   StringSet m_lddirs;
   StringSet m_ldlnkdirs;
 };

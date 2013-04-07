@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include <vector>
 #include <string>
 
+
 namespace sbbdep {
 
 class Cache : public a4z::Single<Cache>
@@ -54,13 +55,10 @@ public:
   
   void doSync();
   
-  bool isNew() { return m_db.isNew(); }
   
   CacheDB& DB() { return m_db ;}
   
 
-  //us major minor combination to see if schema has changed in an way that it needs to be re-created
-  void checkVersion( int major, int minor, int patchlevel );
 
 private:
   
@@ -68,8 +66,8 @@ private:
   
   void SyncData();
 
-  void UpdateLdDirs(bool owntransaction= true); 
-  
+
+
   CacheDB m_db;
 
     

@@ -281,7 +281,7 @@ CacheDB::Create()
           A4Z_THROW_NESTED("");
         }
 
-      m_isNew = false ;
+
     }
   else
     return false;
@@ -395,7 +395,8 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
 //--------------------------------------------------------------------------------------------------
 
 void
-CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
+CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert,
+    const StringVec& lddirs, const StringVec& ldlinkdirs)
 {
 
 
@@ -539,19 +540,23 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 
   storework.join();
 
+
+  updateLdDirs( lddirs,  ldlinkdirs ) ;
+
+
   LogInfo() << "persist new information to disk\n";
 
   transaction.commit();
+
+  m_isNew = false ;
 
 }
 //--------------------------------------------------------------------------------------------------
 
 void
-CacheDB::updateLdDirs(const std::vector<std::string>& lddirs, const std::vector<std::string>& ldlinkdirs)
+CacheDB::updateLdDirs(const StringVec& lddirs, const StringVec& ldlinkdirs)
 {
   using namespace a4sqlt3;
-
-  LogInfo() << "update lddirs\n";
 
 
   SqlCommand* cmdlddir = getCommand("cmdlddir");
@@ -566,7 +571,6 @@ CacheDB::updateLdDirs(const std::vector<std::string>& lddirs, const std::vector<
           CacheSQL::InsertLdLnkDirSQL(), {DbValueType::Text});
   }
 
-  Transaction transaction(*this);
 
   Execute("DELETE FROM lddirs;");
   Execute("DELETE FROM ldlnkdirs;");
@@ -583,7 +587,7 @@ CacheDB::updateLdDirs(const std::vector<std::string>& lddirs, const std::vector<
       cmdldlnkdir->Parameters().Nr(1).set(val);
       Execute(cmdldlnkdir);
     }
-  transaction.commit();
+
 }
 //--------------------------------------------------------------------------------------------------
 

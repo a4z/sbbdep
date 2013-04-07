@@ -148,7 +148,7 @@ Pkg::doLoadDestDir()
       [this, checkdir ]( const std::string& dname ) -> void
   {
     DirContent dcont(dname);
-    dcont.Open();
+    dcont.Open(); // TODO , could throw
     std::string contend;
     while (dcont.getNext(contend))
       {

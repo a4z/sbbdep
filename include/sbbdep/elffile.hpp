@@ -79,6 +79,7 @@ private:
 
 // if just the info is required if given path points to a bin or lib file, this is ok
 bool isElfBinOrElfLib(const PathName& pn);
+bool isElfLib(const PathName& pn);
 
 
 }
