@@ -541,7 +541,8 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert,
   storework.join();
 
 
-  updateLdDirs( lddirs,  ldlinkdirs ) ;
+  if(lddirs.size()> 0 && ldlinkdirs.size()> 0)
+    updateLdDirs( lddirs,  ldlinkdirs ) ;
 
 
   LogInfo() << "persist new information to disk\n";
