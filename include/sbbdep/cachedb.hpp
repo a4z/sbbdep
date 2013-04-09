@@ -90,8 +90,7 @@ public:
 
   using StringVec = std::vector<std::string>;
 
-  void updateData(const StringVec& toremove, const StringVec& toinsert,
-      const StringVec& lddirs, const StringVec& ldlinkdirs);
+  void updateData(const StringVec& toremove, const StringVec& toinsert);
 
 
 

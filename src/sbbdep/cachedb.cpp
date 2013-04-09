@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgname.hpp>
 #include <sbbdep/config.hpp> // generated
-
+#include <sbbdep/lddirs.hpp>
 
 #include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/dataset.hpp>
@@ -395,9 +395,22 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
 //--------------------------------------------------------------------------------------------------
 
 void
-CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert,
-    const StringVec& lddirs, const StringVec& ldlinkdirs)
+CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 {
+
+  LogInfo() << "apply changes "<< std::endl;
+
+  if(toremove.size()== 0 && toinsert.size()==0)
+    return ;
+
+// todo this needs only to be done if toinsert has data, if we just remove, this could be ignored
+  LDDirs lddirs;
+  std::thread loadlddirs( [&lddirs] (){
+    lddirs.getLdDirs();
+    lddirs.getLdLnkDirs();
+  });
+
+
 
 
   struct ToStoreData
@@ -518,16 +531,19 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert,
 
   ToIndexData toindex(toinsert);
 
+  auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
+
   std::thread indexer1(indexer , std::ref(toindex), std::ref(tostore) );
   std::thread indexer2(indexer,  std::ref(toindex), std::ref(tostore) );
 
-  if(delwork.joinable())
-    delwork.join();
+  waitfor(delwork);
 
   std::thread storework(persiter, std::ref(tostore), std::ref(dbaction));
 
-  indexer1.join();
-  indexer2.join();
+
+
+  waitfor(indexer1);
+  waitfor(indexer2);
 
 
   {
@@ -538,11 +554,17 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert,
     tostore.condition.notify_one(); // just to be sure to not run into troubles
   }
 
-  storework.join();
+  waitfor(storework);
 
 
-  if(lddirs.size()> 0 && ldlinkdirs.size()> 0)
-    updateLdDirs( lddirs,  ldlinkdirs ) ;
+  LogInfo() << "wait for resolving symbolic links"<< std::endl;
+  waitfor(loadlddirs);
+
+
+  updateLdDirs(StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end()) ,
+        StringVec(lddirs.getLdLnkDirs().begin(), lddirs.getLdLnkDirs().end())
+  );
+
 
 
   LogInfo() << "persist new information to disk\n";

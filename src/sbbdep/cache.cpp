@@ -31,7 +31,7 @@ THE SOFTWARE.
 #include <sbbdep/error.hpp>
 
 
-#include <sbbdep/lddirs.hpp>
+
 #include <sbbdep/pkgadmdir.hpp>
 #include <sbbdep/log.hpp>
 
@@ -126,17 +126,8 @@ Cache::CreateData()
   };
   pkg_adm_dir.apply(newfiles_cb) ;
 
-  LDDirs lddirs;
-  LogInfo() << "searching for links"<< std::endl;
-  lddirs.getLdLnkDirs();
 
-
-  m_db.updateData(StringVec(), pkgnamevec  ,
-      StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end()) ,
-      StringVec(lddirs.getLdLnkDirs().begin(), lddirs.getLdLnkDirs().end())
-  );
-
-
+  m_db.updateData(StringVec(), pkgnamevec  );
 
   
 }
@@ -151,6 +142,8 @@ Cache::SyncData()
   // get what is not present in db but in fs for insert
   // get files with newer date and existing name for handling reinstalled pkgs
   
+  using StringSet  = std::set<std::string> ;
+
   LogInfo() << "search for changes" << std::endl;
   StringSet allpkgfiles; // all pks in file system
   StringSet allpkgindb; // all pks in the db
@@ -249,33 +242,7 @@ Cache::SyncData()
   allremoves.insert(allremoves.end(), toremoveList.begin(), toremoveList.end()) ;
   allremoves.insert(allremoves.end(), reinstalledList.begin(), reinstalledList.end()) ;
 
-  // if just delete, no update of Ld Dirs is required...
-  if(allinserts.size() == 0)
-    {
-      // call just if something is to remove
-      if(allremoves.size()> 0 )
-        m_db.updateData( allremoves , allinserts ,StringVec() , StringVec() ) ;
-
-      return;
-    }
-
-
-  LDDirs lddirs;
-  // force pre-loading
-  LogInfo() << "searching for links"<< std::endl;
-  lddirs.getLdLnkDirs();
-  // TODO , check for putting this in the background at the begin of this function
-  // or some other speed up, this takes somehow to much time...
-  
-  // TODO if nothing changed, skip the ld part (and the update call)
-
-  LogInfo() << "apply changes "<< std::endl;
-
-  m_db.updateData( allremoves , allinserts ,
-      StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end()) ,
-      StringVec(lddirs.getLdLnkDirs().begin(), lddirs.getLdLnkDirs().end())
-      ) ;
-
+  m_db.updateData( allremoves , allinserts) ;
 
 
   //--------------------
