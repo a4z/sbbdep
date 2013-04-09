@@ -30,8 +30,6 @@ THE SOFTWARE.
 
 #include <sbbdep/error.hpp>
 
-
-
 #include <sbbdep/pkgadmdir.hpp>
 #include <sbbdep/log.hpp>
 
@@ -194,9 +192,9 @@ Cache::SyncData()
     } //omp parallel sections
     
 
-  StringList toremoveList;
-  StringList toinsertList;
-  StringList reinstalledList;
+  StringVec toremoveList;
+  StringVec toinsertList;
+  StringVec reinstalledList;
 
 
 #pragma omp parallel sections
@@ -216,6 +214,10 @@ Cache::SyncData()
               allpkgindb.begin(), allpkgindb.end(),
               std::inserter(toinsertList, toinsertList.begin()));
 
+          // check sorted, should not be required but ensure that next difference will work
+          if(not std::is_sorted(toinsertList.begin(), toinsertList.end()))
+            std::sort(toinsertList.begin(), toinsertList.end());
+
           // new pkgs that are not in the insert list are re-installed and need to be added again
           std::set_difference(newpkgs.begin(), newpkgs.end(), toinsertList.begin(),
               toinsertList.end(), std::inserter(reinstalledList, reinstalledList.begin()));
@@ -224,25 +226,21 @@ Cache::SyncData()
 
     } //omp sections
 
+  //merge reinstalled into installed and removed, need to be handled both
+  // but them on the begin, think looks nicer in the output
+  toremoveList.insert(std::begin(toremoveList), reinstalledList.begin(), reinstalledList.end());
+  toinsertList.insert(std::begin(toinsertList), reinstalledList.begin(), reinstalledList.end());
 
   // for indexing full path is needed, so create a list of all new pkgs with the full path
-  StringVec allinserts;
   auto fullpathname = [&pkg_adm_dir](std::string& s) ->std::string
       { return pkg_adm_dir.getDirName() + "/" +s ; } ;
 
-  // add the new ones
   std::transform(toinsertList.begin(), toinsertList.end(),
-      std::back_insert_iterator<StringVec>(allinserts), fullpathname );
-  // add the reinstalled ones to all, they need to be re indexed
-  std::transform(reinstalledList.begin(), reinstalledList.end(),
-      std::back_insert_iterator<StringVec>(allinserts), fullpathname );
+      toinsertList.begin(), fullpathname );
 
 
-  StringVec allremoves;  ;
-  allremoves.insert(allremoves.end(), toremoveList.begin(), toremoveList.end()) ;
-  allremoves.insert(allremoves.end(), reinstalledList.begin(), reinstalledList.end()) ;
 
-  m_db.updateData( allremoves , allinserts) ;
+  m_db.updateData( toremoveList , toinsertList) ;
 
 
   //--------------------
@@ -251,8 +249,8 @@ Cache::SyncData()
   typedef std::map<std::string, std::string> MessageMap;
   MessageMap messageMap;
   for(const std::string& inserted : toinsertList)
-    {
-      PkgName inname(inserted) ; // need to compare just the  pkg name, without version tag ,..
+    { //have full path now so need to convert this back...
+      PkgName inname(PathName(inserted).getBase()) ; // need to compare just the  pkg name, without version tag ,..
 
       auto compair = [&inname](const std::string& fullname)->bool {
         return inname.Name() == PkgName(fullname).Name();
@@ -261,24 +259,24 @@ Cache::SyncData()
       
       if ( toremoveIter != toremoveList.end() )
         {
-          messageMap.insert( MessageMap::value_type(inserted , " => update from " + *toremoveIter));
+          messageMap.insert( MessageMap::value_type(inname.Name() , " => update from " + *toremoveIter));
           toremoveList.erase(toremoveIter) ;
         }
       else
         {
-          messageMap.insert( MessageMap::value_type(inserted , " => installed " ) ) ;
+          messageMap.insert( MessageMap::value_type(inname.Name() , " => installed " ) ) ;
         }      
 
     }  
   
 
-  for (StringList::iterator pos = toremoveList.begin(); pos != toremoveList.end(); ++pos)
+  for (auto& val : toremoveList)
     {
-      messageMap.insert( MessageMap::value_type(*pos , " => removed " ) ) ;
+      messageMap.insert( MessageMap::value_type(val , " => removed " ) ) ;
     }
-  for (StringList::iterator pos = reinstalledList.begin(); pos != reinstalledList.end(); ++pos)
+  for (auto& val :  reinstalledList)
     {
-      messageMap.insert( MessageMap::value_type(*pos , " => reinstalled " ) ) ;
+      messageMap.insert( MessageMap::value_type(val , " => reinstalled " ) ) ;
     }  
   
   for(MessageMap::iterator pos=messageMap.begin() ; pos!= messageMap.end(); ++pos)

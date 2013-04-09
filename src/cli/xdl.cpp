@@ -131,7 +131,7 @@ printRequires(DatasetPtr dspkg, Pkg& pkg)
   ElfFile elf = *(pkg.getDynLinked().begin()) ;
   typedef std::map<std::string , std::string> DepMapType;
   DepMapType depmap , ownmap , similarmap;
-  StringList notfound  ;
+  std::vector<std::string> notfound  ;
   StringSet ownsonames;
 
   auto addToMap = [](DepMapType& map, const std::string& fname, const std::string& pkgname )

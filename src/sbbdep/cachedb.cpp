@@ -398,10 +398,14 @@ void
 CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 {
 
-  LogInfo() << "apply changes "<< std::endl;
-
   if(toremove.size()== 0 && toinsert.size()==0)
-    return ;
+    {
+      LogInfo() << "cache is up to date "<< std::endl;
+      return ;
+    }
+
+
+  LogInfo() << "apply changes "<< std::endl;
 
 // todo this needs only to be done if toinsert has data, if we just remove, this could be ignored
   LDDirs lddirs;
