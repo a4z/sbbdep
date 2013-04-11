@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <sbbdep/log.hpp>
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgname.hpp>
+#include <sbbdep/pkgadmdir.hpp>
 #include <sbbdep/config.hpp> // generated
 #include <sbbdep/lddirs.hpp>
 
@@ -39,6 +40,7 @@ THE SOFTWARE.
 #include <a4z/err.hpp>
 
 #include <cstdlib>
+#include <algorithm>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -533,7 +535,16 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
   ToStoreData tostore;
   tostore.running = true ;
 
-  ToIndexData toindex(toinsert);
+  // for indexing I need full path, so do this
+  StringVec fullnames = toinsert;
+  PkgAdmDir pkg_adm_dir;
+  auto makefullpathname = [&pkg_adm_dir](std::string& s) ->std::string
+      { return pkg_adm_dir.getDirName() + "/" + s ; } ;
+
+  std::transform(fullnames.begin(), fullnames.end(),
+       std::begin(fullnames), makefullpathname );
+
+  ToIndexData toindex(fullnames);
 
   auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
 
@@ -541,6 +552,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
   std::thread indexer2(indexer,  std::ref(toindex), std::ref(tostore) );
 
   waitfor(delwork);
+  // important to wait here, reinstalled could have same name so must be deleted first
 
   std::thread storework(persiter, std::ref(tostore), std::ref(dbaction));
 

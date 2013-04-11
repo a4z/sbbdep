@@ -40,7 +40,7 @@ THE SOFTWARE.
 #include <vector>
 #include <set>
 #include <algorithm>
-
+#include <thread>
 
 
 
@@ -87,163 +87,108 @@ Cache::~Cache()
 }
 //--------------------------------------------------------------------------------------------------
 
-
+void PrintReport(const Cache::SyncData&);
 
 void
 Cache::doSync()
 {
-  
+
+  StringVec toremove;
+  StringVec toinsert;
+
+  SyncData syncdata;
+
   if (m_db.isNew())
     {
       Log::Info() << "create cache (" << m_db.Name() <<")" << std::endl;
-      CreateData();
+
+      auto newfiles_cb = [&toinsert](const std::string& d,const std::string&& f) -> bool {
+        toinsert.emplace_back( f);
+        return true ;
+      };
+      PkgAdmDir().apply(newfiles_cb) ;
+
+      // for the report
+      syncdata = {toremove, toinsert, StringVec() } ;
+
     }
   else
     {
       Log::Info() << "sync cache (" << m_db.Name() <<")" << std::endl;
-      SyncData();
+
+      syncdata = getSyncData() ;
+
+      toremove = syncdata.removed;
+      toinsert = syncdata.installed;
+
+      //merge reinstalled into installed and removed, need to be handled both
+      // but them on the begin, think looks nicer in the output
+      toremove.insert(toremove.begin(), syncdata.reinstalled.begin(), syncdata.reinstalled.end());
+      toinsert.insert(toinsert.begin(), syncdata.reinstalled.begin(), syncdata.reinstalled.end());
+
     }
  
+  PrintReport(syncdata) ;
+  m_db.updateData( toremove , toinsert) ;
+  
+  
 
-  
-  
 }
 //--------------------------------------------------------------------------------------------------
 
 
-void
-Cache::CreateData()
+void PrintReport(const Cache::SyncData& syncdata)
 {
-  
-  StringVec pkgnamevec;
+  using StringSet = std::set<std::string> ; //make it sortd
 
-  PkgAdmDir pkg_adm_dir;
-  auto newfiles_cb = [&](const std::string& d,const std::string&& f) -> bool {
-    pkgnamevec.push_back(d +"/"+ f);
-    return true ;
-  };
-  pkg_adm_dir.apply(newfiles_cb) ;
+  StringSet deleted, reinstalled, installed, upgraded;
 
 
-  m_db.updateData(StringVec(), pkgnamevec  );
+  // take removed, than check inserted, if inserted is also in deleted, its an update
+  deleted.insert(syncdata.removed.begin(),syncdata.removed.end() );
+  // so make all inserted to deleted,
+  // take all installed and search if deleted,
+  // if found , remove from deleted and add to upgraded, else it is inserted
 
-  
+  for(auto& val : syncdata.installed)
+    {   // need package name, if the name is in removed and in installed, than
+      PkgName pkgname(val);
+      auto compair = [&pkgname](const std::string& fullname)->bool
+        {
+          return pkgname.Name() == PkgName(fullname).Name();
+        };
+
+      auto isdeleted = std::find_if(deleted.begin(), deleted.end(), compair);
+      if( isdeleted == deleted.end() )
+        {
+          installed.insert(val);
+        }
+      else
+        {
+          upgraded.insert(val);
+          deleted.erase(isdeleted);
+        }
+
+    }
+
+  // finally transfer the re installed and then print all
+  reinstalled.insert(syncdata.reinstalled.begin(), syncdata.reinstalled.end());
+
+  // ok , just print to console
+
+  for(auto& val : deleted) LogInfo()<< "delete: " << val << std::endl;
+  for(auto& val : upgraded) LogInfo()<< "upgrade: " << val  << std::endl;
+  for(auto& val : installed) LogInfo()<< "installed: " << val  << std::endl;
+  for(auto& val : reinstalled) LogInfo()<< "reinstalled: " << val  << std::endl;
+
 }
-//--------------------------------------------------------------------------------------------------
 
 
-void
-Cache::SyncData()
-{
-  // get diff from filesystem and db, remove old stuff from db and insert new 
-  // get what is not present in fs but in db for remove
-  // get what is not present in db but in fs for insert
-  // get files with newer date and existing name for handling reinstalled pkgs
-  
-  using StringSet  = std::set<std::string> ;
-
-  LogInfo() << "search for changes" << std::endl;
-  StringSet allpkgfiles; // all pks in file system
-  StringSet allpkgindb; // all pks in the db
-  StringSet newpkgs; // // all pks in file system with a newer date as the lastest known date
-
-
-  // get latest known file time for a package to compare later
-
-  const time_t maxknownftime = m_db.getLatestPkgTimeStamp() ;
-
-  // var/adm/packages file dir for iteratong through ..
-  PkgAdmDir pkg_adm_dir;
-
-#pragma omp parallel sections
-    {
-
-#pragma omp section
-        {
-          auto newfiles_cb =
-              [&allpkgfiles, &newpkgs, &maxknownftime]
-               (const std::string& d,const std::string&& f) -> bool
-              {
-                Path path(d + "/" + f); //
-                if ( path.isRegularFile() )
-                  {
-                    allpkgfiles.insert(f); // insert filename in all existing file_pkgs,
-                    // and if newer as the latest known file time
-                    if ( path.getLastModificationTime() > maxknownftime )
-                          newpkgs.insert(f); // insert into new pkgs
-                  }
-                return true ;
-              };
-
-          pkg_adm_dir.apply(newfiles_cb) ;
-
-        }// opm section
-#pragma omp section
-        {
-          // insert existing names into all_pkgs;
-          auto rh = [&allpkgindb](a4sqlt3::Columns& cols) -> bool
-              {
-                allpkgindb.insert(cols[0].get<std::string>());
-                return true ;
-              } ;
-
-          m_db.Execute("SELECT fullname FROM pkgs;", rh);
-        } // opm section
-    } //omp parallel sections
-    
-
-  StringVec toremoveList;
-  StringVec toinsertList;
-  StringVec reinstalledList;
-
-
-#pragma omp parallel sections
-    {
-#pragma omp section
-        {
-          // all that are in db but not in filesystem are to remove
-          std::set_difference(allpkgindb.begin(), allpkgindb.end(),
-              allpkgfiles.begin(), allpkgfiles.end(),
-              std::inserter(toremoveList, toremoveList.begin()));
-        }
-
-#pragma omp  section
-        {
-          // all that are in filesystem but not in db are new and need to be added to insert list
-          std::set_difference(allpkgfiles.begin(), allpkgfiles.end(),
-              allpkgindb.begin(), allpkgindb.end(),
-              std::inserter(toinsertList, toinsertList.begin()));
-
-          // check sorted, should not be required but ensure that next difference will work
-          if(not std::is_sorted(toinsertList.begin(), toinsertList.end()))
-            std::sort(toinsertList.begin(), toinsertList.end());
-
-          // new pkgs that are not in the insert list are re-installed and need to be added again
-          std::set_difference(newpkgs.begin(), newpkgs.end(), toinsertList.begin(),
-              toinsertList.end(), std::inserter(reinstalledList, reinstalledList.begin()));
-          
-        }
-
-    } //omp sections
-
-  //merge reinstalled into installed and removed, need to be handled both
-  // but them on the begin, think looks nicer in the output
-  toremoveList.insert(std::begin(toremoveList), reinstalledList.begin(), reinstalledList.end());
-  toinsertList.insert(std::begin(toinsertList), reinstalledList.begin(), reinstalledList.end());
-
-  // for indexing full path is needed, so create a list of all new pkgs with the full path
-  auto fullpathname = [&pkg_adm_dir](std::string& s) ->std::string
-      { return pkg_adm_dir.getDirName() + "/" +s ; } ;
-
-  std::transform(toinsertList.begin(), toinsertList.end(),
-      toinsertList.begin(), fullpathname );
-
-
-
-  m_db.updateData( toremoveList , toinsertList) ;
-
-
+/*  TODO reactivate this, but should be prepared to be in the cli client...
+ *
   //--------------------
+
+   *
   // from here only info generation about what happened within sync..
   //--------------------
   typedef std::map<std::string, std::string> MessageMap;
@@ -284,8 +229,92 @@ Cache::SyncData()
       Log::Info() << pos->first << pos->second << std::endl; 
     }
   
+*/
+
+
+Cache::SyncData
+Cache::getSyncData()
+{
+
+  // get diff from filesystem and db, remove old stuff from db and insert new
+  // get what is not present in fs but in db for remove
+  // get what is not present in db but in fs for insert
+  // get files with newer date and existing name for handling reinstalled pkgs
+
+  LogInfo() << "search for changes" << std::endl;
+
+  using StringSet  = std::set<std::string> ;
+
+
+  Cache::SyncData retval;
+
+
+  StringSet allpkgfiles; // all pks in file system
+  StringSet newpkgs; // // all pks in file system with a newer date as the latest known date
+  const time_t maxknownftime = m_db.getLatestPkgTimeStamp() ;
+
+  // helper to wait for a thread
+  auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
+
+  // filter for pkgadm dir
+  auto checkFileSystem = [&allpkgfiles, &newpkgs, &maxknownftime]
+                          (const std::string& d,const std::string&& f) -> bool
+        {
+          Path path(d + "/" + f); //
+          if ( path.isRegularFile() )
+            {
+              allpkgfiles.insert(f); // insert filename in all existing file_pkgs,
+              // and if newer as the latest known file time
+              if ( path.getLastModificationTime() > maxknownftime )
+                    newpkgs.insert(f); // insert into new pkgs
+            }
+          return true ;
+        };
+
+
+
+  PkgAdmDir admdir;
+  std::thread checkFS(&PkgAdmDir::apply, &admdir, checkFileSystem);
+// while this runs, get all from the db
+
+  StringSet allpkgindb; // all pks in the db
+  // get all in the database
+  auto rh = [&allpkgindb](a4sqlt3::Columns& cols) -> bool
+        {
+          allpkgindb.insert(cols[0].get<std::string>());
+          return true ;
+        } ;
+
+  m_db.Execute("SELECT fullname FROM pkgs;", rh);
+
+  waitfor(checkFS);
+
+  //get the removed ones, these are not in the filesystem but in the db
+  std::thread searchdeleted ( [&allpkgindb, &allpkgfiles , &retval]()->void{
+    std::set_difference(allpkgindb.begin(), allpkgindb.end(),
+        allpkgfiles.begin(), allpkgfiles.end(),
+        std::inserter(retval.removed, retval.removed.begin()));
+  });
+
+
+  // all that are in filesystem but not in db are new and need to be added to installed
+  std::set_difference(allpkgfiles.begin(), allpkgfiles.end(),
+      allpkgindb.begin(), allpkgindb.end(),
+      std::inserter(retval.installed, retval.installed.begin() ));
+
+  // check sorted, should not be required but ensure that next difference will work
+  if(not std::is_sorted(std::begin(retval.installed), std::end(retval.installed)))
+    std::sort(std::begin(retval.installed), std::end(retval.installed));
+
+  // new pkgs that are not in the installed list are re-installed
+  std::set_difference(newpkgs.begin(), newpkgs.end(),
+      retval.installed.begin(), retval.installed.end(),
+      std::inserter(retval.reinstalled, retval.reinstalled.begin()));
+
+  waitfor(searchdeleted);
+
+  return retval;
 }
-//--------------------------------------------------------------------------------------------------
 
 
 //--------------------------------------------------------------------------------------------------

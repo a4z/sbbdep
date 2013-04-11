@@ -55,14 +55,17 @@ public:
   CacheDB& DB() { return m_db ;}
   
 
+  struct SyncData{
+    StringVec removed;
+    StringVec installed;
+    StringVec reinstalled;
+  };
+
 
 private:
-  
-  void CreateData();
-  
-  void SyncData();
 
 
+  SyncData getSyncData();
 
   CacheDB m_db;
 
