@@ -147,6 +147,9 @@ SET ( sbbdepcli_SRC
     src/cli/xdl.hpp
     src/cli/xdl.cpp
        
+    src/cli/report.hpp
+    src/cli/report.cpp
+
    
     src/cli/lookup.hpp
     src/cli/lookup_dependencies.hpp 

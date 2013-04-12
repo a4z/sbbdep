@@ -87,9 +87,9 @@ Cache::~Cache()
 }
 //--------------------------------------------------------------------------------------------------
 
-void PrintReport(const Cache::SyncData&);
 
-void
+
+Cache::SyncData
 Cache::doSync()
 {
 
@@ -128,108 +128,15 @@ Cache::doSync()
 
     }
  
-  PrintReport(syncdata) ;
+
   m_db.updateData( toremove , toinsert) ;
-  
-  
+
+
+  return syncdata  ;
 
 }
 //--------------------------------------------------------------------------------------------------
 
-
-void PrintReport(const Cache::SyncData& syncdata)
-{
-  using StringSet = std::set<std::string> ; //make it sortd
-
-  StringSet deleted, reinstalled, installed, upgraded;
-
-
-  // take removed, than check inserted, if inserted is also in deleted, its an update
-  deleted.insert(syncdata.removed.begin(),syncdata.removed.end() );
-  // so make all inserted to deleted,
-  // take all installed and search if deleted,
-  // if found , remove from deleted and add to upgraded, else it is inserted
-
-  for(auto& val : syncdata.installed)
-    {   // need package name, if the name is in removed and in installed, than
-      PkgName pkgname(val);
-      auto compair = [&pkgname](const std::string& fullname)->bool
-        {
-          return pkgname.Name() == PkgName(fullname).Name();
-        };
-
-      auto isdeleted = std::find_if(deleted.begin(), deleted.end(), compair);
-      if( isdeleted == deleted.end() )
-        {
-          installed.insert(val);
-        }
-      else
-        {
-          upgraded.insert(val);
-          deleted.erase(isdeleted);
-        }
-
-    }
-
-  // finally transfer the re installed and then print all
-  reinstalled.insert(syncdata.reinstalled.begin(), syncdata.reinstalled.end());
-
-  // ok , just print to console
-
-  for(auto& val : deleted) LogInfo()<< "delete: " << val << std::endl;
-  for(auto& val : upgraded) LogInfo()<< "upgrade: " << val  << std::endl;
-  for(auto& val : installed) LogInfo()<< "installed: " << val  << std::endl;
-  for(auto& val : reinstalled) LogInfo()<< "reinstalled: " << val  << std::endl;
-
-}
-
-
-/*  TODO reactivate this, but should be prepared to be in the cli client...
- *
-  //--------------------
-
-   *
-  // from here only info generation about what happened within sync..
-  //--------------------
-  typedef std::map<std::string, std::string> MessageMap;
-  MessageMap messageMap;
-  for(const std::string& inserted : toinsertList)
-    { //have full path now so need to convert this back...
-      PkgName inname(PathName(inserted).getBase()) ; // need to compare just the  pkg name, without version tag ,..
-
-      auto compair = [&inname](const std::string& fullname)->bool {
-        return inname.Name() == PkgName(fullname).Name();
-      };
-      auto toremoveIter = std::find_if(toremoveList.begin(), toremoveList.end(), compair) ;
-      
-      if ( toremoveIter != toremoveList.end() )
-        {
-          messageMap.insert( MessageMap::value_type(inname.Name() , " => update from " + *toremoveIter));
-          toremoveList.erase(toremoveIter) ;
-        }
-      else
-        {
-          messageMap.insert( MessageMap::value_type(inname.Name() , " => installed " ) ) ;
-        }      
-
-    }  
-  
-
-  for (auto& val : toremoveList)
-    {
-      messageMap.insert( MessageMap::value_type(val , " => removed " ) ) ;
-    }
-  for (auto& val :  reinstalledList)
-    {
-      messageMap.insert( MessageMap::value_type(val , " => reinstalled " ) ) ;
-    }  
-  
-  for(MessageMap::iterator pos=messageMap.begin() ; pos!= messageMap.end(); ++pos)
-    {
-      Log::Info() << pos->first << pos->second << std::endl; 
-    }
-  
-*/
 
 
 Cache::SyncData

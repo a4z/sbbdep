@@ -28,6 +28,8 @@
 #include "depfilewriter.hpp"
 #include "xdl.hpp"
 #include "lookup.hpp"
+// and that is this one.. TODO continue refactoring
+#include "report.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -88,7 +90,7 @@ prepairCache(bool syncflag)
     {
       try
         {
-          Cache::get()->doSync();
+          cli::printSyncReport( Cache::get()->doSync() );
         }
       catch (const a4z::Err& e)
         {

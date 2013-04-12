@@ -22,61 +22,23 @@ THE SOFTWARE.
 */
 
 
+#ifndef SBBDEP_CLI_REPORT_HPP_
+#define SBBDEP_CLI_REPORT_HPP_
 
-#ifndef SBBDEP_CACHE_HPP_
-#define SBBDEP_CACHE_HPP_
-
-
-#include <sbbdep/cachedb.hpp>
-#include <a4z/single.hpp>
-#include <vector>
-#include <string>
-
-namespace sbbdep {
-
-class Cache : public a4z::Single<Cache>
-{
-  
-  friend class a4z::Single<Cache> ; 
-  
-  
-  Cache(const std::string& dbname);
-  ~Cache();
-
-  
-public:
- 
-  typedef std::vector<std::string> StringVec;
-  
-
-  
-  
-  CacheDB& DB() { return m_db ;}
-  
-
-  struct SyncData{
-    StringVec removed;
-    StringVec installed;
-    StringVec reinstalled;
-  };
-
-  // lets see which I will prefer to use in future
-  SyncData doSync();
-
-
-private:
-
-
-  SyncData getSyncData();
-
-  CacheDB m_db;
-
-    
-  
-};
+#include <sbbdep/cache.hpp>
 
 
 
-} // ns
+namespace sbbdep{
 
-#endif /* SBBDEP_CACHE_HPP_ */
+
+namespace cli{
+
+
+void printSyncReport(Cache::SyncData syncdata) ;
+
+
+}}
+
+
+#endif
