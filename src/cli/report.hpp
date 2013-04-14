@@ -31,11 +31,16 @@ THE SOFTWARE.
 
 namespace sbbdep{
 
+class Pkg;
 
 namespace cli{
 
 
 void printSyncReport(Cache::SyncData syncdata) ;
+
+
+void printRequiredPkgs( const Pkg& pkg, bool addversion ) ;
+
 
 
 }}

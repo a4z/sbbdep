@@ -77,6 +77,8 @@ struct CacheSQL
   static std::string replaceORIGIN(const std::string& originstr, const std::string& fromfile);
   static void register_own_sql_functions(sqlite3* db);
   
+
+
 };
 
 }

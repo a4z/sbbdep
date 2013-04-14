@@ -70,32 +70,32 @@ public:
   {
     using namespace a4sqlt3;
 
-    if(!(m_cmdpkg=m_dbref.getCommand("cmdpkg"))) {
-      m_cmdpkg = m_dbref.createStoredCommand("cmdpkg", CacheSQL::InsertPkgSQL(),
+    if(!(m_cmdpkg=m_dbref.getCommand("InsertPkgSQL"))) {
+      m_cmdpkg = m_dbref.createStoredCommand("InsertPkgSQL", CacheSQL::InsertPkgSQL(),
           { DbValueType::Text, DbValueType::Text, DbValueType::Text,
               DbValueType::Text, DbValueType::Int,
               DbValueType::Text, DbValueType::Int } ) ;
     }
 
-    if(!(m_cmddynlinked=m_dbref.getCommand("cmddynlinked"))) {
-        m_cmddynlinked = m_dbref.createStoredCommand("cmddynlinked", CacheSQL::InsertDynLinkedSQL(),
+    if(!(m_cmddynlinked=m_dbref.getCommand("InsertDynLinkedSQL"))) {
+        m_cmddynlinked = m_dbref.createStoredCommand("InsertDynLinkedSQL", CacheSQL::InsertDynLinkedSQL(),
             {DbValueType::Int,DbValueType::Text,
                 DbValueType::Text, DbValueType::Text
                 ,DbValueType::Text, DbValueType::Int } );
     }
 
-    if(!(m_cmdrequired=m_dbref.getCommand("cmdrequired"))) {
-        m_cmdrequired = m_dbref.createStoredCommand("cmdrequired", CacheSQL::InsertRequiredSQL(),
+    if(!(m_cmdrequired=m_dbref.getCommand("InsertRequiredSQL"))) {
+        m_cmdrequired = m_dbref.createStoredCommand("InsertRequiredSQL", CacheSQL::InsertRequiredSQL(),
             {DbValueType::Int,DbValueType::Text});
     }
 
-    if(!(m_cmdrrunpath=m_dbref.getCommand("cmdrrunpath"))) {
-        m_cmdrrunpath = m_dbref.createStoredCommand("cmdrrunpath", CacheSQL::InsertRRunPathSQL(),
+    if(!(m_cmdrrunpath=m_dbref.getCommand("InsertRRunPathSQL"))) {
+        m_cmdrrunpath = m_dbref.createStoredCommand("InsertRRunPathSQL", CacheSQL::InsertRRunPathSQL(),
             {DbValueType::Int,DbValueType::Text, DbValueType::Text});
     }
 
-    if(!(m_cmddelpkg=m_dbref.getCommand("cmddelpkg"))) {
-        m_cmddelpkg = m_dbref.createStoredCommand("cmddelpkg", CacheSQL::DeletePkgByFullnameSQL(),
+    if(!(m_cmddelpkg=m_dbref.getCommand("DeletePkgByFullnameSQL"))) {
+        m_cmddelpkg = m_dbref.createStoredCommand("DeletePkgByFullnameSQL", CacheSQL::DeletePkgByFullnameSQL(),
             {DbValueType::Text});
     }
 

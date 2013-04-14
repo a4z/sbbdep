@@ -26,6 +26,15 @@ THE SOFTWARE.
 
 #include <sbbdep/log.hpp>
 #include <sbbdep/pkgname.hpp>
+#include <sbbdep/pkg.hpp>
+#include <sbbdep/cache.hpp>
+#include <sbbdep/elffile.hpp>
+#include <sbbdep/cachesql.hpp>
+
+
+#include <a4sqlt3/sqlcommand.hpp>
+#include <a4sqlt3/dataset.hpp>
+#include <a4sqlt3/columns.hpp>
 
 #include <set>
 #include <algorithm>
@@ -85,6 +94,100 @@ void printSyncReport(Cache::SyncData syncdata)
 }
 
 //--------------------------------------------------------------------------------------------------
+
+
+void printRequiredPkgs( const Pkg& pkg, bool addversion )
+{
+
+  using LibInfoType = std::pair<std::string, int>;
+
+  struct LibInfoCompair {
+    bool operator() (const LibInfoType& lhs, const LibInfoType& rhs) const
+      {
+        int cmp = lhs.first.compare( rhs.first ) ;
+        if (cmp < 0 ) return true;
+        else if ( cmp > 0 ) return false;
+        else return lhs.second < rhs.second ;
+      }
+  };
+  using LibInfoSet = std::set<LibInfoType, LibInfoCompair> ;
+
+
+  LibInfoSet requiresInfo , providesInfo ;
+
+  for(const ElfFile& elf : pkg.getDynLinked())
+    {
+      for(const std::string& needed : elf.getNeeded())
+          requiresInfo.insert(std::make_pair(needed,elf.getArch())) ;
+
+      if ( elf.soName().size() )
+        providesInfo.insert(std::make_pair(elf.soName(),elf.getArch())) ;
+    }
+
+
+  // remove libs that are within this pkg
+  for (auto pos = providesInfo.begin(); pos != providesInfo.end(); ++pos)
+      requiresInfo.erase(*pos) ;
+
+
+  using StringSet = std::set<std::string> ;
+
+  StringSet deps;
+  StringSet notfound;
+
+  using namespace a4sqlt3;
+
+  SqlCommand* searcher = Cache::getInstance()->DB().getCommand("SearchPgkOfSoNameSQL");
+  if(not searcher)
+    searcher = Cache::getInstance()->DB().createStoredCommand("SearchPgkOfSoNameSQL",
+        CacheSQL::SearchPgkOfSoNameSQL(), { DbValueType::Text,  DbValueType::Int});
+
+
+  for( LibInfoSet::iterator pos = requiresInfo.begin(); pos!= requiresInfo.end(); ++pos )
+    {
+      searcher->Parameters().setValues( {DbValue(pos->first), DbValue(pos->second)}) ;
+      Dataset ds;
+      Cache::getInstance()->DB().Execute(searcher, &ds) ;
+
+      if( ds.getRowCount()== 0 ) notfound.insert(pos->first);
+      else
+        {
+          StringSet pkgsrequired;
+          for(auto& flds : ds)
+              pkgsrequired.insert(flds.getField(0).getString() );
+
+          std::string joinednames ;
+          for(auto pos = pkgsrequired.begin(); pos!= pkgsrequired.end();++pos)
+            {
+              if( pos != pkgsrequired.begin() ) joinednames+=" | " ;
+              PkgName pknam(*pos) ;
+              joinednames+= pknam.Name() ;
+              if (addversion) joinednames+= " >= " + pknam.Version()  ;
+            }
+
+          deps.insert(joinednames) ;
+
+        }
+    }
+
+  // to not start with a seperator
+  std::string seperator;
+  for(auto& s : deps){
+      if(seperator.empty())
+        seperator = addversion ? "\n" : ", ";
+      else
+        LogInfo()  << seperator ;
+
+      LogInfo() << s  ;
+  }
+  LogInfo() << std::endl  ;
+
+  for ( auto& val : notfound )
+    {
+      LogInfo() << pkg.getPath() <<" ! not found: " << val << "\n" ;
+    }
+
+}
 
 
 

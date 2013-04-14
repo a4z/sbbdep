@@ -178,9 +178,7 @@ AppCli::Run(const AppArgs& appargs)
 
   if( !appargs.getWhoNeeds() && !appargs.getXDL() )
     {
-      DepFileWriter dfw(appargs.getAppendVersions());
-      Log::ChannelType lc = WriteAppMsg();
-      dfw.generate_log( pkg, lc);
+      cli::printRequiredPkgs( pkg ,  appargs.getAppendVersions() ) ;
     }
   else if( appargs.getWhoNeeds() && !appargs.getXDL() )
     {
