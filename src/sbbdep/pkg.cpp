@@ -200,6 +200,12 @@ Pkg::doLoadInstalled()
         if ( not pn.getURL().compare( 0, s.size() , s ) )
           return true;
     }
+
+    // check if is in /opt, it may have some layout and we must reply yes
+    std::string opt("/opt/");
+    if ( not pn.getURL().compare( 0, opt.size() , opt ) )
+      return true;
+
     return false;
   };
 

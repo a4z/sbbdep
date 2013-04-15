@@ -83,11 +83,9 @@ printRequiredBy(ElfFile& elf)
   std::string replacewith = " ORDER BY pkg, dynlinked.filename;";
   boost::replace_last(query, toreplace,replacewith);
 
-  XdlCmd cmd(query);
+  using namespace a4sqlt3;
+  SqlCommand cmd(query, { DbValue(elf.soName()), DbValue(elf.getArch()) });
   Cache::getInstance()->DB().CompileCommand(&cmd);
-
-  cmd.Parameters().at(0).set(elf.soName());
-  cmd.Parameters().at(1).set(elf.getArch());
 
   DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
   Cache::getInstance()->DB().Execute(&cmd, ds.get());
