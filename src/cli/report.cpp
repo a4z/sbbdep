@@ -95,6 +95,28 @@ void printSyncReport(Cache::SyncData syncdata)
 
 //--------------------------------------------------------------------------------------------------
 
+template<typename T>
+std::string joinToString(T container,  const std::string join,
+    std::function<std::string(const std::string&)> converter = [](const std::string& val){return val;} )
+{
+
+  std::string retval;
+
+  if( container.empty() )
+    return retval;
+
+  auto pos = container.begin();
+  retval+=*pos;
+
+  while( ++pos != container.end())
+    {
+      retval += join  + converter (*pos) ;
+    }
+
+  return retval;
+
+}
+
 
 void printRequiredPkgs( const Pkg& pkg, bool addversion )
 {
@@ -156,30 +178,21 @@ void printRequiredPkgs( const Pkg& pkg, bool addversion )
           for(auto& flds : ds)
               pkgsrequired.insert(flds.getField(0).getString() );
 
-          std::string joinednames ;
-          for(auto pos = pkgsrequired.begin(); pos!= pkgsrequired.end();++pos)
-            {
-              if( pos != pkgsrequired.begin() ) joinednames+=" | " ;
-              PkgName pknam(*pos) ;
-              joinednames+= pknam.Name() ;
-              if (addversion) joinednames+= " >= " + pknam.Version()  ;
-            }
+          auto makename = [addversion](const std::string val){
+            PkgName pknam(val) ;
+            std::string retval =  pknam.Name() ;
+            if (addversion) retval+= " >= " + pknam.Version()  ;
+            return retval;
+          };
 
+          std::string joinednames = joinToString( pkgsrequired , " | " ,  makename ) ;
           deps.insert(joinednames) ;
 
         }
     }
 
-  // to not start with a seperator
-  std::string seperator;
-  for(auto& s : deps){
-      if(seperator.empty())
-        seperator = addversion ? "\n" : ", ";
-      else
-        LogInfo()  << seperator ;
 
-      LogInfo() << s  ;
-  }
+  LogInfo() << joinToString( deps , (addversion ? "\n" : ", ") ) ;
   LogInfo() << std::endl  ;
 
   for ( auto& val : notfound )
