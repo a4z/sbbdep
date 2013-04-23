@@ -44,6 +44,25 @@ namespace cli{
 
 
 
+class ReportSet : public a4sqlt3::Dataset
+{
+public:
+  ReportSet(const std::vector<std::string> fieldnames)
+  {
+    for(std::size_t i = 0; i < fieldnames.size(); ++i)
+        m_namemap.insert( NameMap::value_type(fieldnames[i], i) ) ;
+  }
+
+  void merge( a4sqlt3::Dataset& other )
+  {
+    a4sqlt3::Dataset::merge(other) ;
+  }
+
+} ;
+
+
+
+
 void printSyncReport(Cache::SyncData syncdata)
 {
   using StringSet = std::set<std::string> ; //make it sortd
@@ -114,6 +133,151 @@ std::string joinToString(T container,  const std::string join,
     }
 
   return retval;
+
+}
+
+
+a4sqlt3::Dataset elfdeps(const ElfFile::StringVec& needed,
+    int arch, const ElfFile::StringVec& rrnupaths)
+{
+
+  auto quote = [](const std::string val) -> std::string{
+    return  std::string("'") + val + std::string("'") ;
+  };
+
+  std::string insonames = joinToString(needed, ",", quote);
+  std::string archstr = std::to_string( arch );
+  std::string unionrunpath;
+
+  if(not rrnupaths.empty())
+    {
+      std::string inrunpath = joinToString(rrnupaths , ",", quote);
+      unionrunpath = " UNION SELECT lddir FROM rrunpath WHERE lddir IN (" + inrunpath + ") ";
+    }
+
+  /*
+    SELECT pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
+    FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
+    WHERE dynlinked.soname IN ( ... ) AND dynlinked.arch = ...
+    AND  dynlinked.dirname IN (
+      SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs
+      UNION SELECT UNION SELECT lddir FROM rrunpath WHERE lddir IN ( ... ) // optional
+      );
+  */
+  std::string sql= "SELECT pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname"
+  " FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
+  " WHERE dynlinked.soname IN ( " ;
+  sql+=insonames +
+  sql+= " ) AND AND dynlinked.arch = ";
+  sql+= archstr ;
+  sql+= " AND  dynlinked.dirname IN  " ;
+  sql+= " ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs ";
+  sql+= unionrunpath ;
+  sql+= " );" ;
+
+
+  using namespace a4sqlt3;
+  Dataset ds ;
+  Cache::getInstance()->DB().Execute(sql, &ds) ;
+  return ds;
+
+}
+
+
+void printRequiredPkgs2( const Pkg& pkg, bool addversion )
+{
+
+  using namespace a4sqlt3;
+  using StringVec = std::vector<std::string>;
+  using StringSet = std::set<std::string>;
+
+  StringSet known_needed;
+
+  StringSet notFounds;
+
+  ReportSet rs{ {"pkgname", "filename", "soname"} };
+
+  for(const ElfFile& elf : pkg.getDynLinked())
+    {
+
+      StringVec needed = elf.getNeeded();
+
+      std::remove_if( std::begin(needed), std::end(needed),
+        [&known_needed](const std::string& val) ->bool {
+          return known_needed.find(val) != known_needed.end() ;
+        } );
+
+      if(needed.empty())
+        continue;
+      else
+        known_needed.insert(needed.begin(), needed.end()) ;
+
+      Dataset ds  = elfdeps( needed , elf.getArch() , elf.getRRunPaths() );
+// pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
+
+      // der unterschied zwischen needed und ds sind nout found....
+
+      std::remove_if( std::begin(needed), std::end(needed),
+        [&notFounds, &ds](const std::string& val) ->bool {
+          for(auto& row : ds)
+            {
+              if(row.getField(2).getString() == val )
+                return true;
+            }
+          return false;
+        } );
+
+       notFounds.insert(needed.begin(), needed.end()) ;
+       rs.merge(ds);
+
+    }
+
+
+
+    using SummaryMap = std::map<std::string, StringSet>;
+    SummaryMap summary;
+
+    // fullname as pkgname, filename , soname
+    for( auto& fr : rs )
+      {
+        std::string soname = fr.getField(2).getString() ;
+        auto finder = summary.find( soname );
+        if( finder == summary.end() )
+          {
+            auto insert = summary.insert( SummaryMap::value_type(soname, StringSet()) );
+            finder = insert.first;
+          }
+        std::string pkgname = fr.getField(0).getString() ;
+
+        if( pkgname != pkg.getPath().getBase() ) // can be optimised
+          finder->second.insert(pkgname) ;
+
+       }
+
+
+    StringSet deps;
+
+    auto makename = [addversion](const std::string val){
+      PkgName pknam(val) ;
+      std::string retval =  pknam.Name() ;
+      if (addversion) retval+= " >= " + pknam.Version()  ;
+      return retval;
+    };
+
+
+    for(auto pair : summary )
+      {
+        std::string joinednames = joinToString( pair.second , " | " ,  makename ) ;
+        deps.insert(joinednames) ;
+      }
+
+    Log::AppMessage() << joinToString( deps , (addversion ? "\n" : ", ") ) ;
+    Log::AppMessage() << std::endl  ;
+
+    for ( auto& val : notFounds )
+      {
+        Log::AppMessage() << "!!!not found: " << val << "\n" ;
+      }
 
 }
 

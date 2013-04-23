@@ -73,7 +73,7 @@ public:
   
   CacheDB( const std::string& name );
   
-  ~CacheDB();
+  ~CacheDB() noexcept = default;
   
   // don't forget , SQLITE_OPEN_READWRITE no mtx
   bool Open() ;

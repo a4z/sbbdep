@@ -76,7 +76,7 @@ public:
 
   const DynLinkedFiles& getDynLinked() const { return m_dlfiles; }
   
-  PkgType getType(){return m_type; }
+  PkgType getType() const {return m_type; }
   
 protected:
 

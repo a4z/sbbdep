@@ -153,6 +153,7 @@ CacheSQL::CreateIndexes()
   create index  idx_dynlinked_soname on dynlinked(soname);
   create index  idx_dynlinked_pkg_id on dynlinked(pkg_id);
   create index  idx_dynlinked_dirname on dynlinked(dirname);
+  create index  idx_dynlinked_basename on dynlinked(basename);
 
   create index  idx_required_dynlinked_id on required(dynlinked_id);
   create index  idx_required_needed on required(needed);
