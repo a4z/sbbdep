@@ -104,19 +104,28 @@ void printSyncReport(Cache::SyncData syncdata)
   reinstalled.insert(syncdata.reinstalled.begin(), syncdata.reinstalled.end());
 
 
-  LogInfo()    << "\n---synchronisation summary:\n" ;
+  if(not deleted.empty()
+      and not upgraded.empty()
+      and  not installed.empty()
+      and not reinstalled.empty())
+    LogInfo()    << "\n---synchronisation summary:\n" ;
+
+
   for(auto& val : deleted) LogInfo()    << "deleted: " << val << std::endl;
   for(auto& val : upgraded) LogInfo()   << "upgraded: " << val  << std::endl;
   for(auto& val : installed) LogInfo()  << "installed: " << val  << std::endl;
   for(auto& val : reinstalled) LogInfo()<< "reinstalled: " << val  << std::endl;
 
+  LogInfo() << "\n";
 }
 
 //--------------------------------------------------------------------------------------------------
 
+auto no_conversion = [](const std::string& val) -> std::string { return val;};
+
 template<typename T>
 std::string joinToString(T container,  const std::string join,
-    std::function<std::string(const std::string&)> converter = [](const std::string& val){return val;} )
+    std::function<std::string(const std::string&)> converter = no_conversion )
 {
 
   std::string retval;
@@ -125,7 +134,7 @@ std::string joinToString(T container,  const std::string join,
     return retval;
 
   auto pos = container.begin();
-  retval+=*pos;
+  retval+=converter(*pos);
 
   while( ++pos != container.end())
     {
@@ -167,8 +176,8 @@ a4sqlt3::Dataset elfdeps(const ElfFile::StringVec& needed,
   std::string sql= "SELECT pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname"
   " FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
   " WHERE dynlinked.soname IN ( " ;
-  sql+=insonames +
-  sql+= " ) AND AND dynlinked.arch = ";
+  sql+=insonames ;
+  sql+= " ) AND dynlinked.arch = ";
   sql+= archstr ;
   sql+= " AND  dynlinked.dirname IN  " ;
   sql+= " ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs ";
@@ -202,7 +211,7 @@ void printRequiredPkgs2( const Pkg& pkg, bool addversion )
 
       StringVec needed = elf.getNeeded();
 
-      std::remove_if( std::begin(needed), std::end(needed),
+      auto knownbegin = std::remove_if( std::begin(needed), std::end(needed),
         [&known_needed](const std::string& val) ->bool {
           return known_needed.find(val) != known_needed.end() ;
         } );
@@ -210,37 +219,48 @@ void printRequiredPkgs2( const Pkg& pkg, bool addversion )
       if(needed.empty())
         continue;
       else
-        known_needed.insert(needed.begin(), needed.end()) ;
+        known_needed.insert(knownbegin, needed.end()) ;
 
       Dataset ds  = elfdeps( needed , elf.getArch() , elf.getRRunPaths() );
 // pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
 
-      // der unterschied zwischen needed und ds sind nout found....
-
-      std::remove_if( std::begin(needed), std::end(needed),
+      auto notfound_end  = std::remove_if( std::begin(needed), std::end(needed),
         [&notFounds, &ds](const std::string& val) ->bool {
           for(auto& row : ds)
             {
               if(row.getField(2).getString() == val )
                 return true;
+
             }
           return false;
         } );
 
-       notFounds.insert(needed.begin(), needed.end()) ;
+
+      notFounds.insert(needed.begin(), notfound_end) ;
        rs.merge(ds);
 
     }
 
-
+// from here just report stuff ..
 
     using SummaryMap = std::map<std::string, StringSet>;
     SummaryMap summary;
+
+    StringSet soinpkg ;
+    for(const ElfFile& elf : pkg.getDynLinked())
+      {
+        if(not elf.soName().empty())
+          soinpkg.insert(elf.soName());
+      }
 
     // fullname as pkgname, filename , soname
     for( auto& fr : rs )
       {
         std::string soname = fr.getField(2).getString() ;
+
+        if(soinpkg.find(soname)!= soinpkg.end())
+          continue;
+
         auto finder = summary.find( soname );
         if( finder == summary.end() )
           {
@@ -249,8 +269,7 @@ void printRequiredPkgs2( const Pkg& pkg, bool addversion )
           }
         std::string pkgname = fr.getField(0).getString() ;
 
-        if( pkgname != pkg.getPath().getBase() ) // can be optimised
-          finder->second.insert(pkgname) ;
+	finder->second.insert(pkgname) ;
 
        }
 
@@ -270,6 +289,7 @@ void printRequiredPkgs2( const Pkg& pkg, bool addversion )
         std::string joinednames = joinToString( pair.second , " | " ,  makename ) ;
         deps.insert(joinednames) ;
       }
+
 
     Log::AppMessage() << joinToString( deps , (addversion ? "\n" : ", ") ) ;
     Log::AppMessage() << std::endl  ;
@@ -363,6 +383,10 @@ void printRequiredPkgs( const Pkg& pkg, bool addversion )
     {
       LogInfo() << pkg.getPath() <<" ! not found: " << val << "\n" ;
     }
+
+  LogInfo() << "-----------------------------------\n";
+
+  printRequiredPkgs2(pkg, addversion) ;
 
 }
 
