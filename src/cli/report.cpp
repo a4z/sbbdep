@@ -332,10 +332,48 @@ void printRequiredPkgs( const Pkg& pkg, bool addversion )
   Log::AppMessage() << joinToString(deps, ( addversion ? "\n" : ", " ));
   Log::AppMessage() << std::endl;
 
-  for(auto val : not_found)
+
+  using KeyValsMap = std::map< std::string , StringSet> ;
+  using Tree3 = std::map< std::string , KeyValsMap> ;
+
+  Tree3 nfreport;
+  auto addListToTree3 = [&nfreport](std::string key1, std::string key2, StringSet values) -> void
+  {
+    auto level1 = nfreport.find(key1);
+    if(level1 == nfreport.end())
+      nfreport.insert(Tree3::value_type(key1, { { key2, values} } )) ;
+    else
+      {
+        auto level2 = level1->second.find(key2);
+        if(level2 == level1->second.end())
+          level1->second.insert(KeyValsMap::value_type(key2, values));
+        else
+          level2->second.insert(values.begin(), values.end());
+      }
+
+  };
+
+
+
+  for(auto file_sos : not_found)   // file, so map
     {
-      Log::AppMessage() << "!!missing in: "<< pkg.getPath() <<
-          "\n file " << val.first << " <needed> " << joinToString( val.second, ", ") << "\n";
+      for (auto so : file_sos.second)
+        addListToTree3(pkg.getPath(), so, { file_sos.first });
+
+    }
+
+  // pkg, so, files
+  for(auto val : nfreport)
+    {
+      Log::AppMessage() << "!!missing in: "<< val.first << "\n";
+
+      for (auto missing : val.second)
+        {
+          Log::AppMessage() << " "<< missing.first << " not found \n" ;
+          Log::AppMessage() << "  needed by "<< joinToString(missing.second, ", ") << " \n";
+
+        }
+
     }
 
   Log::AppMessage() << std::endl;
@@ -363,7 +401,7 @@ void printRequiredXDL( const Pkg& pkg )
 
 
 }
-
+//--------------------------------------------------------------------------------------------------
 
 void printRequiredPkgs_old( const Pkg& pkg, bool addversion )
 {
