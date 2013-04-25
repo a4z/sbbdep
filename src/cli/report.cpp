@@ -38,29 +38,14 @@ THE SOFTWARE.
 
 #include <set>
 #include <algorithm>
+#include <tuple>
 
 namespace sbbdep {
 namespace cli{
 
 
 
-class ReportSet : public a4sqlt3::Dataset
-{
-public:
-  ReportSet(const std::vector<std::string> fieldnames)
-  {
-    for(std::size_t i = 0; i < fieldnames.size(); ++i)
-        m_namemap.insert( NameMap::value_type(fieldnames[i], i) ) ;
-  }
-
-  void merge( a4sqlt3::Dataset& other )
-  {
-    a4sqlt3::Dataset::merge(other) ;
-  }
-
-} ;
-
-
+//--------------------------------------------------------------------------------------------------
 
 
 void printSyncReport(Cache::SyncData syncdata)
@@ -105,9 +90,9 @@ void printSyncReport(Cache::SyncData syncdata)
 
 
   if(not deleted.empty()
-      and not upgraded.empty()
-      and  not installed.empty()
-      and not reinstalled.empty())
+      or not upgraded.empty()
+      or not installed.empty()
+      or not reinstalled.empty())
     LogInfo()    << "\n---synchronisation summary:\n" ;
 
 
@@ -120,6 +105,28 @@ void printSyncReport(Cache::SyncData syncdata)
 }
 
 //--------------------------------------------------------------------------------------------------
+
+
+namespace
+{
+
+class ReportSet : public a4sqlt3::Dataset
+{
+public:
+  ReportSet(const std::vector<std::string> fieldnames)
+  {
+    for(std::size_t i = 0; i < fieldnames.size(); ++i)
+        m_namemap.insert( NameMap::value_type(fieldnames[i], i) ) ;
+  }
+
+  void merge( a4sqlt3::Dataset& other )
+  {
+    a4sqlt3::Dataset::merge(other) ;
+  }
+
+} ;
+
+
 
 auto no_conversion = [](const std::string& val) -> std::string { return val;};
 
@@ -145,6 +152,12 @@ std::string joinToString(T container,  const std::string join,
 
 }
 
+using StringVec = std::vector<std::string>;
+using StringSet = std::set<std::string>;
+using NotFoundMap = std::map<std::string, StringSet>; // from file, so names
+
+}
+//--------------------------------------------------------------------------------------------------
 
 a4sqlt3::Dataset elfdeps(const ElfFile::StringVec& needed,
     int arch, const ElfFile::StringVec& rrnupaths)
@@ -153,6 +166,8 @@ a4sqlt3::Dataset elfdeps(const ElfFile::StringVec& needed,
   auto quote = [](const std::string val) -> std::string{
     return  std::string("'") + val + std::string("'") ;
   };
+
+  // TODO , check len  needed or sql , there is are SQLite limits
 
   std::string insonames = joinToString(needed, ",", quote);
   std::string archstr = std::to_string( arch );
@@ -190,119 +205,167 @@ a4sqlt3::Dataset elfdeps(const ElfFile::StringVec& needed,
   Cache::getInstance()->DB().Execute(sql, &ds) ;
   return ds;
 
+
+
 }
+//--------------------------------------------------------------------------------------------------
 
-
-void printRequiredPkgs2( const Pkg& pkg, bool addversion )
+std::tuple<ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
+getRequiredInfos(const Pkg& pkg)
 {
 
   using namespace a4sqlt3;
-  using StringVec = std::vector<std::string>;
-  using StringSet = std::set<std::string>;
 
   StringSet known_needed;
 
-  StringSet notFounds;
+  NotFoundMap not_found;
 
-  ReportSet rs{ {"pkgname", "filename", "soname"} };
+  ReportSet rs
+    {
+      { "pkgname", "filename", "soname" } };
 
   for(const ElfFile& elf : pkg.getDynLinked())
     {
 
       StringVec needed = elf.getNeeded();
 
-      auto knownbegin = std::remove_if( std::begin(needed), std::end(needed),
-        [&known_needed](const std::string& val) ->bool {
-          return known_needed.find(val) != known_needed.end() ;
-        } );
-
-      if(needed.empty())
-        continue;
-      else
-        known_needed.insert(knownbegin, needed.end()) ;
-
-      Dataset ds  = elfdeps( needed , elf.getArch() , elf.getRRunPaths() );
-// pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
-
-      auto notfound_end  = std::remove_if( std::begin(needed), std::end(needed),
-        [&notFounds, &ds](const std::string& val) ->bool {
-          for(auto& row : ds)
+      // but already looked up to the end
+      auto knownbegin = std::remove_if(std::begin(needed), std::end(needed),
+          [&known_needed](const std::string& val) ->bool
             {
+              return known_needed.find(val) != known_needed.end();
+            });
+
+      if( needed.empty() )
+        continue;
+      else // remember already looked up
+        known_needed.insert(knownbegin, needed.end());
+
+      Dataset ds = elfdeps(needed, elf.getArch(), elf.getRRunPaths());
+      // pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
+
+      // move found stuff to the end
+      auto notfound_end = std::remove_if(std::begin(needed), std::end(needed),
+          [&ds](const std::string& val) ->bool
+            {
+              for(auto& row : ds)
               if(row.getField(2).getString() == val )
-                return true;
+              return true;
 
-            }
-          return false;
-        } );
+              return false;
+            });
+
+      // if something was not found, it's now at the begin
+      StringSet notFounds;
+      notFounds.insert(needed.begin(), notfound_end);
+      if(not notFounds.empty())
+          not_found.insert(NotFoundMap::value_type(elf.getName().Str(), notFounds));
 
 
-      notFounds.insert(needed.begin(), notfound_end) ;
-       rs.merge(ds);
+      rs.merge(ds); // put this record to the report
 
     }
 
+  return std::make_tuple(rs, not_found);
+
+}
+//--------------------------------------------------------------------------------------------------
+
+
+void printRequiredPkgs( const Pkg& pkg, bool addversion )
+{
+
+  std::tuple<ReportSet, NotFoundMap> requiredinfo = getRequiredInfos(pkg);
+
+  ReportSet& rs = std::get<0>(requiredinfo) ;
+  NotFoundMap& not_found = std::get<1>(requiredinfo) ;
+
+
 // from here just report stuff ..
 
-    using SummaryMap = std::map<std::string, StringSet>;
-    SummaryMap summary;
+  using SummaryMap = std::map<std::string, StringSet>;
+  SummaryMap summary;
 
-    StringSet soinpkg ;
-    for(const ElfFile& elf : pkg.getDynLinked())
-      {
-        if(not elf.soName().empty())
-          soinpkg.insert(elf.soName());
-      }
+  StringSet soinpkg;
+  for(const ElfFile& elf : pkg.getDynLinked())
+    {
+      if( not elf.soName().empty() )
+        soinpkg.insert(elf.soName());
+    }
 
-    // fullname as pkgname, filename , soname
-    for( auto& fr : rs )
-      {
-        std::string soname = fr.getField(2).getString() ;
+  // pkgname, filename , soname
+  for(auto& fr : rs)
+    {
+      std::string soname = fr.getField(2).getString();
 
-        if(soinpkg.find(soname)!= soinpkg.end())
-          continue;
+      if( soinpkg.find(soname) != soinpkg.end() )
+        continue;
 
-        auto finder = summary.find( soname );
-        if( finder == summary.end() )
-          {
-            auto insert = summary.insert( SummaryMap::value_type(soname, StringSet()) );
-            finder = insert.first;
-          }
-        std::string pkgname = fr.getField(0).getString() ;
+      auto finder = summary.find(soname);
+      if( finder == summary.end() )
+        {
+          auto insert = summary.insert(SummaryMap::value_type(soname, StringSet()));
+          finder = insert.first;
+        }
+      std::string pkgname = fr.getField(0).getString();
 
-	finder->second.insert(pkgname) ;
+      finder->second.insert(pkgname);
 
-       }
+    }
 
+  StringSet deps;
 
-    StringSet deps;
-
-    auto makename = [addversion](const std::string val){
-      PkgName pknam(val) ;
-      std::string retval =  pknam.Name() ;
-      if (addversion) retval+= " >= " + pknam.Version()  ;
+  auto makename = [addversion](const std::string val)
+    {
+      PkgName pknam(val);
+      std::string retval = pknam.Name();
+      if (addversion) retval+= " >= " + pknam.Version();
       return retval;
     };
 
+  for(auto pair : summary)
+    {
+      std::string joinednames = joinToString(pair.second, " | ", makename);
+      deps.insert(joinednames);
+    }
 
-    for(auto pair : summary )
-      {
-        std::string joinednames = joinToString( pair.second , " | " ,  makename ) ;
-        deps.insert(joinednames) ;
-      }
+  Log::AppMessage() << joinToString(deps, ( addversion ? "\n" : ", " ));
+  Log::AppMessage() << std::endl;
+
+  for(auto val : not_found)
+    {
+      Log::AppMessage() << "!!missing in: "<< pkg.getPath() <<
+          "\n file " << val.first << " <needed> " << joinToString( val.second, ", ") << "\n";
+    }
+
+  Log::AppMessage() << std::endl;
+
+}
+//--------------------------------------------------------------------------------------------------
 
 
-    Log::AppMessage() << joinToString( deps , (addversion ? "\n" : ", ") ) ;
-    Log::AppMessage() << std::endl  ;
+void printRequiredXDL( const Pkg& pkg )
+{
+  std::tuple<ReportSet, NotFoundMap> requiredinfo = getRequiredInfos(pkg);
 
-    for ( auto& val : notFounds )
-      {
-        Log::AppMessage() << "!!!not found: " << val << "\n" ;
-      }
+  //pkgname,  filename , soname
+  ReportSet& rs = std::get<0>(requiredinfo) ;
+  NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
+
+  if(pkg.getType() == PkgType::Installed)
+    {
+      ;
+    }
+  else if(pkg.getType() == PkgType::BinLib)
+    {
+      ;
+    }
+
 
 }
 
 
-void printRequiredPkgs( const Pkg& pkg, bool addversion )
+void printRequiredPkgs_old( const Pkg& pkg, bool addversion )
 {
 
   using LibInfoType = std::pair<std::string, int>;
@@ -386,7 +449,7 @@ void printRequiredPkgs( const Pkg& pkg, bool addversion )
 
   LogInfo() << "-----------------------------------\n";
 
-  printRequiredPkgs2(pkg, addversion) ;
+  //printRequiredPkgs(pkg, addversion) ; // just for comapare
 
 }
 
