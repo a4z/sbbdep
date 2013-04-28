@@ -344,23 +344,11 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
     {
       if( db_dbversion ==  calcDbVersion(0, 1) )
         {
-          LogInfo()<< "update db schema form 0.1 to 0.2" << std::endl;
-          Transaction transaction(*this);
-          Execute("ALTER TABLE rrunpath ADD COLUMN lddir TEXT;");
-          std::string sql="update rrunpath "
-              "set lddir = mkRealPath("
-              "replaceOrigin(ldpath,(SELECT dirname FROM dynlinked WHERE id=dynlinked_id))"
-              ") ;" ;
-          Execute(sql);
-
-          std::string idxnew =
-              "create index  idx_pkgs_fullname on pkgs(fullname); "
-              "create index  idx_dynlinked_pkg_id on dynlinked(pkg_id);  "
-              "create index  idx_required_dynlinked_id on required(dynlinked_id); "
-              "create index  idx_rrunpath_dynlinked_id on rrunpath(dynlinked_id); ";
-          Execute(idxnew);
-          Execute("UPDATE version set major=0, minor=2, patchlevel=0;");
-          transaction.commit();
+          LogError() << "existing cache db was build with an old version of sbbdep.\n";
+          LogError() << "please create a new cache by using the -c option or removing " <<
+              m_name << ".\n";
+          LogError() << "Sorry for the inconvenience caused.\n\n" ;
+          throw a4z::ErrorMessage("old db version in use");
         }
 //      // for the future
 //      else if( db_dbversion ==  calcDbVersion(0, 2) )

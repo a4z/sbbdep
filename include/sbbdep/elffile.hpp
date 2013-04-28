@@ -53,7 +53,12 @@ public:
 
   Type getType()  const{ return m_type; }  
   
-  const std::string& soName() const { return m_soName ;}
+  std::string soName() const {
+    if(getType()== ElfFile::Library && m_soName.empty())
+      return getName().getBase();
+
+    return m_soName ;
+  }
   
   const StringVec& getNeeded() const { return m_needed ; }
   

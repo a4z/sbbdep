@@ -71,6 +71,9 @@ struct CacheSQL
   //depfinder
   static std::string SearchPgkOfSoNameSQL();
   
+
+  static std::string SearchPgkOfFile(); // dir , name
+
   static std::string SearchRequiredByLib() ; // 1 soname, 2 arch
 
   // this is for rpath $ORIGIN replacement,

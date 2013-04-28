@@ -78,6 +78,8 @@ public:
   
   PkgType getType() const {return m_type; }
   
+  ElfFile::Arch getArch() const;
+
 protected:
 
   //will see if the factory method will go into this class...

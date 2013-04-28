@@ -156,10 +156,74 @@ using StringVec = std::vector<std::string>;
 using StringSet = std::set<std::string>;
 using NotFoundMap = std::map<std::string, StringSet>; // from file, so names
 
+
+
+
+
+struct ReportElement{
+
+  using Node =  std::map< std::string, ReportElement >  ;
+
+  Node node ;
+
+  ReportElement() = default;
+
+  ReportElement( std::string s, ReportElement e ) : node {{s,e}}
+  {
+  }
+
+  void add(StringVec path)
+  {
+    if(not path.empty())
+      node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
+  }
+
+};
+
+
+struct ReportTree
+{
+  ReportElement::Node node ;
+
+  void add(StringVec path)
+  {
+    if(not path.empty())
+      node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
+  }
+};
+
+
+void printTree(ReportTree& tree)
+{
+
+  std::function<void(ReportElement, int)> printChild = [&printChild]( ReportElement elem , int level ){
+
+    for(auto node: elem.node){
+       for(int i = 0; i < level; ++i)
+            std::cout << " " ;
+
+      std::cout << node.first << "\n";
+      printChild(node.second, level+2);
+    }
+
+  } ;
+
+  for( auto elem : tree.node )
+  {
+    std::cout << elem.first << std::endl;
+    printChild(elem.second, 2) ;
+  }
+}
+
+
+
+
+
+
 }
 //--------------------------------------------------------------------------------------------------
 
-a4sqlt3::Dataset elfdeps(const ElfFile::StringVec& needed,
+a4sqlt3::Dataset elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
     int arch, const ElfFile::StringVec& rrnupaths)
 {
 
@@ -167,6 +231,22 @@ a4sqlt3::Dataset elfdeps(const ElfFile::StringVec& needed,
     return  std::string("'") + val + std::string("'") ;
   };
 
+/* todo after fixing the soname, use these for testing
+ * select * from dynlinked where soname = 'libuno_sal.so.3' ;
+
+  select * from dynlinked where basename = 'libcomphelpgcc3.so'  ;
+
+ /usr/lib64/libreoffice/program/libcomphelpgcc3.so and othe rlibreoffice files...
+ *
+ */
+
+  auto quoterpath = [&fromfile, &quote](const std::string val) -> std::string{
+    std::string pathname = CacheSQL::replaceORIGIN(val, fromfile.getDir());
+    if(pathname.empty()) return "'no/where'";
+    Path p(pathname);
+    p.makeRealPath() ;
+    return  quote(p.getURL()) ;
+  };
   // TODO , check len  needed or sql , there is are SQLite limits
 
   std::string insonames = joinToString(needed, ",", quote);
@@ -175,7 +255,7 @@ a4sqlt3::Dataset elfdeps(const ElfFile::StringVec& needed,
 
   if(not rrnupaths.empty())
     {
-      std::string inrunpath = joinToString(rrnupaths , ",", quote);
+      std::string inrunpath = joinToString(rrnupaths , ",", quoterpath);
       unionrunpath = " UNION SELECT lddir FROM rrunpath WHERE lddir IN (" + inrunpath + ") ";
     }
 
@@ -220,9 +300,7 @@ getRequiredInfos(const Pkg& pkg)
 
   NotFoundMap not_found;
 
-  ReportSet rs
-    {
-      { "pkgname", "filename", "soname" } };
+  ReportSet rs {{ "pkgname", "filename", "soname" } };
 
   for(const ElfFile& elf : pkg.getDynLinked())
     {
@@ -240,8 +318,8 @@ getRequiredInfos(const Pkg& pkg)
         continue;
       else // remember already looked up
         known_needed.insert(knownbegin, needed.end());
-
-      Dataset ds = elfdeps(needed, elf.getArch(), elf.getRRunPaths());
+      //LogDebug() << "HERE2: " << elf.getName().Str() << std::endl;
+      Dataset ds = elfdeps(elf.getName(), needed, elf.getArch(), elf.getRRunPaths());
       // pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
 
       // move found stuff to the end
@@ -272,6 +350,8 @@ getRequiredInfos(const Pkg& pkg)
 //--------------------------------------------------------------------------------------------------
 
 
+void printRequiredXDL( const Pkg& pkg );
+
 void printRequiredPkgs( const Pkg& pkg, bool addversion )
 {
 
@@ -298,7 +378,7 @@ void printRequiredPkgs( const Pkg& pkg, bool addversion )
     {
       std::string soname = fr.getField(2).getString();
 
-      if( soinpkg.find(soname) != soinpkg.end() )
+      if( soinpkg.find(soname) != soinpkg.end() ) // filter of internal in package delivered files
         continue;
 
       auto finder = summary.find(soname);
@@ -365,7 +445,7 @@ void printRequiredPkgs( const Pkg& pkg, bool addversion )
   // pkg, so, files
   for(auto val : nfreport)
     {
-      Log::AppMessage() << "!!missing in: "<< val.first << "\n";
+      Log::AppMessage() << "not found in standard link paths: "<< val.first << "\n";
 
       for (auto missing : val.second)
         {
@@ -378,17 +458,52 @@ void printRequiredPkgs( const Pkg& pkg, bool addversion )
 
   Log::AppMessage() << std::endl;
 
+
+  printRequiredXDL(pkg) ;
 }
 //--------------------------------------------------------------------------------------------------
+
+
+
+
+
 
 
 void printRequiredXDL( const Pkg& pkg )
 {
   std::tuple<ReportSet, NotFoundMap> requiredinfo = getRequiredInfos(pkg);
+  ReportTree reptree;
 
   //pkgname,  filename , soname
   ReportSet& rs = std::get<0>(requiredinfo) ;
   NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
+
+
+  for(auto& row : rs)
+    {
+      reptree.add( { row.getField(2).getString(),
+        row.getField(1).getString() ,
+        row.getField(0).getString() } );
+    }
+
+  if( pkg.getType() == PkgType::BinLib )
+    {
+      using namespace a4sqlt3;
+      SqlCommand* cmd = Cache::getInstance()->DB().getCommand("SearchPgkOfFile");
+      if( cmd == nullptr )
+        cmd = Cache::getInstance()->DB().createStoredCommand(
+            "SearchPgkOfFile" ,CacheSQL::SearchPgkOfFile());
+
+      cmd->Parameters().setValues( DbValueList{
+        DbValue(pkg.getPath().getDir()),
+        DbValue(pkg.getPath().getBase()),
+        DbValue(pkg.getArch()) });
+
+      Dataset ds;
+      Cache::getInstance()->DB().Execute(cmd, &ds);
+
+    }
+  printTree(reptree) ;
 
   if(pkg.getType() == PkgType::Installed)
     {

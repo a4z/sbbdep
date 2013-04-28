@@ -229,6 +229,15 @@ CacheSQL::MaxPkgTimeStamp()
 }
 //--------------------------------------------------------------------------------------------------
 
+std::string
+CacheSQL::SearchPgkOfFile()
+{
+  return R"~(
+SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
+ WHERE dynlinked.dirname=? AND dynlinked.basename=? AND dynlinked.arch=? ; 
+)~";
+}
+
 
 //depfinder
 std::string 
