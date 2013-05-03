@@ -64,7 +64,7 @@ struct CacheSQL
   static std::string MaxPkgTimeStamp();
   
 
-  constexpr const char* CreateViews();
+  static std::string CreateViews();
 
 
 

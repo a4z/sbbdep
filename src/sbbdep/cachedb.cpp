@@ -252,6 +252,7 @@ CacheDB::Create()
         {
           Transaction transact(*this);
           Execute(CacheSQL::CreateSchemaSQL());
+
           transact.commit();
         }
       catch ( const a4z::Err& e )
@@ -262,12 +263,13 @@ CacheDB::Create()
 
       CacheSQL::register_own_sql_functions(m_sql3db);
 
-      // call sync here ..
+      // possible call first sync/creation here and create indexes later..
 
       try
         {
           Transaction transact(*this);
           Execute(CacheSQL::CreateIndexes());
+          Execute(CacheSQL::CreateViews());
           transact.commit();
         }
       catch ( const a4z::Err& e )

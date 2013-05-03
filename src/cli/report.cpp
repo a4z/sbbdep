@@ -214,13 +214,57 @@ void printTree(ReportTree& tree)
     printChild(elem.second, 2) ;
   }
 }
+//--------------------------------------------------------------------------------------------------
 
 
+bool isRRunPath(const std::string& dirname)
+{
+  using namespace a4sqlt3;
+  SqlCommand* cmd = Cache::getInstance()->DB().getCommand("isRRunpathDirectory");
+  if( cmd == nullptr )
+    {
+      std::string sql = "SELECT count(*)  FROM rrunpath WHERE rrunpath.lddir NOT IN "
+          " (SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs) "
+          " AND rrunpath.lddir = ? ;" ;
 
+      cmd = Cache::getInstance()->DB().createStoredCommand(
+          "isRRunpathDirectory" ,  sql );
+    }
 
+  cmd->Parameters().Nr(1).set(dirname);
 
+  Dataset ds;
+  Cache::getInstance()->DB().Execute(cmd, &ds);
+  return ds.getField(0).getInt() > 0 ;
 
 }
+//--------------------------------------------------------------------------------------------------
+
+bool isLinkPath(const std::string& dirname)
+{
+  using namespace a4sqlt3;
+  SqlCommand* cmd = Cache::getInstance()->DB().getCommand("isLinkPathDirectory");
+  if( cmd == nullptr )
+    {
+      std::string sql =" SELECT count(*) FROM "
+         " (SELECT dirname FROM lddirs WHERE dirname = ? "
+            " UNION SELECT dirname FROM ldlnkdirs WHERE dirname = ?) ";
+
+      cmd = Cache::getInstance()->DB().createStoredCommand(
+          "isLinkPathDirectory" ,  sql );
+    }
+
+  cmd->Parameters().setValues( {DbValue(dirname), DbValue(dirname)} ) ;
+
+  Dataset ds;
+  Cache::getInstance()->DB().Execute(cmd, &ds);
+  return ds.getField(0).getInt() > 0 ;
+
+}
+//--------------------------------------------------------------------------------------------------
+
+
+} // ano ns
 //--------------------------------------------------------------------------------------------------
 
 a4sqlt3::Dataset elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
@@ -351,6 +395,10 @@ getRequiredInfos(const Pkg& pkg)
 
 
 void printRequiredXDL( const Pkg& pkg );
+void printWhoNeeds( const ElfFile& elf );
+
+
+
 
 void printRequiredPkgs( const Pkg& pkg, bool addversion )
 {
@@ -518,95 +566,37 @@ void printRequiredXDL( const Pkg& pkg )
 }
 //--------------------------------------------------------------------------------------------------
 
-void printRequiredPkgs_old( const Pkg& pkg, bool addversion )
+
+
+void printWhoNeeds( const ElfFile& elf )
 {
+  if(elf.getType() != ElfFile::Library)
+    return ;
 
-  using LibInfoType = std::pair<std::string, int>;
+  std::string dirname = elf.getName().getDir();
 
-  struct LibInfoCompair {
-    bool operator() (const LibInfoType& lhs, const LibInfoType& rhs) const
-      {
-        int cmp = lhs.first.compare( rhs.first ) ;
-        if (cmp < 0 ) return true;
-        else if ( cmp > 0 ) return false;
-        else return lhs.second < rhs.second ;
-      }
-  };
-  using LibInfoSet = std::set<LibInfoType, LibInfoCompair> ;
-
-
-  LibInfoSet requiresInfo , providesInfo ;
-
-  for(const ElfFile& elf : pkg.getDynLinked())
+  if(isRRunPath(dirname) )
     {
-      for(const std::string& needed : elf.getNeeded())
-          requiresInfo.insert(std::make_pair(needed,elf.getArch())) ;
 
-      if ( elf.soName().size() )
-        providesInfo.insert(std::make_pair(elf.soName(),elf.getArch())) ;
+    }
+  else if (isLinkPath(dirname))
+    {
+
+    }
+  else
+    {
+
     }
 
-
-  // remove libs that are within this pkg
-  for (auto pos = providesInfo.begin(); pos != providesInfo.end(); ++pos)
-      requiresInfo.erase(*pos) ;
+  // is this a runpath, if than only rnupath need to be checked
 
 
-  using StringSet = std::set<std::string> ;
 
-  StringSet deps;
-  StringSet notfound;
-
-  using namespace a4sqlt3;
-
-  SqlCommand* searcher = Cache::getInstance()->DB().getCommand("SearchPgkOfSoNameSQL");
-  if(not searcher)
-    searcher = Cache::getInstance()->DB().createStoredCommand("SearchPgkOfSoNameSQL",
-        CacheSQL::SearchPgkOfSoNameSQL(), { DbValueType::Text,  DbValueType::Int});
+  // else if public findable ? ... if ont , ignore
 
 
-  for( LibInfoSet::iterator pos = requiresInfo.begin(); pos!= requiresInfo.end(); ++pos )
-    {
-      searcher->Parameters().setValues( {DbValue(pos->first), DbValue(pos->second)}) ;
-      Dataset ds;
-      Cache::getInstance()->DB().Execute(searcher, &ds) ;
-
-      if( ds.getRowCount()== 0 ) notfound.insert(pos->first);
-      else
-        {
-          StringSet pkgsrequired;
-          for(auto& flds : ds)
-              pkgsrequired.insert(flds.getField(0).getString() );
-
-          auto makename = [addversion](const std::string val){
-            PkgName pknam(val) ;
-            std::string retval =  pknam.Name() ;
-            if (addversion) retval+= " >= " + pknam.Version()  ;
-            return retval;
-          };
-
-          std::string joinednames = joinToString( pkgsrequired , " | " ,  makename ) ;
-          deps.insert(joinednames) ;
-
-        }
-    }
-
-
-  LogInfo() << joinToString( deps , (addversion ? "\n" : ", ") ) ;
-  LogInfo() << std::endl  ;
-
-  for ( auto& val : notfound )
-    {
-      LogInfo() << pkg.getPath() <<" ! not found: " << val << "\n" ;
-    }
-
-  LogInfo() << "-----------------------------------\n";
-
-  //printRequiredPkgs(pkg, addversion) ; // just for comapare
 
 }
-
-
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------

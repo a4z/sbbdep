@@ -27,7 +27,6 @@ THE SOFTWARE.
 
 #include <sbbdep/cache.hpp>
 #include <sbbdep/cachedb.hpp>
-#include <sbbdep/cachesql.hpp>
 
 #include <sbbdep/elffile.hpp>
 
@@ -71,32 +70,6 @@ int getArch(Pkg& pkg)
 typedef std::shared_ptr<a4sqlt3::Dataset> DatasetPtr;
 
 
-void
-printRequiredBy(ElfFile& elf)
-{
-
-  if(elf.getType() != ElfFile::Library)
-    return ;
-
-  std::string query = CacheSQL::SearchRequiredByLib();
-  std::string toreplace = ";";
-  std::string replacewith = " ORDER BY pkg, dynlinked.filename;";
-  boost::replace_last(query, toreplace,replacewith);
-
-  using namespace a4sqlt3;
-  SqlCommand cmd(query, { DbValue(elf.soName()), DbValue(elf.getArch()) });
-  Cache::getInstance()->DB().CompileCommand(&cmd);
-
-  DatasetPtr ds = std::make_shared<a4sqlt3::Dataset>();
-  Cache::getInstance()->DB().Execute(&cmd, ds.get());
-
-  for( auto& flds : *ds ){
-      WriteAppMsg() << "required by pgk " << flds.getField("pkgname").asString() ;
-      WriteAppMsg() << " file " << flds.getField("dynlinked").asString() << "\n";
-  }
-
-
-}
 
 
 void
@@ -300,7 +273,7 @@ handleXDLrequest(Pkg& pkg)
   // TODO , can I change the dyn linked info list to a vector without side effects ?
   // should be possible ?
 
-  //printRequiredBy(dlinfos);
+
 
   return true;
 }

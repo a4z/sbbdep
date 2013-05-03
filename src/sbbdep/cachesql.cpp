@@ -134,11 +134,59 @@ CacheSQL::CheckVersion(int major, int minor, int patchlevel)
 }
 //--------------------------------------------------------------------------------------------------
 
-constexpr const char*
+std::string
 CacheSQL::CreateViews()
 {
   // for future, will need this ...
   return R"~(
+CREATE  VIEW IF NOT EXISTS sbbdep_deps_rpath_only AS
+select pkgs.id as pkgid,  pkgs.fullname as pkgname,
+ dynlinked.id as dlid, dynlinked.dirname as dldir, dynlinked.basename as dlname, 
+ required.needed , 
+ dlr.id as ndlid, dlr.dirname as ndir , dlr.basename as nname , 
+ pkgr.id as npkgid,  pkgr.fullname as npkg
+ from  pkgs inner join dynlinked on pkgs.id = dynlinked.pkg_id
+ inner join required on  dynlinked.id = required.dynlinked_id 
+ inner join dynlinked dlr on dlr.soname =  required.needed
+ inner join pkgs pkgr on pkgr.id = dlr.pkg_id
+where dynlinked.arch = dlr.arch 
+AND dlr.dirname in (  
+SELECT DISTINCT lddir from rrunpath WHERE  dynlinked_id =  dynlinked.id 
+AND lddir not in ( SELECT DISTINCT dirname FROM lddirs UNION SELECT DISTINCT dirname FROM ldlnkdirs )  
+)
+;
+
+CREATE  VIEW IF NOT EXISTS sbbdep_deps_syspath_only AS
+select pkgs.id as pkgid,  pkgs.fullname as pkgname,
+ dynlinked.id as dlid, dynlinked.dirname as dldir, dynlinked.basename as dlname, 
+ required.needed , 
+ dlr.id as ndlid, dlr.dirname as ndir , dlr.basename as nname , 
+ pkgr.id as npkgid,  pkgr.fullname as npkg
+ from  pkgs inner join dynlinked on pkgs.id = dynlinked.pkg_id
+ inner join required on  dynlinked.id = required.dynlinked_id 
+ inner join dynlinked dlr on dlr.soname =  required.needed
+ inner join pkgs pkgr on pkgr.id = dlr.pkg_id
+where dynlinked.arch = dlr.arch 
+AND dlr.dirname in ( SELECT DISTINCT dirname FROM lddirs UNION SELECT DISTINCT dirname FROM ldlnkdirs )  
+AND dlid not in (select dlid from sbbdep_deps_rpath_only where sbbdep_deps_rpath_only.dlid = dlid)
+;
+
+CREATE  VIEW IF NOT EXISTS sbbdep_deps_sys_and_sysrpath_mix AS
+select pkgs.id as pkgid,  pkgs.fullname as pkgname,
+ dynlinked.id as dlid, dynlinked.dirname as dldir, dynlinked.basename as dlname, 
+ required.needed , 
+ dlr.id as ndlid, dlr.dirname as ndir , dlr.basename as nname , 
+ pkgr.id as npkgid,  pkgr.fullname as npkg
+ from  pkgs inner join dynlinked on pkgs.id = dynlinked.pkg_id
+ inner join required on  dynlinked.id = required.dynlinked_id 
+ inner join dynlinked dlr on dlr.soname =  required.needed
+ inner join pkgs pkgr on pkgr.id = dlr.pkg_id
+where dynlinked.arch = dlr.arch 
+AND dlr.dirname in ( SELECT DISTINCT dirname FROM lddirs UNION SELECT DISTINCT dirname FROM ldlnkdirs )  
+;
+
+CREATE  VIEW IF NOT EXISTS sbbdep_deps_sys_and_rpath AS
+select * , 'lddir' as type from sbbdep_deps_syspath_only union select * , 'rpath' as type from sbbdep_deps_rpath_only ;
 
 )~";
 }
@@ -159,6 +207,7 @@ CacheSQL::CreateIndexes()
   create index  idx_required_needed on required(needed);
 
   create index  idx_rrunpath_dynlinked_id on rrunpath(dynlinked_id);
+  create index  idx_rrunpath_lddir on rrunpath(lddir);
   
 
 )~";
