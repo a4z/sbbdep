@@ -52,7 +52,7 @@ class Pkg
   
 public:  
 
-  typedef std::vector<ElfFile> DynLinkedFiles;
+  typedef std::vector<ElfFile> DynLinkedFiles; // TODO rename this into something better
 
   // TODO, merge this into something like SpecialDirs together with lddir
   static const StringSet& usualBinDirs(); // need review, see comment in cpp

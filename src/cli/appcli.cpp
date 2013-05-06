@@ -175,35 +175,24 @@ AppCli::Run(const AppArgs& appargs)
     }
 
 
-
-  if( !appargs.getWhoNeeds() && !appargs.getXDL() )
+  if( appargs.getWhoNeeds() )
     {
-      cli::printRequiredPkgs( pkg ,  appargs.getAppendVersions() ) ;
-    }
-  else if( appargs.getWhoNeeds() && !appargs.getXDL() )
-    {
-      // todo , if file is give, message that file is ignored or implement this
-      DepFileWriter dfw(appargs.getAppendVersions());
-      Log::ChannelType lc = WriteAppMsg();
-      dfw.who_requires(pkg, lc);
-    }
-  else if( appargs.getXDL() )
-    {
-      if( appargs.getWhoNeeds() )
+      try
         {
-          if( !lookup::explain_who_needs(pkg, Log::AppMessage() ) )
-            LogError() << "explain dynamic linked (whoneeds) did not work\n"
-                << "a better error message is in development\n";
+          cli::printWhoNeed( pkg , appargs.getAppendVersions(), appargs.getXDL() ) ;
         }
-      else
+      catch (const a4z::Err& e)
         {
-          if( !handleXDLrequest(pkg) )
-            LogError() << "explain dynamic linked did not work\n"
-                << "a better error message is in development\n";
+          LogError() << e << std::endl;
+          return -5;
         }
 
     }
-  else
+  else if( !appargs.getWhoNeeds()  )
+    {
+      cli::printRequired( pkg ,  appargs.getAppendVersions(), appargs.getXDL() ) ;
+    }
+  else // TODO , this is more or less obsolete
     {
       LogError() << "Can not run given combination of arguments \n";
       LogError() << "(could possible, but I do not want)\n";

@@ -39,8 +39,11 @@ namespace cli{
 void printSyncReport(Cache::SyncData syncdata) ;
 
 
-void printRequiredPkgs( const Pkg& pkg, bool addversion ) ;
 
+
+void printRequired( const Pkg& pkg, bool addversion, bool xdl ) ;
+
+void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl ) ;
 
 
 }}
