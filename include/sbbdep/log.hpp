@@ -29,8 +29,11 @@ THE SOFTWARE.
 #include <a4z/single.hpp>
 #include <a4z/errostream.hpp>
 
+#include <boost/iostreams/stream.hpp>
 
 namespace sbbdep {
+
+
 
 
 
@@ -39,7 +42,7 @@ class Log : public a4z::LogSystemOMP<char> , public a4z::Single<sbbdep::Log>
 {
     friend class a4z::Single<Log>;
     
-    void setupChannels() ;
+
     
 public:
     //typedef a4z::LogSystemOMP< char >::ChannelType ChannelType;
@@ -62,9 +65,9 @@ public:
 #endif
   {
     // Error/Debug = cerr , Info = cout
-    setupChannels();
+
   }
-  ~Log(){};
+  ~Log();
   
 
   static ChannelType Debug(int loglevel = Level::Debug){ 
@@ -121,6 +124,32 @@ Log::ChannelType WriteAppMsg(){
 
 
 typedef Log::ChannelType LogChannelType; 
+
+
+// this should go to log base class
+struct DevNullSink
+{
+  typedef char char_type;
+  typedef boost::iostreams::sink_tag category;
+
+  std::streamsize
+  write( const char_type* c, std::streamsize n )
+  {
+    return n;
+  }
+};
+//--------------------------------------------------------------------------------------------------
+
+
+class  DevNullStream : public boost::iostreams::stream< DevNullSink >
+{
+  DevNullSink m_sink;
+public:
+  DevNullStream(): m_sink(){ open(m_sink); }
+};
+//--------------------------------------------------------------------------------------------------
+static  DevNullStream DevNull  ;
+
 
 
 }

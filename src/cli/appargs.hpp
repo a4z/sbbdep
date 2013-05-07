@@ -41,6 +41,7 @@ class AppArgs
   int m_nosync;
   int m_whoneeds;
   int m_explain_dynlinked;
+  int m_quiet;
   int m_featureX;
   
 public:
@@ -58,6 +59,7 @@ public:
   bool getNoSync() const { return m_nosync ; }
   bool getWhoNeeds() const { return m_whoneeds ; }
   bool getXDL() const { return m_explain_dynlinked ; }
+  bool getQuiet() const { return m_quiet ; }
   bool getFeatureX() const { return m_featureX ; }
   
   void PrintHelp();

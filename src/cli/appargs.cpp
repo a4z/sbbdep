@@ -42,6 +42,7 @@ AppArgs::AppArgs()
   , m_nosync(0)
   , m_whoneeds(0)
   , m_explain_dynlinked(0)
+  , m_quiet(0)
   , m_featureX(0)
 {
   
@@ -135,6 +136,12 @@ AppArgs::PrintHelp()
   
   write.newline();
   write.newline();  
+
+  write.option("--quiet") .description("Suppress status information during sync") ;
+  write.descriptionline("messages during synchronisation will not be shown") ;
+  write.newline();
+  write.newline();
+
   
   write.option("--whoneeds") .description("prints packages that depend on arg") ;
   write.descriptionline("instead of printing the requirements of the given arg") ;
@@ -178,6 +185,7 @@ AppArgs::Parse( int argc, char** argv )
       { "short", no_argument, &m_append_versions, 0 },
       { "version", no_argument, &m_sbbdep_version, 1 },
       { "nosync", no_argument, &m_nosync, 1 },
+      { "quiet", no_argument, &m_quiet, 1 },
       { "whoneeds", no_argument, &m_whoneeds, 1 },
       { "xdl", no_argument, &m_explain_dynlinked, 1 },
       { "fx", no_argument, &m_featureX, 1 }, // undocumented option for the next test...

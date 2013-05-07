@@ -157,6 +157,12 @@ using StringVec = std::vector<std::string>;
 using StringSet = std::set<std::string>;
 using NotFoundMap = std::map<std::string, StringSet>; // from file, so names
 
+template<typename T>
+StringSet getKeySet(const T& keyvalmap){
+  StringSet retval;
+  for(auto val: keyvalmap) retval.insert(val.first);
+  return retval;
+}
 
 
 
@@ -333,8 +339,9 @@ a4sqlt3::Dataset elfdeps(const PathName& fromfile, const ElfFile::StringVec& nee
       UNION SELECT UNION SELECT lddir FROM rrunpath WHERE lddir IN ( ... ) // optional
       );
   */
-  std::string sql= "SELECT pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname "
-  " FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
+  std::string sql= "SELECT pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname,  " ;
+  sql+= "'" + fromfile.Str() + "' as  requiredby" ;
+  sql+=" FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
   " WHERE dynlinked.soname IN ( " ;
   sql+=insonames ;
   sql+= " ) AND dynlinked.arch = ";
@@ -365,7 +372,7 @@ getRequiredInfos(const Pkg& pkg)
 
   NotFoundMap not_found;
 
-  ReportSet rs {{ "pkgname", "filename", "soname" } };
+  ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
 
   for(const ElfFile& elf : pkg.getDynLinked())
     {
@@ -413,6 +420,133 @@ getRequiredInfos(const Pkg& pkg)
 
 }
 //--------------------------------------------------------------------------------------------------
+
+
+
+
+
+void printRequired( const Pkg& pkg, bool addversion, bool xdl )
+{
+
+  std::tuple<ReportSet, NotFoundMap> requiredinfo = getRequiredInfos(pkg);
+  ReportTree reptree;
+
+  //pkgname,  filename , soname
+  ReportSet& rs = std::get<0>(requiredinfo) ;
+  NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
+
+
+  for(auto& row : rs)
+    {
+      if(xdl)
+        {
+        reptree.add( {row.getField(3).getString(),
+          row.getField(2).getString(),
+          row.getField(1).getString() ,
+          row.getField(0).getString() } );
+        }
+      else
+        {
+          reptree.add( {
+            row.getField(2).getString(),
+            row.getField(1).getString() ,
+            row.getField(0).getString() } );
+        }
+    }
+
+  if( pkg.getType() == PkgType::BinLib )
+    {
+
+      a4sqlt3::Dataset ds = getPkgsFromFile( pkg.getPath(), pkg.getArch() ) ;
+      // what to do with this , just a report summary ?
+
+    }
+
+  auto makename = [addversion, xdl](const std::string val)
+    {
+
+      if(xdl)
+        {
+          if(addversion)
+            return val;
+
+          return PkgName(val).Name();
+        }
+
+      PkgName pknam(val);
+      std::string retval = pknam.Name();
+      if (addversion) retval+= " >= " + pknam.Version();
+      return retval;
+
+
+    };
+
+  if( xdl )
+    {
+      for(auto requiredby_sos : reptree.node)
+        {
+          Log::AppMessage() << "file " << requiredby_sos.first << " needs:\n";
+          for(auto so_files : requiredby_sos.second.node)
+            {
+              Log::AppMessage() << "  " << so_files.first << " found in:\n";
+              for(auto file_pkgs : so_files.second.node)
+                {
+                  Log::AppMessage() << "    " << file_pkgs.first << "( "
+                      << joinToString(getKeySet(file_pkgs.second.node), " | ", makename) << " )\n";
+                }
+            }
+        }
+    }
+  else
+    {
+      StringSet pkglist;
+      std::string ignore_name ;
+      if(pkg.getType() == PkgType::Installed)
+        ignore_name = pkg.getPath().getBase();
+
+
+      for(auto so_files: reptree.node) // filename so, just what the pkgs...
+        {
+          StringSet pkgsofso;
+          for(auto file_pkgs : so_files.second.node )
+            {
+              if(not ignore_name.empty() &&
+                  file_pkgs.second.node.find(ignore_name) != file_pkgs.second.node.end() )
+                { // avoid own package in the list
+                  pkgsofso.clear();
+                  break;
+                }
+              for (auto so_pkg : file_pkgs.second.node)
+                pkgsofso.insert( so_pkg.first ) ;
+            }
+
+          if(not pkgsofso.empty())
+            pkglist.insert( joinToString(pkgsofso, " | ", makename ) ) ;
+        }
+
+      Log::AppMessage() << joinToString(pkglist, addversion ? "\n" : ", " ) ;
+
+    }
+    Log::AppMessage() << std::endl;
+
+
+    if(not notFounds.empty())
+      {
+        Log::AppMessage() << std::endl;
+        Log::AppMessage() << "not found in standard paths: \n" ;
+      }
+
+    for(auto val : notFounds)
+        Log::AppMessage() << " for " << val.first << ": "<<joinToString(val.second, ", ") << "\n" ;
+
+    Log::AppMessage() << std::endl;
+
+
+}
+
+
+
+
 
 
 
@@ -479,88 +613,8 @@ getWhoNeeds(const ElfFile& elf)
 //--------------------------------------------------------------------------------------------------
 
 
-void printRequired( const Pkg& pkg, bool addversion, bool xdl )
-{
-
-  std::tuple<ReportSet, NotFoundMap> requiredinfo = getRequiredInfos(pkg);
-  ReportTree reptree;
-
-  //pkgname,  filename , soname
-  ReportSet& rs = std::get<0>(requiredinfo) ;
-  NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
 
 
-  for(auto& row : rs)
-    {
-      reptree.add( { row.getField(2).getString(),
-        row.getField(1).getString() ,
-        row.getField(0).getString() } );
-    }
-
-  if( pkg.getType() == PkgType::BinLib )
-    {
-
-      a4sqlt3::Dataset ds = getPkgsFromFile( pkg.getPath(), pkg.getArch() ) ;
-      // what to do with this , justa report summary ?
-
-    }
-
-  auto makename = [addversion](const std::string val)
-    {
-      PkgName pknam(val);
-      std::string retval = pknam.Name();
-      if (addversion) retval+= " >= " + pknam.Version();
-      return retval;
-    };
-
-  if(xdl)
-    printTree(reptree) ;
-  else
-    {
-      StringSet pkglist;
-      std::string ignore_name ;
-      if(pkg.getType() == PkgType::Installed)
-        ignore_name = pkg.getPath().getBase();
-
-
-      for(auto so_files: reptree.node) // filename so, just what the pkgs...
-        {
-          StringSet pkgsofso;
-          for(auto file_pkgs : so_files.second.node )
-            {
-              if(not ignore_name.empty() &&
-                  file_pkgs.second.node.find(ignore_name) != file_pkgs.second.node.end() )
-                { // avoid own package in the list
-                  pkgsofso.clear();
-                  break;
-                }
-              for (auto so_pkg : file_pkgs.second.node)
-                pkgsofso.insert( so_pkg.first ) ;
-            }
-
-          if(not pkgsofso.empty())
-            pkglist.insert( joinToString(pkgsofso, " | ", makename ) ) ;
-        }
-
-      Log::AppMessage() << joinToString(pkglist, addversion ? "\n" : ", " ) ;
-
-    }
-    Log::AppMessage() << std::endl;
-
-
-    if(not notFounds.empty())
-      {
-        Log::AppMessage() << std::endl;
-        Log::AppMessage() << "not found in standard paths: \n" ;
-      }
-
-    for(auto val : notFounds)
-        Log::AppMessage() << " for " << val.first << ": "<<joinToString(val.second, ", ") << "\n" ;
-
-    Log::AppMessage() << std::endl;
-
-
-}
 
 void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
 {

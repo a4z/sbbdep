@@ -27,12 +27,9 @@ THE SOFTWARE.
 
 namespace sbbdep {
 
-void
-Log::setupChannels(  )
+
+Log::~Log(  )
 {
-  addChannel(ChannelId::Debug, std::cerr , "Debug");
-  addChannel(ChannelId::Error, std::cerr , "Error");
-  addChannel(ChannelId::Info, std::cout , "Info");
 
 }
 

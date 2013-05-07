@@ -37,13 +37,14 @@
 
 
 #include <sbbdep/config.hpp> // generated 
-#include <sbbdep/singles.hpp>
 #include <sbbdep/path.hpp>
+#include <sbbdep/log.hpp>
 
 // should possible not be required here
 #include <sbbdep/pkg.hpp>
 
 #include <a4z/err.hpp>
+#include <a4z/singlecollector.hpp>
 
 namespace sbbdep {
 
@@ -55,8 +56,7 @@ AppCli::AppCli()
 
 AppCli::~AppCli()
 {
-  //clear all singletons
-  destroy_all_singles();
+  a4z::SingleCollector::destroy();
 }
 //--------------------------------------------------------------------------------------------------
 
@@ -115,9 +115,20 @@ AppCli::Run(const AppArgs& appargs)
       return 0;
     }
 
+  // log must be the first thing that is initialised !!
+  Log::create();
+  Log::getInstance()->addChannel(Log::ChannelId::Debug, std::cerr , "Debug");
+  Log::getInstance()->addChannel(Log::ChannelId::Error, std::cerr , "Error");
+
+  if( appargs.getQuiet() )
+    Log::getInstance()->addChannel(Log::ChannelId::Info, DevNull , "Info");
+  else
+    Log::getInstance()->addChannel(Log::ChannelId::Info, std::cout , "Info");
+
+
   try
     {
-      init_all_singles(appargs.getDBName());
+      Cache::create( appargs.getDBName() );
 
       if( !prepairCache(appargs.getNoSync()) )
         return -2;
