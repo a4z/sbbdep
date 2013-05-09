@@ -27,10 +27,11 @@ THE SOFTWARE.
 
 
 #include <sbbdep/path.hpp>
-#include <sbbdep/stringset.hpp>
 #include <sbbdep/elffile.hpp>
 
 #include <vector>
+#include <set>
+#include <string>
 
 namespace sbbdep {
 
@@ -51,6 +52,8 @@ class Pkg
 
   
 public:  
+
+  using StringSet = std::set<std::string> ;
 
   typedef std::vector<ElfFile> DynLinkedFiles; // TODO rename this into something better
 

@@ -34,14 +34,14 @@ namespace sbbdep {
 // check also #include <sbbdep/lddirs.hpp>
 // they contain a bit more
 // TODO , check if they are still required, the are also in the database
-const StringSet&
+const Pkg::StringSet&
 Pkg::usualBinDirs()
 {
   static const StringSet data
     { "/sbin", "/usr/sbin", "/bin", "/usr/bin", "/usr/libexec" };
   return data;
 }
-const StringSet&
+const Pkg::StringSet&
 Pkg::usualLibDirs()
 {
   static const StringSet data

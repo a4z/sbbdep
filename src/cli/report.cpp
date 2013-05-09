@@ -533,11 +533,18 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
     if(not notFounds.empty())
       {
         Log::AppMessage() << std::endl;
-        Log::AppMessage() << "not found in standard paths: \n" ;
+        Log::AppMessage() << "sonames not found via standard paths: \n" ;
       }
 
     for(auto val : notFounds)
         Log::AppMessage() << " for " << val.first << ": "<<joinToString(val.second, ", ") << "\n" ;
+
+    if(not notFounds.empty())
+      {
+        Log::AppMessage() << "this does not necessarily there is a problem\n";
+        Log::AppMessage() << "the application can either have its own environment or the soname is resolved via a link name \n" ;
+        Log::AppMessage() << "you can re-check the affected file with ldd \n" ;
+      }
 
     Log::AppMessage() << std::endl;
 
@@ -555,30 +562,6 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
 
 
 
-a4sqlt3::Dataset  // {"dynlinked", "pkg", "file" , "soname" }
-getWhoNeedsPkg(const std::string& name)
-{
-
-  using namespace a4sqlt3;
-
-  const std::string spname = "get_whoneed_pkgname";
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand(spname);
-  if( cmd == nullptr )
-    {
-      std::string sql = "SELECT ndir || '/' || nname as dynlinked ,pkgname as pkg, dldir || '/' || dlname as file,  needed as soname"
-          " FROM sbbdep_deps_sys_and_rpath"
-          " WHERE sbbdep_deps_sys_and_rpath.npkg = ?";
-
-      cmd = Cache::getInstance()->DB().createStoredCommand(spname, sql);
-    }
-
-  cmd->Parameters().setValues({ name });
-
-  Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, &ds);
-  return ds ;
-}
-//--------------------------------------------------------------------------------------------------
 
 
 
@@ -613,6 +596,30 @@ getWhoNeeds(const ElfFile& elf)
 //--------------------------------------------------------------------------------------------------
 
 
+a4sqlt3::Dataset  // {"dynlinked", "pkg", "file" , "soname" }
+getWhoNeedsPkg(const std::string& name)
+{
+
+  using namespace a4sqlt3;
+
+  const std::string spname = "get_whoneed_pkgname";
+  SqlCommand* cmd = Cache::getInstance()->DB().getCommand(spname);
+  if( cmd == nullptr )
+    {
+      std::string sql = "SELECT ndir || '/' || nname as dynlinked ,pkgname as pkg, dldir || '/' || dlname as file,  needed as soname"
+          " FROM sbbdep_deps_sys_and_rpath"
+          " WHERE sbbdep_deps_sys_and_rpath.npkg = ?";
+
+      cmd = Cache::getInstance()->DB().createStoredCommand(spname, sql);
+    }
+
+  cmd->Parameters().setValues({ name });
+
+  Dataset ds;
+  Cache::getInstance()->DB().Execute(cmd, &ds);
+  return ds ;
+}
+//--------------------------------------------------------------------------------------------------
 
 
 

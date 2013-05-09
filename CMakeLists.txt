@@ -75,28 +75,22 @@ include
 ##########################################################################################
 
 SET ( libsbbdep_HDR
+
 include/sbbdep/cache.hpp
 include/sbbdep/cachedb.hpp
 include/sbbdep/cachesql.hpp
 include/sbbdep/dircontent.hpp
-
 include/sbbdep/elffile.hpp
-
 include/sbbdep/error.hpp
-
-include/sbbdep/log.hpp
 include/sbbdep/lddirs.hpp
+include/sbbdep/lddmap.hpp
+include/sbbdep/log.hpp
 include/sbbdep/path.hpp
 include/sbbdep/pathname.hpp
-
 include/sbbdep/pkg.hpp
 include/sbbdep/pkgadmdir.hpp
-
 include/sbbdep/pkgname.hpp
 
-
-include/sbbdep/stringlist.hpp
-include/sbbdep/stringset.hpp
 ${sbbdep_CONFIG_HEADER}
 )
 #-----------------------------------------------------------------------------------------
@@ -109,9 +103,8 @@ src/sbbdep/cache.cpp
 src/sbbdep/cachedb.cpp
 src/sbbdep/cachesql.cpp
 src/sbbdep/dircontent.cpp
-
 src/sbbdep/elffile.cpp
-
+src/sbbdep/lddmap.cpp
 src/sbbdep/lddirs.cpp
 src/sbbdep/log.cpp
 src/sbbdep/path.cpp
@@ -137,27 +130,18 @@ SET ( sbbdepcli_SRC
     src/cli/appargs.hpp
     src/cli/appcli.cpp
     src/cli/appcli.hpp
-    src/cli/depfilewriter.hpp
-    src/cli/depfilewriter.cpp
 
     src/cli/main.cpp
-    src/cli/pkoffile.hpp
-    src/cli/pkoffile.cpp
-    
-    src/cli/xdl.hpp
-    src/cli/xdl.cpp
+  
        
     src/cli/report.hpp
     src/cli/report.cpp
 
-   
-    src/cli/lookup.hpp
-    src/cli/lookup_dependencies.hpp 
     src/cli/lookup_fileinpackages.hpp
-    src/cli/lookup_whoneeds.hpp            
-    src/cli/lookup_dependencies.cpp 
     src/cli/lookup_fileinpackages.cpp
-    src/cli/lookup_whoneeds.cpp        
+    
+    src/cli/featurex.hpp
+    src/cli/featurex.cpp
 )
 
 

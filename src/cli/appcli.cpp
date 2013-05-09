@@ -25,11 +25,11 @@
 #include "appargs.hpp"
 
 // should become one
-#include "depfilewriter.hpp"
-#include "xdl.hpp"
-#include "lookup.hpp"
+#include "lookup_fileinpackages.hpp"
 // and that is this one.. TODO continue refactoring
 #include "report.hpp"
+
+#include "featurex.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -183,6 +183,12 @@ AppCli::Run(const AppArgs& appargs)
     {
       LogError() << e << std::endl;
       return -4;
+    }
+
+  if(appargs.getFeatureX())
+    {
+      sbbdep::cli::runFx() ;
+      return 0  ;
     }
 
 

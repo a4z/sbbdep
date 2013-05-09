@@ -570,6 +570,9 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 
   transaction.commit();
 
+  LogInfo() << "run db analyzer\n";
+  Execute("ANALYZE ;");
+
   m_isNew = false ;
 
 }

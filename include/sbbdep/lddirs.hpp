@@ -25,13 +25,16 @@ THE SOFTWARE.
 #ifndef SBBDEP_LDDIRS_HPP_
 #define SBBDEP_LDDIRS_HPP_
 
-#include <sbbdep/stringset.hpp>
+#include <set>
+#include <string>
 
 namespace sbbdep
 {
 // get dir names from /etc/ld.so.conf
 class LDDirs
 {
+
+  using StringSet = std::set<std::string> ;
   
 public:
   LDDirs();

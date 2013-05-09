@@ -50,8 +50,8 @@ LDDirs::~LDDirs()
 }
 //-------------------------------------------------------------------------------------------------- 
 
-const StringSet& 
-LDDirs::readLdDirs()
+auto
+LDDirs::readLdDirs() -> const LDDirs::StringSet&
 {
   m_lddirs.clear();
   m_lddirs.insert("/lib");
@@ -94,8 +94,8 @@ LDDirs::readLdDirs()
 /*
  * get all directory names that have files with link in an lddir....
  */
-const StringSet& 
-LDDirs::readLdLinkDirs()
+auto
+LDDirs::readLdLinkDirs() -> const LDDirs::StringSet&
 {
   if(m_lddirs.empty()) // ensure loading cause need it later to filter what already exists
     readLdDirs();
