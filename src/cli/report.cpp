@@ -271,7 +271,7 @@ bool isLinkPath(const std::string& dirname)
 //--------------------------------------------------------------------------------------------------
 
 a4sqlt3::Dataset
-getPkgsFromFile(const PathName& fname, int arch)
+getPkgsOfFile(const PathName& fname, int arch)
 {
   using namespace a4sqlt3;
   SqlCommand* cmd = Cache::getInstance()->DB().getCommand("SearchPgkOfFile");
@@ -457,7 +457,7 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
   if( pkg.getType() == PkgType::BinLib )
     {
 
-      a4sqlt3::Dataset ds = getPkgsFromFile( pkg.getPath(), pkg.getArch() ) ;
+      a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
       // what to do with this , just a report summary ?
 
     }
@@ -541,7 +541,7 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
 
     if(not notFounds.empty())
       {
-        Log::AppMessage() << "this does not necessarily there is a problem\n";
+        Log::AppMessage() << "this does not necessarily mean there is a problem\n";
         Log::AppMessage() << "the application can either have its own environment or the soname is resolved via a link name \n" ;
         Log::AppMessage() << "you can re-check the affected file with ldd \n" ;
       }
@@ -559,58 +559,98 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
 
 
 
+std::string getWhoNeedFileQuery()
+{
+  return
+  R"~(
+  select pkgs.fullname as pkg, dynlinked.filename as filename , required.needed as soname , d2.filename as fromfile
+   from  pkgs 
+   inner join dynlinked on pkgs.id = dynlinked.pkg_id
+   inner join required on dynlinked.id = required.dynlinked_id
+  left join rrunpath on dynlinked.id = rrunpath.dynlinked_id 
+  left join dynlinked d2 on required.needed = d2.soname 
+   where  d2.arch = dynlinked.arch 
+  AND 
+  ( 
+    ( rrunpath.lddir IS NOT NULL AND d2.dirname not in (  select distinct * from lddirs union select distinct * from ldlnkdirs )  and rrunpath.lddir = d2.dirname )
+   OR 
+    (
+    d2.dirname in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) 
+    AND ( rrunpath.lddir IS  NULL OR rrunpath.lddir in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) )
+    )
+  )
+  AND d2.filename = ? 
+  ;
+  )~";
+}
+
+std::string
+getWhoNeedPkgQuery()
+{
+
+  return R"~(
+select pkgs.fullname as pkg, dynlinked.filename as filename , required.needed as soname , d2.filename as fromfile
+ from  pkgs 
+ inner join dynlinked on pkgs.id = dynlinked.pkg_id
+ inner join required on dynlinked.id = required.dynlinked_id
+left join rrunpath on dynlinked.id = rrunpath.dynlinked_id 
+left join dynlinked d2 on required.needed = d2.soname 
+inner join pkgs p2 on p2.id = d2.pkg_id
+ where  d2.arch = dynlinked.arch 
+AND 
+( 
+  ( rrunpath.lddir IS NOT NULL AND d2.dirname not in (  select distinct * from lddirs union select distinct * from ldlnkdirs )  and rrunpath.lddir = d2.dirname )
+ OR 
+  (
+  d2.dirname in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) 
+  AND ( rrunpath.lddir IS  NULL OR rrunpath.lddir in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) )
+  )
+)
+AND p2.fullname  = ? 
+;
+)~";
+}
+//--------------------------------------------------------------------------------------------------
 
 
 
 
-
-
-a4sqlt3::Dataset // { "pkg", "file" , "soname" }
+a4sqlt3::Dataset // { "pkg", "filename" , "soname", "fromfile" }
 getWhoNeeds(const ElfFile& elf)
 {
-  if( elf.getType() != ElfFile::Library )
-    return a4sqlt3::Dataset();
-
-  std::string dirname = elf.getName().getDir();
-  std::string fname = elf.getName().getBase();
-
   using namespace a4sqlt3;
+
+  Dataset ds;
+
+  if( elf.getType() != ElfFile::Library )
+    return ds;
 
   const std::string spname = "get_whoneed_file";
   SqlCommand* cmd = Cache::getInstance()->DB().getCommand(spname);
   if( cmd == nullptr )
     {
-      std::string sql = "SELECT pkgname as pkg, dldir || '/' || dlname as file,  needed as soname "
-          " FROM sbbdep_deps_sys_and_rpath"
-          " WHERE ndir = ? AND nname = ?";
-
-      cmd = Cache::getInstance()->DB().createStoredCommand(spname, sql);
+      cmd = Cache::getInstance()->DB().createStoredCommand(spname, getWhoNeedFileQuery());
     }
 
-  cmd->Parameters().setValues({ dirname, fname });
+  cmd->Parameters().setValues({ elf.getName().Str() });
 
-  Dataset ds;
   Cache::getInstance()->DB().Execute(cmd, &ds);
   return ds ;
 }
 //--------------------------------------------------------------------------------------------------
 
 
-a4sqlt3::Dataset  // {"dynlinked", "pkg", "file" , "soname" }
+a4sqlt3::Dataset  // { "pkg", "filename" , "soname" , "fromfile" }
 getWhoNeedsPkg(const std::string& name)
 {
 
   using namespace a4sqlt3;
 
-  const std::string spname = "get_whoneed_pkgname";
+  const std::string spname = "get_whoneed_pkg";
   SqlCommand* cmd = Cache::getInstance()->DB().getCommand(spname);
   if( cmd == nullptr )
-    {
-      std::string sql = "SELECT ndir || '/' || nname as dynlinked ,pkgname as pkg, dldir || '/' || dlname as file,  needed as soname"
-          " FROM sbbdep_deps_sys_and_rpath"
-          " WHERE sbbdep_deps_sys_and_rpath.npkg = ?";
-
-      cmd = Cache::getInstance()->DB().createStoredCommand(spname, sql);
+    { //select
+      cmd = Cache::getInstance()->DB().createStoredCommand(spname, getWhoNeedPkgQuery());
     }
 
   cmd->Parameters().setValues({ name });
@@ -618,6 +658,7 @@ getWhoNeedsPkg(const std::string& name)
   Dataset ds;
   Cache::getInstance()->DB().Execute(cmd, &ds);
   return ds ;
+
 }
 //--------------------------------------------------------------------------------------------------
 
@@ -626,47 +667,31 @@ getWhoNeedsPkg(const std::string& name)
 void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
 {
 
-  ReportTree reptree;
+  ReportSet rs {{ "pkg", "filename" , "soname" , "fromfile"  } };
+
+
   if(pkg.getType() == PkgType::BinLib  )
     {
-      // should be exact one 1 , but..
-      for(auto elf: pkg.getDynLinked())
-        {
-          if(elf.getType() != ElfFile::Library)
-            continue;
-
-          ReportSet rs{ {"pkg", "file" , "soname"} };
-          rs.merge( getWhoNeeds(elf) ) ;
-
-          for(auto& row : rs)
-            {
-              reptree.add( {
-                elf.getName().Str() + " (" + row.getField(2).getString() + ")" ,
-                addversion ? row.getField(0).getString() : PkgName(row.getField(0).getString()).Name() ,
-                row.getField(1).getString()
-              } );
-            }
-
-        }
-
+      if(pkg.getDynLinked().size()> 0) // should always be exact 1
+        rs.merge ( getWhoNeeds( pkg.getDynLinked()[0]) ) ;
     }
-  if( pkg.getType() == PkgType::Installed)
+  else if( pkg.getType() == PkgType::Installed)
     {
-      ReportSet rs{ {"dynlinked", "pkg", "file" , "soname"} };
-      rs.merge( getWhoNeedsPkg( PkgName(pkg.getPath().getBase()).FullName() ) ) ;
-
-            for(auto& row : rs)
-              {
-                reptree.add( {
-                  addversion ? row.getField(1).getString() : PkgName(row.getField(1).getString()).Name() ,
-                  row.getField(2).getString() ,
-                  "needs "+row.getField(0).getString() + " (" + row.getField(3).getString() + ")"
-                } );
-              }
+      rs.merge ( getWhoNeedsPkg(pkg.getPath().getBase()) ) ;
     }
+  else
+    return ;
 
   if(xdl)
     {
+      ReportTree reptree;
+      for(auto& row : rs )
+        {
+          reptree.add( { row.getField(3).getString() + " (" + row.getField(2).getString() +")",
+            row.getField(0).getString() ,
+            row.getField(1).getString() } ) ;
+
+        }
 
       std::function<void(ReportElement, int)> printChild = [&printChild]( ReportElement elem , int level ){
         for(auto node: elem.node){
@@ -689,11 +714,12 @@ void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
   else
     {
       StringSet pkgnames ;
-      for(auto soinfos : reptree.node )
+      for(auto& row : rs )
         {
-          for (auto pgkinfos : soinfos.second.node )
-            pkgnames.insert(pgkinfos.first) ;
+          pkgnames.insert(addversion ?
+              row.getField(0).getString() : PkgName(row.getField(0).getString()).Name() ) ;
         }
+
       Log::AppMessage()<< joinToString( pkgnames, addversion ? "\n": ", " ) << std::endl ;
     }
 

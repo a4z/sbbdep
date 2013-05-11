@@ -139,30 +139,26 @@ CacheSQL::CreateViews()
 {
   // for future, will need this ...
   return R"~(
-create view sbbdep_known_deps_link as
- select pkgs.fullname, dynlinked.filename , required.needed  , d2.filename , p2.fullname
+create view sbbdep_known_deplinks as
+select pkgs.fullname as pkg, dynlinked.filename as file , required.needed as needed , d2.filename as fromfile , p2.fullname as frompkg
  from
  pkgs 
  inner join dynlinked on pkgs.id = dynlinked.pkg_id
  inner join required on dynlinked.id = required.dynlinked_id
-left join rrunpath on dynlinked.id = rrunpath.dynlinked_id and rrunpath.lddir = d2.dirname 
+left join rrunpath on dynlinked.id = rrunpath.dynlinked_id 
 left join dynlinked d2 on required.needed = d2.soname 
 inner join pkgs p2 on p2.id = d2.pkg_id
- where  d2.arch = dynlinked.arch and 
-rrunpath.lddir IS NOT NULL and d2.dirname not in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) 
- union
-select pkgs.fullname, dynlinked.filename , required.needed  , d2.filename , p2.fullname
- from
- pkgs 
- inner join dynlinked on pkgs.id = dynlinked.pkg_id
- inner join required on dynlinked.id = required.dynlinked_id
-left join rrunpath on dynlinked.id = rrunpath.dynlinked_id  --and rrunpath.lddir = d2.dirname 
-left join dynlinked d2 on required.needed = d2.soname 
-inner join pkgs p2 on p2.id = d2.pkg_id
- where  d2.arch = dynlinked.arch and 
-d2.dirname in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) 
-AND ( rrunpath.lddir IS  NULL or rrunpath.lddir in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) )
-
+ where  d2.arch = dynlinked.arch 
+AND 
+( 
+  ( rrunpath.lddir IS NOT NULL AND d2.dirname not in (  select distinct * from lddirs union select distinct * from ldlnkdirs )  and rrunpath.lddir = d2.dirname )
+ OR 
+  (
+  d2.dirname in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) 
+  AND ( rrunpath.lddir IS  NULL OR rrunpath.lddir in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) )
+  )
+)
+;
 )~";
 }
 //--------------------------------------------------------------------------------------------------
@@ -261,29 +257,6 @@ SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
  WHERE dynlinked.dirname=? AND dynlinked.basename=? AND dynlinked.arch=? ; 
 )~";
 }
-
-
-//depfinder
-std::string 
-CacheSQL::SearchPgkOfSoNameSQL()
-{
-  return R"~(
-SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
- WHERE dynlinked.soname=? AND dynlinked.arch=? 
- AND dirname IN (SELECT dirname FROM lddirs 
- UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs
- UNION SELECT lddir from rrunpath 
- WHERE  dynlinked_id =  dynlinked.id 
-  AND rrunpath.lddir IS NOT NULL 
-  AND rrunpath.lddir NOT IN 
-    ( SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs UNION SELECT dirname FROM ldusrdirs )
-)  ;
-
-)~";
-  
-  
-}
-//--------------------------------------------------------------------------------------------------
 
 
 

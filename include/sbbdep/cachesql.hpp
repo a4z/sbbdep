@@ -66,7 +66,6 @@ struct CacheSQL
 
   static std::string CreateViews();
 
-  static std::string SearchPgkOfSoNameSQL();
 
   static std::string SearchPgkOfFile(); // dir , name
 
