@@ -1,4 +1,4 @@
-Slackware Builds and Binaries Dependencies Walker
+Slackware Builds and Binaries Dependencies (Walker)
 
 
 sbbdep is a tool for Slackware and Slackware based distributions that traces 
@@ -16,8 +16,8 @@ some simple usage example:
     /usr/bin/akonadictl
     /usr/bin/akonadiserver
 
-
 this shows us that libboost_program_options.so is required by the package akonadi.
+
 
 sbbdep works also in the other direction
 
@@ -36,9 +36,9 @@ file /usr/lib64/libboost_program_options.so.1.49.0 needs:
   libstdc++.so.6 found in:
     /usr/lib64/libstdc++.so.6.0.17( cxxlibs | gcc-g++ )
 
-
 this shows which packages libboost_program_options.so requires. 
- 
+
+
 these queries can also be used for packages
 
 ./sbbdep  /var/adm/packages/boost-1.49.0-x86_64-3 
@@ -56,6 +56,21 @@ akonadi-1.9.0-x86_64-1alien
 boost-1.49.0-x86_64-3
 kig-4.10.3-x86_64-1alien
 
+the output format is a package list as slapt-get expects it for dependencies.
+(the --short option would generate a list without version number)
+
+passing the --xdl option would list the dependencies for each file of the package.
+to keep the samples short this option is skiped here.
+
+
+If the given argument is a file but not with binary dependencies, sbbdep will
+search the package database and show found information.
+
+./sbbdep  /etc/pine.conf 
+not a file with binary dependencies: /etc/pine.conf
+ try to find other information:
+absolute match in /var/adm/packages/alpine-2.02-x86_64-1: /etc/pine.conf
+
 
 
 Some more information:
@@ -72,14 +87,15 @@ Some more information:
 
  through having a static storage sbbdep is very fast in querying these information.
 
- currently query for package/packages and file/packages in both directions are implemented.
+ currently query for package/packages and file/packages in both directions are 
+ implemented.
 
  For query/generate information sbbdep itself is not a must requirement, 
  the sqlite3 db can be used with other programming languages or sql query tool like 
  the sqlite3 cli or sqliteman.
  A description of the database can be found in README_db.txt.
 
-
+ for additional information run ./sbbdep --help
  
  
 building sbbdep:
