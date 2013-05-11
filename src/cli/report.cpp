@@ -199,7 +199,7 @@ struct ReportTree
   }
 };
 
-
+#ifdef DEBUG
 void printTree(ReportTree& tree)
 {
 
@@ -209,7 +209,7 @@ void printTree(ReportTree& tree)
        for(int i = 0; i < level; ++i)
             std::cout << " " ;
 
-      std::cout << node.first << "\n";
+      LogDebug() << node.first << "\n";
       printChild(node.second, level+2);
     }
 
@@ -217,10 +217,11 @@ void printTree(ReportTree& tree)
 
   for( auto elem : tree.node )
   {
-    std::cout << elem.first << std::endl;
+      LogDebug() << elem.first << std::endl;
     printChild(elem.second, 2) ;
   }
 }
+#endif // DEBUG
 //--------------------------------------------------------------------------------------------------
 
 

@@ -44,7 +44,13 @@ namespace {
 void runFx()
 {
   
-  Log::AppMessage() << __PRETTY_FUNCTION__ << "\n";
+
+  Log::AppMessage() << " internal test function " << __PRETTY_FUNCTION__ << "\n";
+
+#ifndef DEBUG
+  Log::AppMessage() << "not enabled in non debug builds\n";
+  return;
+#endif
 
   using namespace a4sqlt3;
   Dataset rs_cnt, rs_files ;
