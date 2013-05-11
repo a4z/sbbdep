@@ -1,27 +1,61 @@
+Slackware Builds and Binaries Dependencies Walker
 
-sbbdep is a tool for Slackware and Slackware based distributions like Salixos that traces 
+
+sbbdep is a tool for Slackware and Slackware based distributions that traces 
 binary runtime dependencies of dynamic linked files.
 
 some simple usage example:
 
-    >./sbbdep --whoneeds /usr/lib64/libboost_program_options.so
-    akonadi-1.7.2-x86_64-1
+./sbbdep  --whoneeds  --xdl /usr/lib64/libboost_program_options.so
+/usr/lib64/libboost_program_options.so.1.49.0 (libboost_program_options.so.1.49.0)
+  akonadi-1.9.0-x86_64-1alien
+    /usr/bin/akonadi_agent_launcher
+    /usr/bin/akonadi_agent_server
+    /usr/bin/akonadi_control
+    /usr/bin/akonadi_rds
+    /usr/bin/akonadictl
+    /usr/bin/akonadiserver
+
 
 this shows us that libboost_program_options.so is required by the package akonadi.
 
 sbbdep works also in the other direction
+
+./sbbdep --xdl --short /usr/lib64/libboost_program_options.so
+file /usr/lib64/libboost_program_options.so.1.49.0 needs:
+  libc.so.6 found in:
+    /lib64/libc-2.15.so( glibc | glibc-solibs )
+  libgcc_s.so.1 found in:
+    /usr/lib64/libgcc_s.so.1( aaa_elflibs | gcc )
+  libm.so.6 found in:
+    /lib64/libm-2.15.so( glibc | glibc-solibs )
+  libpthread.so.0 found in:
+    /lib64/libpthread-2.15.so( glibc | glibc-solibs )
+  librt.so.1 found in:
+    /lib64/librt-2.15.so( glibc | glibc-solibs )
+  libstdc++.so.6 found in:
+    /usr/lib64/libstdc++.so.6.0.17( cxxlibs | gcc-g++ )
+
+
+this shows which packages libboost_program_options.so requires. 
  
-    >./sbbdep -s  /usr/lib64/libboost_program_options.so
-    aaa_elflibs | gcc, cxxlibs | gcc-g++, glibc | glibc-solibs
- 
- 
-this shows us that which packages libboost_program_options.so requires. 
- 
- 
-Of course sbbdep can do much more, like 
-    reporting missing files, 
-    reporting dependencies between files and files
-    generating dependencies information for packages and install destinations of Slackware builds 
+these queries can also be used for packages
+
+./sbbdep  /var/adm/packages/boost-1.49.0-x86_64-3 
+aaa_elflibs >= 14.0 | bzip2 >= 1.0.6
+aaa_elflibs >= 14.0 | gcc >= 4.7.1_multilib
+aaa_elflibs >= 14.0 | zlib >= 1.2.6
+cxxlibs >= 6.0.17 | gcc-g++ >= 4.7.1_multilib
+glibc >= 2.15_multilib | glibc-solibs >= 2.15_multilib
+icu4c >= 49.1.2
+
+or
+
+./sbbdep --whoneeds /var/adm/packages/boost-1.49.0-x86_64-3 
+akonadi-1.9.0-x86_64-1alien
+boost-1.49.0-x86_64-3
+kig-4.10.3-x86_64-1alien
+
 
 
 Some more information:
@@ -38,7 +72,7 @@ Some more information:
 
  through having a static storage sbbdep is very fast in querying these information.
 
- currently query for package/packages and file/packages in both directions are implemented in sbbdep
+ currently query for package/packages and file/packages in both directions are implemented.
 
  For query/generate information sbbdep itself is not a must requirement, 
  the sqlite3 db can be used with other programming languages or sql query tool like 
@@ -46,20 +80,45 @@ Some more information:
  A description of the database can be found in README_db.txt.
 
 
+ 
+ 
 building sbbdep:
 
-Beside boost, libelf and file, which are part of the current Slackware distribution.
 sbbdep needs a4z and a4sqlt3 which are both available on bitbucket
+an additional build dependency is boost
 
-an easy way for downloading and building is cloning
-https://bitbucket.org/a4z/sbbdep_slk
- if you want the mercurial repository
-
-or download the current state of the source bundle from
+an easy way for downloading the source disribution including a4z and a4sqlt3 is 
+getting the source bundle from
 https://bitbucket.org/a4z/sbbdep_slk/downloads
 
+https://bitbucket.org/a4z/sbbdep_slk is this meta repository includes the 
+required subrepositories
 
-more information about build and runtime dependencies can be found at
-https://bitbucket.org/a4z/sbbdep_slk
-or in the README of the sbbdep_slk source bundle.
+since sbbdep uses C++11 Slackware 14 or newer ist required.
 
+runtime dependencies from sbbdep can be viewed with sbbdep itself: 
+
+./sbbdep --short --xdl sbbdep 
+
+file /home/slk140/a4work/sbbdep_slk/build/bin/sbbdep needs:
+  libc.so.6 found in:
+    /lib64/libc-2.15.so( glibc | glibc-solibs )
+  libgcc_s.so.1 found in:
+    /usr/lib64/libgcc_s.so.1( aaa_elflibs | gcc )
+  libgomp.so.1 found in:
+    /usr/lib64/libgomp.so.1.0.0( gcc )
+  libm.so.6 found in:
+    /lib64/libm-2.15.so( glibc | glibc-solibs )
+  libpthread.so.0 found in:
+    /lib64/libpthread-2.15.so( glibc | glibc-solibs )
+  libstdc++.so.6 found in:
+    /usr/lib64/libstdc++.so.6.0.17( cxxlibs | gcc-g++ )
+
+
+
+
+    
+    
+    
+    
+ 
