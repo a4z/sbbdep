@@ -391,7 +391,9 @@ getRequiredInfos(const Pkg& pkg)
         continue;
       else // remember already looked up
         known_needed.insert(knownbegin, needed.end());
-      //LogDebug() << "HERE2: " << elf.getName().Str() << std::endl;
+
+      // if ldd option, than here the branch
+
       Dataset ds = elfdeps(elf.getName(), needed, elf.getArch(), elf.getRRunPaths());
       // pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
 
@@ -706,7 +708,7 @@ void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
 
       for( auto elem : reptree.node )
       {
-        Log::AppMessage() << elem.first << std::endl;
+        Log::AppMessage() << elem.first << " is used from:"<<std::endl;
         printChild(elem.second, 2) ;
       }
       Log::AppMessage() << std::endl;
