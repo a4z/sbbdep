@@ -73,25 +73,25 @@ public:
     if(!(m_cmdpkg=m_dbref.getCommand("InsertPkgSQL"))) {
       m_cmdpkg = m_dbref.createStoredCommand("InsertPkgSQL", CacheSQL::InsertPkgSQL(),
           { DbValueType::Text, DbValueType::Text, DbValueType::Text,
-              DbValueType::Text, DbValueType::Int,
-              DbValueType::Text, DbValueType::Int } ) ;
+              DbValueType::Text, DbValueType::Int64,
+              DbValueType::Text, DbValueType::Int64 } ) ;
     }
 
     if(!(m_cmddynlinked=m_dbref.getCommand("InsertDynLinkedSQL"))) {
         m_cmddynlinked = m_dbref.createStoredCommand("InsertDynLinkedSQL", CacheSQL::InsertDynLinkedSQL(),
-            {DbValueType::Int,DbValueType::Text,
+            {DbValueType::Int64,DbValueType::Text,
                 DbValueType::Text, DbValueType::Text
-                ,DbValueType::Text, DbValueType::Int } );
+                ,DbValueType::Text, DbValueType::Int64 } );
     }
 
     if(!(m_cmdrequired=m_dbref.getCommand("InsertRequiredSQL"))) {
         m_cmdrequired = m_dbref.createStoredCommand("InsertRequiredSQL", CacheSQL::InsertRequiredSQL(),
-            {DbValueType::Int,DbValueType::Text});
+            {DbValueType::Int64,DbValueType::Text});
     }
 
     if(!(m_cmdrrunpath=m_dbref.getCommand("InsertRRunPathSQL"))) {
         m_cmdrrunpath = m_dbref.createStoredCommand("InsertRRunPathSQL", CacheSQL::InsertRRunPathSQL(),
-            {DbValueType::Int,DbValueType::Text, DbValueType::Text});
+            {DbValueType::Int64,DbValueType::Text, DbValueType::Text});
     }
 
     if(!(m_cmddelpkg=m_dbref.getCommand("DeletePkgByFullnameSQL"))) {
@@ -322,16 +322,16 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
   using namespace a4sqlt3;
   auto getDbVersion = [calcDbVersion, this]() -> int
     {
-      Dataset ds( {DbValueType::Int, DbValueType::Int} );
+      Dataset ds( {DbValueType::Int64, DbValueType::Int64} );
       this->Execute("SELECT major, minor FROM version", &ds);
-      return calcDbVersion(ds.getField(0).getInt(), ds.getField(1).getInt());
+      return calcDbVersion(ds.getField(0).getInt64(), ds.getField(1).getInt64());
     };
   auto getDbAppVersion = [calcFullVersion, this]() -> int
     {
-      Dataset ds({DbValueType::Int, DbValueType::Int, DbValueType::Int});
+      Dataset ds({DbValueType::Int64, DbValueType::Int64, DbValueType::Int64});
       this->Execute("SELECT major, minor , patchlevel FROM version", &ds);
-      return calcFullVersion(ds.getField(0).getInt(),
-          ds.getField(1).getInt(),ds.getField(2).getInt());
+      return calcFullVersion(ds.getField(0).getInt64(),
+          ds.getField(1).getInt64(),ds.getField(2).getInt64());
     };
 
   if( calcFullVersion(major, minor, patchlevel) == getDbAppVersion() )

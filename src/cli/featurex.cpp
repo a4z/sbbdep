@@ -63,7 +63,7 @@ void runFx()
   for(auto& row : rs_files)
     {
       StingMap ldmap = getLddMap( row.getField(0).getString() )  ;
-      LogDebug() << counter << " from " << rs_cnt.getField(0).getInt() << " - " << ldmap.size() <<   "\n";
+      LogDebug() << counter << " from " << rs_cnt.getField(0).getInt64() << " - " << ldmap.size() <<   "\n";
       counter++;
     }
 

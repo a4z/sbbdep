@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include <sbbdep/cache.hpp>
 #include <sbbdep/elffile.hpp>
 #include <sbbdep/cachesql.hpp>
-
+#include <sbbdep/lddmap.hpp>
 
 #include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/dataset.hpp>
@@ -123,6 +123,14 @@ public:
   void merge( const a4sqlt3::Dataset& other )
   {
     a4sqlt3::Dataset::merge(other) ;
+  }
+
+  void addFields(a4sqlt3::DbValueList fields)
+  {
+    if( fields.size() != m_namemap.size() )
+      throw "TODO"; //TODO
+
+    m_rows.emplace_back(fields);
   }
 
 } ;
@@ -243,7 +251,7 @@ bool isRRunPath(const std::string& dirname)
 
   Dataset ds;
   Cache::getInstance()->DB().Execute(cmd, &ds);
-  return ds.getField(0).getInt() > 0 ;
+  return ds.getField(0).getInt64() > 0 ;
 
 }
 //--------------------------------------------------------------------------------------------------
@@ -266,25 +274,27 @@ bool isLinkPath(const std::string& dirname)
 
   Dataset ds;
   Cache::getInstance()->DB().Execute(cmd, &ds);
-  return ds.getField(0).getInt() > 0 ;
+  return ds.getField(0).getInt64() > 0 ;
 
 }
 //--------------------------------------------------------------------------------------------------
 
 a4sqlt3::Dataset
-getPkgsOfFile(const PathName& fname, int arch)
+getPkgsOfFile(const PathName& fname)
 {
   using namespace a4sqlt3;
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand("SearchPgkOfFile");
+  const std::string cmdname = "getPkgsOfFilebyFile" ;
+  SqlCommand* cmd = Cache::getInstance()->DB().getCommand(cmdname);
   if( cmd == nullptr )
-    cmd = Cache::getInstance()->DB().createStoredCommand(
-        "SearchPgkOfFile" ,CacheSQL::SearchPgkOfFile());
+    {
+      std::string sql = R"~(
+    SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
+     WHERE dynlinked.dirname=? AND dynlinked.basename=? AND dynlinked.arch=? ; 
+    )~";
+      cmd = Cache::getInstance()->DB().createStoredCommand(cmdname, sql);
+    }
 
-
-  cmd->Parameters().setValues( DbValueList{
-    DbValue(fname.getDir()),
-    DbValue(fname.getBase()),
-    DbValue(arch) });
+  cmd->Parameters().setValues( { fname.Str() }) ;
 
   Dataset ds;
   Cache::getInstance()->DB().Execute(cmd, &ds);
@@ -295,7 +305,7 @@ getPkgsOfFile(const PathName& fname, int arch)
 } // ano ns
 //--------------------------------------------------------------------------------------------------
 
-a4sqlt3::Dataset elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
+ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
     int arch, const ElfFile::StringVec& rrnupaths)
 {
 
@@ -303,14 +313,7 @@ a4sqlt3::Dataset elfdeps(const PathName& fromfile, const ElfFile::StringVec& nee
     return  std::string("'") + val + std::string("'") ;
   };
 
-/* todo after fixing the soname, use these for testing
- * select * from dynlinked where soname = 'libuno_sal.so.3' ;
 
-  select * from dynlinked where basename = 'libcomphelpgcc3.so'  ;
-
- /usr/lib64/libreoffice/program/libcomphelpgcc3.so and othe rlibreoffice files...
- *
- */
 
   auto quoterpath = [&fromfile, &quote](const std::string val) -> std::string{
     std::string pathname = CacheSQL::replaceORIGIN(val, fromfile.getDir());
@@ -353,8 +356,7 @@ a4sqlt3::Dataset elfdeps(const PathName& fromfile, const ElfFile::StringVec& nee
   sql+= " );" ;
 
 
-  using namespace a4sqlt3;
-  Dataset ds ;
+  ReportSet ds{{}} ;
   Cache::getInstance()->DB().Execute(sql, &ds) ;
   return ds;
 
@@ -362,6 +364,81 @@ a4sqlt3::Dataset elfdeps(const PathName& fromfile, const ElfFile::StringVec& nee
 
 }
 //--------------------------------------------------------------------------------------------------
+
+std::tuple<ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
+getRequiredInfosLDD(const Pkg& pkg)
+{
+  //lot of redundant code with getRequiredInfos but care later if this works
+  using namespace a4sqlt3;
+
+  StringSet known_needed;
+  using StringMap = std::map<std::string, std::string> ;
+
+  NotFoundMap not_found;
+
+  ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
+
+  for(const ElfFile& elf : pkg.getDynLinked())
+    {
+
+      StringVec needed = elf.getNeeded();
+
+      // but already looked up to the end
+      auto knownbegin = std::remove_if(std::begin(needed), std::end(needed),
+          [&known_needed](const std::string& val) ->bool
+            {
+              return known_needed.find(val) != known_needed.end();
+            });
+
+      if( needed.empty() )
+        continue;
+      else // remember already looked up
+        known_needed.insert(knownbegin, needed.end());
+
+
+      StringMap ldmap = getLddMap(elf.getName()) ;
+
+      StringSet rem_so; // for delete an insert as problems
+      for(auto so_needed : ldmap)
+        { // is 'not found', but search for on "/"
+          if( so_needed.second.find("/") == std::string::npos )
+              rem_so.insert(so_needed.first); // bookmark for later delete from map
+
+        }
+      not_found.insert(NotFoundMap::value_type(elf.getName().Str(), rem_so));
+      for(auto so : rem_so)
+        ldmap.erase(so);
+
+      if(ldmap.empty())
+        continue;
+
+      ReportSet elfds {{ "pkgname", "filename", "soname" , "requiredby" } };
+
+
+      for(auto so_needed : ldmap)
+        {
+          a4sqlt3::Dataset dspkgs = getPkgsOfFile( PathName(so_needed.second) );
+          for(auto pkgval : dspkgs)
+            {
+              DbValueList vals = {
+              pkgval.getField(0) ,
+              DbValue(so_needed.second), DbValue(so_needed.first) ,
+              DbValue(elf.getName().Str())
+              };
+
+              elfds.addFields(vals);
+            }
+
+        }
+
+
+      rs.merge(elfds); // put this record to the report
+
+    }
+
+  return std::make_tuple(rs, not_found);
+}
+
 
 std::tuple<ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
 getRequiredInfos(const Pkg& pkg)
@@ -394,7 +471,7 @@ getRequiredInfos(const Pkg& pkg)
 
       // if ldd option, than here the branch
 
-      Dataset ds = elfdeps(elf.getName(), needed, elf.getArch(), elf.getRRunPaths());
+      ReportSet ds = elfdeps(elf.getName(), needed, elf.getArch(), elf.getRRunPaths());
       // pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
 
       // move found stuff to the end
@@ -460,7 +537,7 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
   if( pkg.getType() == PkgType::BinLib )
     {
 
-      a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
+      //a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
       // what to do with this , just a report summary ?
 
     }

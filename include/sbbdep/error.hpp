@@ -35,6 +35,7 @@ namespace sbbdep{
   /// defines the root domain 
   typedef a4z::ErrDomain<sbbdepDomainName> ErrorDomain;
   
+  // TODO , this is all very old and not used anymore, review, remove, and add whats needed
   struct ErrorCodes 
   {
     enum Value{
