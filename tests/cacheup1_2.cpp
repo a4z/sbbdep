@@ -5,7 +5,6 @@
 #include <sbbdep/cachesql.hpp>
 #include <sbbdep/cachedb.hpp>
 
-#include <a4sqlt3/onevalresult.hpp>
 #include <a4sqlt3/dataset.hpp>
 
 #include <iostream>
@@ -20,7 +19,7 @@ class DB : public CacheDB{
 
   DB(): CacheDB(":memory:"){}
 
-  sqlite3* getDb() { return m_sql3db; }
+  sqlite3* getDb() { return _sql3db; }
 
   void MakeTestTables()
   {
@@ -81,9 +80,8 @@ struct Case
     std::string sql="ALTER TABLE rrunpath ADD COLUMN lddir TEXT;" ;
     BOOST_REQUIRE_NO_THROW(db.Execute(sql));
     {
-      a4sqlt3::OneValResult<int> cnt;
-      db.Execute("select count(*) from rrunpath;", & cnt);
-      BOOST_CHECK(cnt.isValid() && cnt.Val() == 3 ) ;
+      a4sqlt3::DbValue cnt = db.selectSingleValue("select count(*) from rrunpath;");
+      BOOST_CHECK( cnt.getInt64() == 3 ) ;
     }
 
   }
@@ -97,15 +95,14 @@ struct Case
         ") ;" ;
     BOOST_REQUIRE_NO_THROW(db.Execute(sql));
 
-    a4sqlt3::OneValResult<std::string> wanted;
-    db.Execute("select lddir from rrunpath where id=1;", &wanted);
-    BOOST_CHECK(wanted.isValid() && wanted.Val() == "/usr/lib" ) ;
-    wanted.Reset();
-    db.Execute("select lddir from rrunpath where id=2;", &wanted);
-    BOOST_CHECK(wanted.isValid() && wanted.Val() == "/usr/lib" ) ;
-    wanted.Reset();
-    db.Execute("select lddir from rrunpath where id=3;", &wanted);
-    BOOST_CHECK(wanted.isValid() && wanted.isNull() ) ;
+    a4sqlt3::DbValue wanted = db.selectSingleValue("select lddir from rrunpath where id=1;");
+    BOOST_CHECK( wanted.getString() == "/usr/lib" ) ;
+
+    wanted = db.selectSingleValue("select lddir from rrunpath where id=2;");
+    BOOST_CHECK( wanted.getString() == "/usr/lib" ) ;
+
+    wanted = db.selectSingleValue("select lddir from rrunpath where id=3;");
+    BOOST_CHECK( wanted.isNull() ) ;
   }
 
 };

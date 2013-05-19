@@ -2,7 +2,8 @@
 
 #include <a4z/testsuitebuilder.hpp>
 #include <a4sqlt3/database.hpp>
-#include <a4sqlt3/onevalresult.hpp>
+
+
 #include <sbbdep/cachesql.hpp>
 
 #include <iostream>
@@ -18,7 +19,7 @@ struct TmpDB : public a4sqlt3::Database
   
   void createExtendedFunctions()
   {
-    CacheSQL::register_own_sql_functions( m_sql3db );
+    CacheSQL::register_own_sql_functions( _sql3db );
   }
   
 };
@@ -30,19 +31,17 @@ void RunDefault()
   db.Open() ;
   db.createExtendedFunctions() ;
   
-  a4sqlt3::OneValResult<std::string> result; 
+  a4sqlt3::DbValue result(a4sqlt3::DbValueType::Text);
   
   std::string c1sql = "SELECT replaceOrigin('$ORIGIN/../lib', '/usr/lib')" ;
   std::string c2sql = "SELECT replaceOrigin('$ORIGIN/local/lib', '/usr')" ;
   
-  db.Execute(c1sql, &result) ;
+  result = db.selectSingleValue(c1sql) ;
   
-  BOOST_REQUIRE_EQUAL( result.Val() , "/usr/lib"  );
+  BOOST_REQUIRE_EQUAL( result.getString() , "/usr/lib"  );
   
-  result.Reset();
-  
-  db.Execute(c2sql, &result) ;
-  BOOST_REQUIRE_EQUAL( result.Val() , "/usr/local/lib"  );
+  result = db.selectSingleValue(c2sql) ;
+  BOOST_REQUIRE_EQUAL( result.getString() , "/usr/local/lib"  );
   
   
 }

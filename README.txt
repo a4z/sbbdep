@@ -1,6 +1,7 @@
-Slackware Builds and Binaries Dependencies (Walker)
-
-
+sbbdep (Slack Build Binary Dependencies)
+     
+     
+Slackware Builds and Binaries Dependencies Walker,
 sbbdep is a tool for Slackware and Slackware based distributions that traces 
 binary runtime dependencies of dynamic linked files.
 

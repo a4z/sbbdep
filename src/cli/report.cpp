@@ -34,7 +34,7 @@ THE SOFTWARE.
 
 #include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/dataset.hpp>
-#include <a4sqlt3/columns.hpp>
+
 
 #include <set>
 #include <algorithm>
@@ -117,7 +117,7 @@ public:
   ReportSet(const std::vector<std::string> fieldnames)
   {
     for(std::size_t i = 0; i < fieldnames.size(); ++i)
-        m_namemap.insert( NameMap::value_type(fieldnames[i], i) ) ;
+        _namemap.insert( NameMap::value_type(fieldnames[i], i) ) ;
   }
 
   void merge( const a4sqlt3::Dataset& other )
@@ -127,10 +127,10 @@ public:
 
   void addFields(a4sqlt3::DbValueList fields)
   {
-    if( fields.size() != m_namemap.size() )
+    if( fields.size() != _namemap.size() )
       throw "TODO"; //TODO
 
-    m_rows.emplace_back(fields);
+    _rows.emplace_back(fields);
   }
 
 } ;
@@ -250,7 +250,7 @@ bool isRRunPath(const std::string& dirname)
   cmd->Parameters().Nr(1).set(dirname);
 
   Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, &ds);
+  Cache::getInstance()->DB().Execute(cmd, ds);
   return ds.getField(0).getInt64() > 0 ;
 
 }
@@ -273,7 +273,7 @@ bool isLinkPath(const std::string& dirname)
   cmd->Parameters().setValues( {DbValue(dirname), DbValue(dirname)} ) ;
 
   Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, &ds);
+  Cache::getInstance()->DB().Execute(cmd, ds);
   return ds.getField(0).getInt64() > 0 ;
 
 }
@@ -297,7 +297,7 @@ getPkgsOfFile(const PathName& fname)
   cmd->Parameters().setValues( { fname.Str() }) ;
 
   Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, &ds);
+  Cache::getInstance()->DB().Execute(cmd, ds);
   return ds;
 }
 
@@ -357,7 +357,7 @@ ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
 
 
   ReportSet ds{{}} ;
-  Cache::getInstance()->DB().Execute(sql, &ds) ;
+  Cache::getInstance()->DB().Execute(sql, ds) ;
   return ds;
 
 
@@ -714,7 +714,7 @@ getWhoNeeds(const ElfFile& elf)
 
   cmd->Parameters().setValues({ elf.getName().Str() });
 
-  Cache::getInstance()->DB().Execute(cmd, &ds);
+  Cache::getInstance()->DB().Execute(cmd, ds);
   return ds ;
 }
 //--------------------------------------------------------------------------------------------------
@@ -736,7 +736,7 @@ getWhoNeedsPkg(const std::string& name)
   cmd->Parameters().setValues({ name });
 
   Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, &ds);
+  Cache::getInstance()->DB().Execute(cmd, ds);
   return ds ;
 
 }

@@ -34,7 +34,7 @@ THE SOFTWARE.
 
 #include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/dataset.hpp>
-#include <a4sqlt3/onevalresult.hpp>
+
 #include <a4sqlt3/error.hpp>
 
 #include <a4z/err.hpp>
@@ -201,7 +201,7 @@ CacheDB::CacheDB()
 : a4sqlt3::Database(std::string(std::getenv("HOME")) + std::string("/sbbdep.cache")) //TODO wenn test vorbei nach .config/.. oder sonst wo
 {
  
-  Path p( m_name );
+  Path p( _name );
   m_isNew = !p.isValid();
 
 }
@@ -212,7 +212,7 @@ CacheDB::CacheDB( const std::string& name )
 // , m_isNew( !Path(name).isValid() ) better readable in body
 {
 
-  Path p( m_name );
+  Path p( _name );
   m_isNew = !p.isValid();
 
 }
@@ -225,7 +225,7 @@ CacheDB::Open()
   
   if(  a4sqlt3::Database::Open() )
     {
-      CacheSQL::register_own_sql_functions(m_sql3db);
+      CacheSQL::register_own_sql_functions(_sql3db);
 
       checkVersion(
                 sbbdep::MAJOR_VERSION,
@@ -244,7 +244,7 @@ bool
 CacheDB::Create()
 {
 
-  LogInfo()<< "create cache " << m_name << std::endl;
+  LogInfo()<< "create cache " << _name << std::endl;
 
   if (a4sqlt3::Database::Create() )
     {
@@ -261,7 +261,7 @@ CacheDB::Create()
           A4Z_THROW_NESTED("");
         }
 
-      CacheSQL::register_own_sql_functions(m_sql3db);
+      CacheSQL::register_own_sql_functions(_sql3db);
 
       // possible call first sync/creation here and create indexes later..
 
@@ -294,14 +294,15 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
 {
     {
       std::string sql = "select count(*) from sqlite_master where name='version';";
-      a4sqlt3::OneValResult<int> rc;
-      Execute(sql, &rc);
-      if(!rc.isValid())
+
+      a4sqlt3::DbValue rc = this->selectSingleValue(sql);
+
+      if(rc.isNull())
         throw a4z::ErrorTodo();
 
-      if( rc.Val() != 1 )
+      if( rc.getInt64() != 1 )
         {
-          if( rc.Val() > 1 )
+          if( rc.getInt64() > 1 )
             {
               LogError() << "more than one entry in version table, confused and can not continue\n";
               throw a4z::ErrorTodo();
@@ -323,13 +324,13 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
   auto getDbVersion = [calcDbVersion, this]() -> int
     {
       Dataset ds( {DbValueType::Int64, DbValueType::Int64} );
-      this->Execute("SELECT major, minor FROM version", &ds);
+      this->Execute("SELECT major, minor FROM version", ds);
       return calcDbVersion(ds.getField(0).getInt64(), ds.getField(1).getInt64());
     };
   auto getDbAppVersion = [calcFullVersion, this]() -> int
     {
       Dataset ds({DbValueType::Int64, DbValueType::Int64, DbValueType::Int64});
-      this->Execute("SELECT major, minor , patchlevel FROM version", &ds);
+      this->Execute("SELECT major, minor , patchlevel FROM version", ds);
       return calcFullVersion(ds.getField(0).getInt64(),
           ds.getField(1).getInt64(),ds.getField(2).getInt64());
     };
@@ -348,7 +349,7 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
         {
           LogError() << "existing cache db was build with an old version of sbbdep.\n";
           LogError() << "please create a new cache by using the -c option or removing " <<
-              m_name << ".\n";
+              _name << ".\n";
           LogError() << "Sorry for the inconvenience caused.\n\n" ;
           throw a4z::ErrorMessage("old db version in use");
         }
@@ -619,12 +620,10 @@ CacheDB::updateLdDirs(const StringVec& lddirs, const StringVec& ldlinkdirs)
 int64_t
 CacheDB::getLatestPkgTimeStamp()
 {
-  a4sqlt3::OneValResult< int64_t > maxTimeStamp;
-  Execute(CacheSQL::MaxPkgTimeStamp(), &maxTimeStamp);
-  // TODO, if maxTimeStamp is not valid,
-  // throw should never happen or does not matter cause will be 0 and thats ok
 
-  return maxTimeStamp.Val() ;
+  a4sqlt3::DbValue val = selectSingleValue(CacheSQL::MaxPkgTimeStamp());
+
+  return val.isNull() ? 0 : val.getInt64() ;
 
 }
 

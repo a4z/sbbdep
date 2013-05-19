@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include <sbbdep/log.hpp>
 
 
-#include <a4sqlt3/columns.hpp>
 #include <a4sqlt3/error.hpp>
 
 #include <vector>
@@ -186,9 +185,9 @@ Cache::getSyncData()
 
   StringSet allpkgindb; // all pks in the db
   // get all in the database
-  auto rh = [&allpkgindb](a4sqlt3::Columns& cols) -> bool
+  auto rh = [&allpkgindb](a4sqlt3::SqlQueryRow& qrow) -> bool
         {
-          allpkgindb.insert(cols[0].get<std::string>());
+          allpkgindb.insert(qrow[0].getString());
           return true ;
         } ;
 
