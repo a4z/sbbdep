@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2012-2012 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2012-2013 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
