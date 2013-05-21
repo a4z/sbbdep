@@ -33,17 +33,18 @@ THE SOFTWARE.
 namespace sbbdep {
 
 AppArgs::AppArgs()
-  : m_help(0)
-  , m_dbname(std::string(std::getenv("HOME") + std::string("/sbbdep.cache")))
-  , m_query()
-  , m_outfile()
-  , m_append_versions(1)
-  , m_sbbdep_version(0)
-  , m_nosync(0)
-  , m_whoneeds(0)
-  , m_explain_dynlinked(0)
-  , m_quiet(0)
-  , m_featureX(0)
+  : _help(0)
+  , _dbname(std::string(std::getenv("HOME") + std::string("/sbbdep.cache")))
+  , _query()
+  , _outfile()
+  , _append_versions(1)
+  , _sbbdep_version(0)
+  , _nosync(0)
+  , _whoneeds(0)
+  , _explain_dynlinked(0)
+  , _quiet(0)
+  , _ldd(0)
+  , _featureX(0)
 {
   
 }
@@ -94,74 +95,83 @@ AppArgs::PrintHelp()
     }
     
   };
+
   
-  
-  
-  Writer write;
-  write.text("usage: sbbdep [OPTION]... [QUERY]") ;
-  write.newline();
-  write.text(" QUERY can be a single binary/library file");
-  write.text("              a file from /var/adm/packages");
-  write.text("              a package DESTDIR of a slackbuild");
-  write.text(" if QUERY is omitted runs only cache synchronise");
-  write.newline();
-  write.text(" if OPTION -c/--cache is omitted, ~/sbbdep.cache will be used").newline() ;
-  write.newline();
+  Writer write ;
+  write.text("usage: sbbdep [OPTION]... [QUERY]")
+   .newline()
+   .text(" QUERY can be a single binary/library file")
+   .text("              a file from /var/adm/packages")
+   .text("              a package DESTDIR of a slackbuild")
+   .text(" if QUERY is omitted runs only cache synchronise")
+   .text(" if OPTION -c/--cache is omitted, ~/sbbdep.cache will be used")
+   .newline()
+   .newline() ;
   
   write.text(" available options:") .newline();
 
-  write.option("-c,  --cache") .description("cache file to use") ; 
-  write.descriptionline("if this option is omitted ") ;
-  write.descriptionline("$HOME/sbbdep.cache is used") ;
-  write.descriptionline("cache must be read/writable") ;
-  write.newline();
-  write.newline();  
+  write.option("-c,  --cache") .description("cache file to use")
+   .descriptionline("if this option is omitted ")
+   .descriptionline("$HOME/sbbdep.cache is used")
+   .descriptionline("cache must be read/writable")
+   .newline()
+   .newline();
   
-  write.option("-f,  --file=[FILENAME]") .description("write output to file FILENAME") ;
-  write.descriptionline("if this option is omitted ") ;
-  write.descriptionline("output will go to stdout") ;  
-  write.newline();
-  write.newline();
+  write.option("-f,  --file=[FILENAME]") .description("write output to file FILENAME")
+   .descriptionline("if this option is omitted ")
+   .descriptionline("output will go to stdout")
+   .newline()
+   .newline();
 
-  write.option("-s,  --short") .description("suppress version information") ; 
-  write.descriptionline("produce a comma separated list of required package names ") ;
-  write.newline();
-  write.newline();  
+  write.option("-s,  --short") .description("suppress version information")
+    .descriptionline("print only package name without version ")
+    .descriptionline("produce a comma separated list of required package names if ")
+    .descriptionline("QUERY is a package or DESTDIR")
+    .newline()
+    .newline();
   
   
-  write.option("--nosync") .description("skips synchronise the cache") ;
-  write.descriptionline("only usefull if cache is up to date") ;
-  write.descriptionline("after install/update/remove packages, this option should not be used") ;
-  write.descriptionline("if cache is up to date, QUERY will be a bit faster with this option") ;
-  
-  write.newline();
-  write.newline();  
+  write.option("--nosync") .description("skips synchronise the cache")
+   .descriptionline("only useful if cache is up to date")
+   .descriptionline("after install/update/remove packages, this option should not be used")
+   .descriptionline("if cache is up to date, QUERY will be a bit faster with this option")
+   .newline()
+   .newline();
 
-  write.option("--quiet") .description("Suppress status information during sync") ;
-  write.descriptionline("messages during synchronisation will not be shown") ;
-  write.newline();
-  write.newline();
+  write.option("--quiet") .description("Suppress status information during sync")
+   .descriptionline("messages during synchronisation will not be shown")
+   .newline()
+   .newline();
 
   
-  write.option("--whoneeds") .description("prints packages that depend on arg") ;
-  write.descriptionline("instead of printing the requirements of the given arg") ;
-  write.descriptionline("packages that depend on the given arg are written to std::out") ;
-  write.newline();
-  write.newline();  
+  write.option("--whoneeds") .description("prints packages that depend on arg")
+   .descriptionline("instead of printing the requirements of the given QUERY")
+   .descriptionline("packages that depend on QUERY are reported")
+   .newline()
+   .newline();
   
-  write.option("--xdl") .description("explain dynamic linked file") ;
-  write.descriptionline("needs a dynamic linked binary as QUERY") ;
-  write.descriptionline("reports detailed information about needed and whoneeds") ;
-  write.newline();
-  write.newline();
+  write.option("--xdl") .description("explain dynamic linked file")
+   .descriptionline("reports detailed information about needed and whoneeds")
+   .descriptionline("if QUERY is a package than each file will be reported")
+   .newline()
+   .newline();
 
-  write.option("-v,  --version") .description("display sbbdep version") ;
-  write.newline();
-  write.newline();  
+  write.option("--ldd") .description("use ldd")
+   .descriptionline("per default, sbbdep uses the ELF information from binaries and libraries")
+   .descriptionline("with this option, sbbdep executes the ldd command against each dynamic ")
+   .descriptionline("linked file and uses the ldd output for dependency resolution")
+   .descriptionline("this option is useless for a --whoneeds query")
+   .newline()
+   .newline();
+
+
+  write.option("-v,  --version") .description("display sbbdep version")
+   .newline()
+   .newline();
   
-  write.option("-h,  --help") .description("display this text") ;
-  write.newline();
-  write.newline();  
+  write.option("-h,  --help") .description("display this text")
+   .newline()
+   .newline();
   
 }
 //--------------------------------------------------------------------------------------------------
@@ -181,14 +191,15 @@ AppArgs::Parse( int argc, char** argv )
     {
       { "file", required_argument, 0, 1 },
       { "cache", required_argument, 0, 1 },
-      { "help", no_argument, &m_help, 1 },
-      { "short", no_argument, &m_append_versions, 0 },
-      { "version", no_argument, &m_sbbdep_version, 1 },
-      { "nosync", no_argument, &m_nosync, 1 },
-      { "quiet", no_argument, &m_quiet, 1 },
-      { "whoneeds", no_argument, &m_whoneeds, 1 },
-      { "xdl", no_argument, &m_explain_dynlinked, 1 },
-      { "fx", no_argument, &m_featureX, 1 }, // undocumented option for the next test...
+      { "help", no_argument, &_help, 1 },
+      { "short", no_argument, &_append_versions, 0 },
+      { "version", no_argument, &_sbbdep_version, 1 },
+      { "nosync", no_argument, &_nosync, 1 },
+      { "quiet", no_argument, &_quiet, 1 },
+      { "whoneeds", no_argument, &_whoneeds, 1 },
+      { "xdl", no_argument, &_explain_dynlinked, 1 },
+      { "ldd", no_argument, &_ldd, 1 },
+      { "fx", no_argument, &_featureX, 1 }, // undocumented option for the next test...
       { 0, 0, 0, 0 } // Required end   
     };
   
@@ -205,33 +216,33 @@ AppArgs::Parse( int argc, char** argv )
         case 1:
           optionName = long_options[optionIdx].name;
           if (optionName == "file")
-            m_outfile = optarg ? optarg : "";
+            _outfile = optarg ? optarg : "";
           else if(optionName == "cache")
-            m_dbname = optarg ? optarg : "";
+            _dbname = optarg ? optarg : "";
 
           break;
 
 
         case 'c':
-          m_dbname = optarg ? optarg : "";
+          _dbname = optarg ? optarg : "";
           break;
 
         case 'f':
-          m_outfile = optarg ? optarg : "";
+          _outfile = optarg ? optarg : "";
           break;
           
         case 'h':
           optionVal = -1; //exit from here
-          m_help = true;
+          _help = true;
           break;
           
         case 's':
-          m_append_versions = false;
+          _append_versions = false;
           break;
           
         case 'v':
           optionVal = -1;
-          m_sbbdep_version=true;
+          _sbbdep_version=true;
           break;          
           
         case '?': //unknown param
@@ -248,15 +259,15 @@ AppArgs::Parse( int argc, char** argv )
 
 
   // if help was submitted, ignore following cause only helptext is to show
-  if( !m_help && !m_sbbdep_version )
+  if( !_help && !_sbbdep_version )
     {
       for (int argidx = optind; argidx < argc; ++argidx)
         {
-          if(m_query.empty())
-            m_query = argv[argidx];
+          if(_query.empty())
+            _query = argv[argidx];
           else
             break;
-          // TODO, log ignored arguments ....or change m_query to a list
+          // TODO, log ignored arguments ....or change _query to a list
         }
     }
   

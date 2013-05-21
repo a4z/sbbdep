@@ -32,17 +32,18 @@ namespace sbbdep {
 class AppArgs
 {
   
-  int m_help;
-  std::string m_dbname ;
-  std::string m_query;
-  std::string m_outfile ;
-  int m_append_versions;
-  int m_sbbdep_version;
-  int m_nosync;
-  int m_whoneeds;
-  int m_explain_dynlinked;
-  int m_quiet;
-  int m_featureX;
+  int _help;
+  std::string _dbname ;
+  std::string _query;
+  std::string _outfile ;
+  int _append_versions;
+  int _sbbdep_version;
+  int _nosync;
+  int _whoneeds;
+  int _explain_dynlinked;
+  int _quiet;
+  int _ldd;
+  int _featureX;
   
 public:
   AppArgs();
@@ -50,17 +51,18 @@ public:
   
   bool Parse( int argc, char** argv ) ;
   
-  bool getHelp() const { return m_help ;}
-  const std::string& getDBName() const { return m_dbname ; }
-  const std::string& getQuery() const { return m_query; }
-  const std::string& getOutFile() const { return m_outfile ; }
-  bool getAppendVersions() const { return m_append_versions ;}
-  bool getPrintVersions() const { return m_sbbdep_version ;}
-  bool getNoSync() const { return m_nosync ; }
-  bool getWhoNeeds() const { return m_whoneeds ; }
-  bool getXDL() const { return m_explain_dynlinked ; }
-  bool getQuiet() const { return m_quiet ; }
-  bool getFeatureX() const { return m_featureX ; }
+  bool getHelp() const { return _help ;}
+  const std::string& getDBName() const { return _dbname ; }
+  const std::string& getQuery() const { return _query; }
+  const std::string& getOutFile() const { return _outfile ; }
+  bool getAppendVersions() const { return _append_versions ;}
+  bool getPrintVersions() const { return _sbbdep_version ;}
+  bool getNoSync() const { return _nosync ; }
+  bool getWhoNeeds() const { return _whoneeds ; }
+  bool getXDL() const { return _explain_dynlinked ; }
+  bool getQuiet() const { return _quiet ; }
+  bool getLdd() const { return _ldd ; }
+  bool getFeatureX() const { return _featureX ; }
   
   void PrintHelp();
  
@@ -69,3 +71,4 @@ public:
 }
 
 #endif /* SBBDEP_APPARGS_HPP_ */
+

@@ -139,6 +139,9 @@ AppCli::Run(const AppArgs& appargs)
       return -1;
     }
 
+  if(appargs.getLdd())
+    LogError()<< "--ldd feature is in development.\n--ldd therefore ignored for now\n" << std::endl ;
+
   std::ofstream outfile;
   if( appargs.getOutFile().size() )
     {
