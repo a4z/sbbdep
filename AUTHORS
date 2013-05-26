@@ -3,3 +3,15 @@ harald.achitz@gmail.com
 sbbdep uses ELFIO for reading files in ELF binary format.
 the home of ELFIO is http://elfio.sourceforge.net/ 
 the ELFIO projet is maintaned by Serge Lamikhov-Center, to_serge@users.sourceforge.net
+
+
+Contributions:
+
+thanks to AlienBOB (Eric Hameleers) for his sbbdep.SlackBuild and binary distribution
+http://www.slackware.com/~alien/slackbuilds/sbbdep/
+
+thanks to Roberto Neri , rneri@libero.it
+for providing excellent detailed feedback and helping with testing sbbdep
+
+
+  
