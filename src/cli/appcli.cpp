@@ -180,7 +180,7 @@ AppCli::Run(const AppArgs& appargs)
 
   try
     {
-      pkg.Load();
+      pkg.Load(); // TODO , check the return value
     }
   catch (const a4z::Err& e)
     {
@@ -196,7 +196,7 @@ AppCli::Run(const AppArgs& appargs)
 
 
   if( appargs.getWhoNeeds() )
-    {
+    { // TODO test what happens if a DESTDIR is given as pkg :-)
       try
         {
           cli::printWhoNeed( pkg , appargs.getAppendVersions(), appargs.getXDL() ) ;
