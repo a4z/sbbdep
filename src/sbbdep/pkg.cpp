@@ -222,6 +222,8 @@ Pkg::doLoadInstalled()
         // place a warning here if file still not exists...
         if ( !p.isValid() ) LogInfo() << "Note: indexing file " << p << ": file not found\n" ;
       }
+
+    if(p.isRegularFile())
       {
         ElfFile elfile(p);
         if( elfile.isBinaryOrLibrary() )

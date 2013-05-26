@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include <sbbdep/elffile.hpp>
 #include <sbbdep/log.hpp>
+#include <sbbdep/path.hpp>
 
 #include <elfio/elfio.hpp>
 
@@ -61,6 +62,9 @@ ElfFile::~ElfFile()
 void
 ElfFile::load()
 {
+  // firewall against invalid pathnames
+  if(not Path(m_name).isRegularFile())
+    return ;
 
   ELFIO::elfio elfreader;
 
