@@ -31,6 +31,7 @@
 
 namespace sbbdep{
 
+// soname, requires ...
 std::map<std::string, std::string>
  getLddMap(const sbbdep::PathName& f) ;
 

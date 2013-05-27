@@ -538,13 +538,13 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
     {
 
       //a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
-      // what to do with this , just a report summary ?
+      // TODO , add some infos about the file
 
     }
 
   auto makename = [addversion, xdl](const std::string val)
     {
-
+      // in xdl mode, not using the slapt-get style of 'name >= version'
       if(xdl)
         {
           if(addversion)
@@ -557,7 +557,8 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
       std::string retval = pknam.Name();
       if (addversion) retval+= " >= " + pknam.Version();
       return retval;
-
+      // TODO , think about give up this format and use the normal long version for all
+      // or change it to = , see http://software.jaos.org/git/slapt-get/plain/FAQ.html#slgFAQ19
 
     };
 
@@ -614,19 +615,15 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
       {
         Log::AppMessage() << std::endl;
         Log::AppMessage() << "sonames not found via standard paths: \n" ;
-      }
 
-    for(auto val : notFounds)
-        Log::AppMessage() << " for " << val.first << ": "<<joinToString(val.second, ", ") << "\n" ;
+        for(auto val : notFounds)
+            Log::AppMessage() << " for " << val.first << ": "<<joinToString(val.second, ", ") << "\n" ;
 
-    if(not notFounds.empty())
-      {
         Log::AppMessage() << "this does not necessarily mean there is a problem\n";
         Log::AppMessage() << "the application can either have its own environment or the soname is resolved via a link name \n" ;
         Log::AppMessage() << "you can re-check the affected file with ldd \n" ;
+        Log::AppMessage() << std::endl;
       }
-
-    Log::AppMessage() << std::endl;
 
 
 }
