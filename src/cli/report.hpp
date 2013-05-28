@@ -36,7 +36,7 @@ namespace cli{
 
 
 
-void printRequired( const Pkg& pkg, bool addversion, bool xdl ) ;
+void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd) ;
 
 void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl ) ;
 

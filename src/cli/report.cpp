@@ -55,7 +55,7 @@ namespace
 
 
 a4sqlt3::Dataset
-getPkgsOfFile(const PathName& fname)
+getPkgsOfFile(const PathName& fname, int arch)
 {
   using namespace a4sqlt3;
   const std::string cmdname = "getPkgsOfFilebyFile" ;
@@ -64,12 +64,12 @@ getPkgsOfFile(const PathName& fname)
     {
       std::string sql = R"~(
     SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
-     WHERE dynlinked.dirname=? AND dynlinked.basename=? AND dynlinked.arch=? ; 
+     WHERE dynlinked.filename=?  AND dynlinked.arch=? ; 
     )~";
       cmd = Cache::getInstance()->DB().createStoredCommand(cmdname, sql);
     }
 
-  cmd->Parameters().setValues( { fname.Str() }) ;
+  cmd->Parameters().setValues( { fname.Str(), arch }) ;
 
   Dataset ds;
   Cache::getInstance()->DB().Execute(cmd, ds);
@@ -147,7 +147,6 @@ getRequiredInfosLDD(const Pkg& pkg)
 
   utils::StringSet known_needed;
 
-
   NotFoundMap not_found;
 
   utils::ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
@@ -175,11 +174,16 @@ getRequiredInfosLDD(const Pkg& pkg)
       utils::StringSet rem_so; // for delete an insert as problems
       for(auto so_needed : ldmap)
         { // is 'not found', but search for on "/"
-          if( so_needed.second.find("/") == std::string::npos )
+          LogDebug() << "check " << so_needed.first << " , " << so_needed.second << std::endl;
+          if( so_needed.second.find("/") == std::string::npos ) {
               rem_so.insert(so_needed.first); // bookmark for later delete from map
-
+              LogDebug() << "not found " << so_needed.first << " , " << so_needed.second << std::endl;
+          }
         }
-      not_found.insert(NotFoundMap::value_type(elf.getName().Str(), rem_so));
+
+      if(not rem_so.empty())
+        not_found.insert(NotFoundMap::value_type(elf.getName().Str(), rem_so));
+
       for(auto so : rem_so)
         ldmap.erase(so);
 
@@ -188,10 +192,26 @@ getRequiredInfosLDD(const Pkg& pkg)
 
       utils::ReportSet elfds {{ "pkgname", "filename", "soname" , "requiredby" } };
 
+      // ok,  test why /usr/lib64/libxfce4ui-1.so libz is not found
 
       for(auto so_needed : ldmap)
         {
-          a4sqlt3::Dataset dspkgs = getPkgsOfFile( PathName(so_needed.second) );
+          // check here, if so_needed is in needed, than it is direct, otherwise indirect
+          // can I add this info here ? possible not... but would like to
+          // need to reslove pathname because it could point to a symlink
+          Path path(so_needed.second);
+          LogDebug() << "search " << path  ;
+
+          if( path.isLink())
+            {
+              path.makeRealPath();
+            }
+
+          LogDebug() << " as " << path << std::endl ;
+
+          // TODO  , if this query returns empty , there is something wrong ...
+
+          a4sqlt3::Dataset dspkgs = getPkgsOfFile( path, elf.getArch() );
           for(auto pkgval : dspkgs)
             {
               DbValueList vals = {
@@ -203,12 +223,12 @@ getRequiredInfosLDD(const Pkg& pkg)
               elfds.addFields(vals);
             }
 
+          rs.merge(elfds); // put this record to the report
+
         }
-
-
-      rs.merge(elfds); // put this record to the report
-
     }
+
+
 
   return std::make_tuple(rs, not_found);
 }
@@ -277,10 +297,12 @@ getRequiredInfos(const Pkg& pkg)
 
 
 
-void printRequired( const Pkg& pkg, bool addversion, bool xdl )
+void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
 {
 
-  std::tuple<utils::ReportSet, NotFoundMap> requiredinfo = getRequiredInfos(pkg);
+  std::tuple<utils::ReportSet, NotFoundMap> requiredinfo =
+      ldd ? getRequiredInfosLDD(pkg) :   getRequiredInfos(pkg) ;
+
   utils::ReportTree reptree;
 
   //pkgname,  filename , soname
@@ -386,7 +408,7 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
 
     if(not notFounds.empty())
       {
-        Log::AppMessage() << std::endl;
+        Log::AppMessage() <<std::endl;
         Log::AppMessage() << "sonames not found via standard paths: \n" ;
 
         for(auto val : notFounds){
@@ -407,8 +429,10 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
 
 
 
-
-
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+// from here whoneeds stuff, possible add this to own file
+//--------------------------------------------------------------------------------------------------
 
 
 std::string getWhoNeedFileQuery()
