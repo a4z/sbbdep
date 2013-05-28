@@ -22,23 +22,20 @@ THE SOFTWARE.
 */
 
 
-#ifndef SBBDEP_CLI_REPORT_HPP_
-#define SBBDEP_CLI_REPORT_HPP_
+#ifndef SBBDEP_CLI_REPORT_SYNC_HPP_
+#define SBBDEP_CLI_REPORT_SYNC_HPP_
+
+#include <sbbdep/cache.hpp>
 
 
 
 namespace sbbdep{
 
-class Pkg;
-
 namespace cli{
 
 
+void printSyncReport(Cache::SyncData syncdata) ;
 
-
-void printRequired( const Pkg& pkg, bool addversion, bool xdl ) ;
-
-void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl ) ;
 
 
 }}

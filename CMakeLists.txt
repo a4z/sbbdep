@@ -136,6 +136,12 @@ SET ( sbbdepcli_SRC
        
     src/cli/report.hpp
     src/cli/report.cpp
+    
+    src/cli/report_sync.hpp
+    src/cli/report_sync.cpp
+    
+    src/cli/report_utils.hpp
+    src/cli/report_utils.cpp    
 
     src/cli/lookup_fileinpackages.hpp
     src/cli/lookup_fileinpackages.cpp

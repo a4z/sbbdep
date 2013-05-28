@@ -28,6 +28,7 @@
 #include "lookup_fileinpackages.hpp"
 // and that is this one.. TODO continue refactoring
 #include "report.hpp"
+#include "report_sync.hpp"
 
 #include "featurex.hpp"
 

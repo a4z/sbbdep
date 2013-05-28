@@ -23,6 +23,7 @@ THE SOFTWARE.
 
 
 #include "report.hpp"
+#include "report_utils.hpp"
 
 #include <sbbdep/log.hpp>
 #include <sbbdep/pkgname.hpp>
@@ -44,240 +45,14 @@ THE SOFTWARE.
 namespace sbbdep {
 namespace cli{
 
-
-
 //--------------------------------------------------------------------------------------------------
-
-
-void printSyncReport(Cache::SyncData syncdata)
-{
-  using StringSet = std::set<std::string> ; //make it sortd
-
-  StringSet deleted, reinstalled, installed, upgraded;
-
-
-  // take removed, than check inserted, if inserted is also in deleted, its an update
-  deleted.insert(syncdata.removed.begin(),syncdata.removed.end() );
-  // so make all inserted to deleted,
-  // take all installed and search if deleted,
-  // if found , remove from deleted and add to upgraded, else it is inserted
-
-  for(auto& val : syncdata.installed)
-    {   // need package name, if the name is in removed and in installed, than
-      PkgName pkgname(val);
-      auto compair = [&pkgname](const std::string& fullname)->bool
-        {
-          return pkgname.Name() == PkgName(fullname).Name();
-        };
-
-      auto isdeleted = std::find_if(deleted.begin(), deleted.end(), compair);
-      if( isdeleted == deleted.end() )
-        {
-          installed.insert(val);
-        }
-      else
-        {
-          PkgName delname(*isdeleted);
-          std::string updateinfo = val +
-              "  (was " + delname.FullName().substr( delname.Name().size()+1 ) +")";
-          upgraded.insert(updateinfo);
-          deleted.erase(isdeleted);
-        }
-
-    }
-
-  // finally transfer the re installed and then print all
-  reinstalled.insert(syncdata.reinstalled.begin(), syncdata.reinstalled.end());
-
-
-  if(not deleted.empty()
-      or not upgraded.empty()
-      or not installed.empty()
-      or not reinstalled.empty())
-    LogInfo()    << "\n---synchronisation summary:\n" ;
-
-
-  for(auto& val : deleted) LogInfo()    << "deleted: " << val << std::endl;
-  for(auto& val : upgraded) LogInfo()   << "upgraded: " << val  << std::endl;
-  for(auto& val : installed) LogInfo()  << "installed: " << val  << std::endl;
-  for(auto& val : reinstalled) LogInfo()<< "reinstalled: " << val  << std::endl;
-
-  LogInfo() << "\n";
-}
-
-//--------------------------------------------------------------------------------------------------
-
 
 namespace
 {
-
-class ReportSet : public a4sqlt3::Dataset
-{
-public:
-  ReportSet(const std::vector<std::string> fieldnames)
-  {
-    for(std::size_t i = 0; i < fieldnames.size(); ++i)
-        _namemap.insert( NameMap::value_type(fieldnames[i], i) ) ;
-  }
-
-  void merge( const a4sqlt3::Dataset& other )
-  {
-    a4sqlt3::Dataset::merge(other) ;
-  }
-
-  void addFields(a4sqlt3::DbValueList fields)
-  {
-    if( fields.size() != _namemap.size() )
-      throw "TODO"; //TODO
-
-    _rows.emplace_back(fields);
-  }
-
-} ;
-
-
-
-auto no_conversion = [](const std::string& val) -> std::string { return val;};
-
-template<typename T>
-std::string joinToString(T container,  const std::string join,
-    std::function<std::string(const std::string&)> converter = no_conversion )
-{
-
-  std::string retval;
-
-  if( container.empty() )
-    return retval;
-
-  auto pos = container.begin();
-  retval+=converter(*pos);
-
-  while( ++pos != container.end())
-    {
-      retval += join  + converter (*pos) ;
-    }
-
-  return retval;
-
-}
-
-using StringVec = std::vector<std::string>;
-using StringSet = std::set<std::string>;
-using NotFoundMap = std::map<std::string, StringSet>; // from file, so names
-
-template<typename T>
-StringSet getKeySet(const T& keyvalmap){
-  StringSet retval;
-  for(auto val: keyvalmap) retval.insert(val.first);
-  return retval;
+  using NotFoundMap = std::map<std::string, utils::StringSet>; // from file, so names
 }
 
 
-
-
-struct ReportElement{
-
-  using Node =  std::map< std::string, ReportElement >  ;
-
-  Node node ;
-
-  ReportElement() = default;
-
-  ReportElement( std::string s, ReportElement e ) : node {{s,e}}
-  {
-  }
-
-  void add(StringVec path)
-  {
-    if(not path.empty())
-      node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
-  }
-
-};
-
-
-struct ReportTree
-{
-  ReportElement::Node node ;
-
-  void add(StringVec path)
-  {
-    if(not path.empty())
-      node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
-  }
-};
-
-#ifdef DEBUG
-void printTree(ReportTree& tree)
-{
-
-  std::function<void(ReportElement, int)> printChild = [&printChild]( ReportElement elem , int level ){
-
-    for(auto node: elem.node){
-       for(int i = 0; i < level; ++i)
-            std::cout << " " ;
-
-      LogDebug() << node.first << "\n";
-      printChild(node.second, level+2);
-    }
-
-  } ;
-
-  for( auto elem : tree.node )
-  {
-      LogDebug() << elem.first << std::endl;
-    printChild(elem.second, 2) ;
-  }
-}
-#endif // DEBUG
-//--------------------------------------------------------------------------------------------------
-
-
-bool isRRunPath(const std::string& dirname)
-{
-  using namespace a4sqlt3;
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand("isRRunpathDirectory");
-  if( cmd == nullptr )
-    {
-      std::string sql = "SELECT count(*)  FROM rrunpath WHERE rrunpath.lddir NOT IN "
-          " (SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs) "
-          " AND rrunpath.lddir = ? ;" ;
-
-      cmd = Cache::getInstance()->DB().createStoredCommand(
-          "isRRunpathDirectory" ,  sql );
-    }
-
-  cmd->Parameters().Nr(1).set(dirname);
-
-  Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, ds);
-  return ds.getField(0).getInt64() > 0 ;
-
-}
-//--------------------------------------------------------------------------------------------------
-
-bool isLinkPath(const std::string& dirname)
-{
-  using namespace a4sqlt3;
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand("isLinkPathDirectory");
-  if( cmd == nullptr )
-    {
-      std::string sql =" SELECT count(*) FROM "
-         " (SELECT dirname FROM lddirs WHERE dirname = ? "
-            " UNION SELECT dirname FROM ldlnkdirs WHERE dirname = ?) ";
-
-      cmd = Cache::getInstance()->DB().createStoredCommand(
-          "isLinkPathDirectory" ,  sql );
-    }
-
-  cmd->Parameters().setValues( {DbValue(dirname), DbValue(dirname)} ) ;
-
-  Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, ds);
-  return ds.getField(0).getInt64() > 0 ;
-
-}
-//--------------------------------------------------------------------------------------------------
 
 a4sqlt3::Dataset
 getPkgsOfFile(const PathName& fname)
@@ -302,10 +77,9 @@ getPkgsOfFile(const PathName& fname)
 }
 
 
-} // ano ns
 //--------------------------------------------------------------------------------------------------
 
-ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
+utils::ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
     int arch, const ElfFile::StringVec& rrnupaths)
 {
 
@@ -324,13 +98,13 @@ ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
   };
   // TODO , check len  needed or sql , there is are SQLite limits
 
-  std::string insonames = joinToString(needed, ",", quote);
+  std::string insonames = utils::joinToString(needed, ",", quote);
   std::string archstr = std::to_string( arch );
   std::string unionrunpath;
 
   if(not rrnupaths.empty())
     {
-      std::string inrunpath = joinToString(rrnupaths , ",", quoterpath);
+      std::string inrunpath = utils::joinToString(rrnupaths , ",", quoterpath);
       unionrunpath = " UNION SELECT lddir FROM rrunpath WHERE lddir IN (" + inrunpath + ") ";
     }
 
@@ -356,7 +130,7 @@ ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
   sql+= " );" ;
 
 
-  ReportSet ds{{}} ;
+  utils::ReportSet ds{{}} ;
   Cache::getInstance()->DB().Execute(sql, ds) ;
   return ds;
 
@@ -365,23 +139,23 @@ ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& needed,
 }
 //--------------------------------------------------------------------------------------------------
 
-std::tuple<ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
+std::tuple<utils::ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
 getRequiredInfosLDD(const Pkg& pkg)
 {
   //lot of redundant code with getRequiredInfos but care later if this works
   using namespace a4sqlt3;
 
-  StringSet known_needed;
-  using StringMap = std::map<std::string, std::string> ;
+  utils::StringSet known_needed;
+
 
   NotFoundMap not_found;
 
-  ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
+  utils::ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
 
   for(const ElfFile& elf : pkg.getDynLinked())
     {
 
-      StringVec needed = elf.getNeeded();
+      utils::StringVec needed = elf.getNeeded();
 
       // but already looked up to the end
       auto knownbegin = std::remove_if(std::begin(needed), std::end(needed),
@@ -396,9 +170,9 @@ getRequiredInfosLDD(const Pkg& pkg)
         known_needed.insert(knownbegin, needed.end());
 
 
-      StringMap ldmap = getLddMap(elf.getName()) ;
+      utils::StringMap ldmap = getLddMap(elf.getName()) ;
 
-      StringSet rem_so; // for delete an insert as problems
+      utils::StringSet rem_so; // for delete an insert as problems
       for(auto so_needed : ldmap)
         { // is 'not found', but search for on "/"
           if( so_needed.second.find("/") == std::string::npos )
@@ -412,7 +186,7 @@ getRequiredInfosLDD(const Pkg& pkg)
       if(ldmap.empty())
         continue;
 
-      ReportSet elfds {{ "pkgname", "filename", "soname" , "requiredby" } };
+      utils::ReportSet elfds {{ "pkgname", "filename", "soname" , "requiredby" } };
 
 
       for(auto so_needed : ldmap)
@@ -440,22 +214,22 @@ getRequiredInfosLDD(const Pkg& pkg)
 }
 
 
-std::tuple<ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
+std::tuple<utils::ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
 getRequiredInfos(const Pkg& pkg)
 {
 
   using namespace a4sqlt3;
 
-  StringSet known_needed;
+  utils::StringSet known_needed;
 
   NotFoundMap not_found;
 
-  ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
+  utils::ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
 
   for(const ElfFile& elf : pkg.getDynLinked())
     {
 
-      StringVec needed = elf.getNeeded();
+      utils::StringVec needed = elf.getNeeded();
 
       // but already looked up to the end
       auto knownbegin = std::remove_if(std::begin(needed), std::end(needed),
@@ -471,7 +245,7 @@ getRequiredInfos(const Pkg& pkg)
 
       // if ldd option, than here the branch
 
-      ReportSet ds = elfdeps(elf.getName(), needed, elf.getArch(), elf.getRRunPaths());
+      utils::ReportSet ds = elfdeps(elf.getName(), needed, elf.getArch(), elf.getRRunPaths());
       // pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname
 
       // move found stuff to the end
@@ -486,7 +260,7 @@ getRequiredInfos(const Pkg& pkg)
             });
 
       // if something was not found, it's now at the begin
-      StringSet notFounds;
+      utils::StringSet notFounds;
       notFounds.insert(needed.begin(), notfound_end);
       if(not notFounds.empty())
           not_found.insert(NotFoundMap::value_type(elf.getName().Str(), notFounds));
@@ -503,16 +277,14 @@ getRequiredInfos(const Pkg& pkg)
 
 
 
-
-
 void printRequired( const Pkg& pkg, bool addversion, bool xdl )
 {
 
-  std::tuple<ReportSet, NotFoundMap> requiredinfo = getRequiredInfos(pkg);
-  ReportTree reptree;
+  std::tuple<utils::ReportSet, NotFoundMap> requiredinfo = getRequiredInfos(pkg);
+  utils::ReportTree reptree;
 
   //pkgname,  filename , soname
-  ReportSet& rs = std::get<0>(requiredinfo) ;
+  utils::ReportSet& rs = std::get<0>(requiredinfo) ;
   NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
 
 
@@ -573,14 +345,15 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
               for(auto file_pkgs : so_files.second.node)
                 {
                   Log::AppMessage() << "    " << file_pkgs.first << "( "
-                      << joinToString(getKeySet(file_pkgs.second.node), " | ", makename) << " )\n";
+                      << utils::joinToString(getKeySet(file_pkgs.second.node), " | ", makename)
+                      << " )\n";
                 }
             }
         }
     }
   else
     {
-      StringSet pkglist;
+      utils::StringSet pkglist;
       std::string ignore_name ;
       if(pkg.getType() == PkgType::Installed)
         ignore_name = pkg.getPath().getBase();
@@ -588,7 +361,7 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
 
       for(auto so_files: reptree.node) // filename so, just what the pkgs...
         {
-          StringSet pkgsofso;
+          utils::StringSet pkgsofso;
           for(auto file_pkgs : so_files.second.node )
             {
               if(not ignore_name.empty() &&
@@ -602,10 +375,10 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
             }
 
           if(not pkgsofso.empty())
-            pkglist.insert( joinToString(pkgsofso, " | ", makename ) ) ;
+            pkglist.insert( utils::joinToString(pkgsofso, " | ", makename ) ) ;
         }
 
-      Log::AppMessage() << joinToString(pkglist, addversion ? "\n" : ", " ) ;
+      Log::AppMessage() << utils::joinToString(pkglist, addversion ? "\n" : ", " ) ;
 
     }
     Log::AppMessage() << std::endl;
@@ -616,8 +389,10 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl )
         Log::AppMessage() << std::endl;
         Log::AppMessage() << "sonames not found via standard paths: \n" ;
 
-        for(auto val : notFounds)
-            Log::AppMessage() << " for " << val.first << ": "<<joinToString(val.second, ", ") << "\n" ;
+        for(auto val : notFounds){
+            Log::AppMessage() << " for " << val.first << ": "<<utils::joinToString(val.second, ", ")
+            << "\n" ;
+        }
 
         Log::AppMessage() << "this does not necessarily mean there is a problem\n";
         Log::AppMessage() << "the application can either have its own environment or the soname is resolved via a link name \n" ;
@@ -744,7 +519,7 @@ getWhoNeedsPkg(const std::string& name)
 void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
 {
 
-  ReportSet rs {{ "pkg", "filename" , "soname" , "fromfile"  } };
+  utils::ReportSet rs {{ "pkg", "filename" , "soname" , "fromfile"  } };
 
 
   if(pkg.getType() == PkgType::BinLib  )
@@ -761,7 +536,7 @@ void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
 
   if(xdl)
     {
-      ReportTree reptree;
+      utils::ReportTree reptree;
       for(auto& row : rs )
         {
           reptree.add( { row.getField(3).getString() + " (" + row.getField(2).getString() +")",
@@ -770,7 +545,8 @@ void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
 
         }
 
-      std::function<void(ReportElement, int)> printChild = [&printChild]( ReportElement elem , int level ){
+      std::function<void(utils::ReportElement, int)> printChild =
+          [&printChild]( utils::ReportElement elem , int level ){
         for(auto node: elem.node){
            for(int i = 0; i < level; ++i)
              Log::AppMessage() << " " ;
@@ -790,14 +566,14 @@ void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
     }
   else
     {
-      StringSet pkgnames ;
+      utils::StringSet pkgnames ;
       for(auto& row : rs )
         {
           pkgnames.insert(addversion ?
               row.getField(0).getString() : PkgName(row.getField(0).getString()).Name() ) ;
         }
 
-      Log::AppMessage()<< joinToString( pkgnames, addversion ? "\n": ", " ) << std::endl ;
+      Log::AppMessage()<< utils::joinToString( pkgnames, addversion ? "\n": ", " ) << std::endl ;
     }
 
 
