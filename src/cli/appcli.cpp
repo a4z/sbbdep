@@ -163,11 +163,22 @@ AppCli::Run(const AppArgs& appargs)
   Pkg pkg = Pkg::create(querypath);
   if(pkg.getType() == PkgType::Unknown)
     {
-      LogInfo() << "not a file with binary dependencies: " << appargs.getQuery()
-          << "\n try to find other information:\n";
       try
         {
-          lookup::fileInPackages(querypath);
+          if(querypath.isValid())
+            {
+              LogInfo() << "not a file with binary dependencies: " ;
+              LogInfo() << querypath  << "\n try to find information in package list:\n";
+              lookup::fileInPackages(querypath);
+            }
+          else
+            {
+              LogInfo() << "not a file path: '" << appargs.getQuery() ;
+              LogInfo() << "', use name as filename and ";
+              LogInfo() << " try to find filename in package list:\n" ;
+              lookup::fileInPackages(Path(appargs.getQuery()));
+            }
+
           return 0;
         }
       catch (const a4z::Err& e)

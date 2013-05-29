@@ -42,6 +42,10 @@ THE SOFTWARE.
 #include <tuple>
 #include <iterator>
 
+#include <thread>
+#include <mutex>
+
+
 namespace sbbdep {
 namespace cli{
 
@@ -142,42 +146,35 @@ utils::ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& nee
 std::tuple<utils::ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
 getRequiredInfosLDD(const Pkg& pkg)
 {
-  //lot of redundant code with getRequiredInfos but care later if this works
   using namespace a4sqlt3;
 
-  utils::StringSet known_needed;
-
   NotFoundMap not_found;
-
   utils::ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
+
+
+  // for each elf file in dl I need to get the ld map (symbol -> file (possible link))
+  // something to do for not founds ....
+  // than the redundant stuff,
+  // so -> need symbol -> file (list who needs this)
+  // this will reduce the lookups...
+
+
+  using SymFileLinkArch = std::tuple<std::string, std::string, int> ;
+
+  SymFileLinkArch  sym_flnk_arch;
+
+  // takes the sym, filelink, arch , and a list of files that need this ...
+  std::map<SymFileLinkArch, utils::StringSet> ldsym_byfile;
 
   for(const ElfFile& elf : pkg.getDynLinked())
     {
-
-      utils::StringVec needed = elf.getNeeded();
-
-      // but already looked up to the end
-      auto knownbegin = std::remove_if(std::begin(needed), std::end(needed),
-          [&known_needed](const std::string& val) ->bool
-            {
-              return known_needed.find(val) != known_needed.end();
-            });
-
-      if( needed.empty() )
-        continue;
-      else // remember already looked up
-        known_needed.insert(knownbegin, needed.end());
-
-
       utils::StringMap ldmap = getLddMap(elf.getName()) ;
 
       utils::StringSet rem_so; // for delete an insert as problems
       for(auto so_needed : ldmap)
         { // is 'not found', but search for on "/"
-          LogDebug() << "check " << so_needed.first << " , " << so_needed.second << std::endl;
           if( so_needed.second.find("/") == std::string::npos ) {
               rem_so.insert(so_needed.first); // bookmark for later delete from map
-              LogDebug() << "not found " << so_needed.first << " , " << so_needed.second << std::endl;
           }
         }
 
@@ -190,48 +187,60 @@ getRequiredInfosLDD(const Pkg& pkg)
       if(ldmap.empty())
         continue;
 
-      utils::ReportSet elfds {{ "pkgname", "filename", "soname" , "requiredby" } };
-
-      // ok,  test why /usr/lib64/libxfce4ui-1.so libz is not found
-
       for(auto so_needed : ldmap)
         {
-          // check here, if so_needed is in needed, than it is direct, otherwise indirect
-          // can I add this info here ? possible not... but would like to
-          // need to reslove pathname because it could point to a symlink
-          Path path(so_needed.second);
-          LogDebug() << "search " << path  ;
+          sym_flnk_arch = std::make_tuple( so_needed.first, so_needed.second , elf.getArch() ) ;
 
-          if( path.isLink())
-            {
-              path.makeRealPath();
-            }
+          auto storepos = ldsym_byfile.find( sym_flnk_arch );
 
-          LogDebug() << " as " << path << std::endl ;
-
-          // TODO  , if this query returns empty , there is something wrong ...
-
-          a4sqlt3::Dataset dspkgs = getPkgsOfFile( path, elf.getArch() );
-          for(auto pkgval : dspkgs)
-            {
-              DbValueList vals = {
-              pkgval.getField(0) ,
-              DbValue(so_needed.second), DbValue(so_needed.first) ,
-              DbValue(elf.getName().Str())
-              };
-
-              elfds.addFields(vals);
-            }
-
-          rs.merge(elfds); // put this record to the report
+          if( storepos == ldsym_byfile.end())
+            ldsym_byfile[sym_flnk_arch] = { elf.getName().Str() } ;
+          else
+            storepos->second.insert( elf.getName().Str() ) ;
 
         }
+
     }
 
 
+  for(auto ldsym_files : ldsym_byfile )
+    {
+
+      const SymFileLinkArch & sfa = ldsym_files.first ;
+      auto& sym = std::get<0>(sfa);
+      auto& flnk = std::get<1>(sfa);
+      const auto arch = std::get<2>(sfa);
+
+      Path path(flnk);
+      while( path.isLink() )
+        path.makeRealPath();
+
+      a4sqlt3::Dataset dspkgs = getPkgsOfFile( path, arch );
+
+      //need  "pkgname", "filename", "soname" , "requiredby"
+      for(auto pkgval : dspkgs)
+        {
+          for(auto f : ldsym_files.second)
+          {
+
+            DbValueList vals = {
+            pkgval.getField(0) ,
+            DbValue( path.getURL()), DbValue(sym) ,
+            DbValue(f)
+            };
+
+          rs.addFields(vals);
+            }
+        }
+
+
+    }
 
   return std::make_tuple(rs, not_found);
+
 }
+
+
 
 
 std::tuple<utils::ReportSet, NotFoundMap> // ds(pkgname, filename , soname) and NotFound
@@ -409,7 +418,8 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
     if(not notFounds.empty())
       {
         Log::AppMessage() <<std::endl;
-        Log::AppMessage() << "sonames not found via standard paths: \n" ;
+        Log::AppMessage() << "sonames not found via " <<
+            (ldd ? "ldd\n" : "standard paths: \n") ;
 
         for(auto val : notFounds){
             Log::AppMessage() << " for " << val.first << ": "<<utils::joinToString(val.second, ", ")
@@ -417,8 +427,16 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
         }
 
         Log::AppMessage() << "this does not necessarily mean there is a problem\n";
-        Log::AppMessage() << "the application can either have its own environment or the soname is resolved via a link name \n" ;
-        Log::AppMessage() << "you can re-check the affected file with ldd \n" ;
+        if(not ldd)
+          {
+            Log::AppMessage() << "the application can either have its own environment or the soname is resolved via a link name \n" ;
+            Log::AppMessage() << "you can re-check the affected files with --ldd \n" ;
+          }
+        else
+          {
+            Log::AppMessage() << "but it's very likely that there is one\n";
+          }
+
         Log::AppMessage() << std::endl;
       }
 

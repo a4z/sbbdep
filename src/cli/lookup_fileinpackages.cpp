@@ -88,8 +88,8 @@ namespace {
             if (path_is_same_or_incoming(match))
                 WriteAppMsg()  << "absolute match in " << pkgfile << ": " << search  << "\n";
             else
-                WriteAppMsg()  << " filename also in " << pkgfile << ": " << search.getBase() << "\n"
-                << "line was :" << line << "\n";
+                WriteAppMsg()  << " filename found in " << pkgfile << ": " << search.getBase() << "\n"
+                << " -> line was :" << line << "\n";
 
             // if there was a match, no need to proceed
             return ;
