@@ -42,9 +42,6 @@ THE SOFTWARE.
 #include <tuple>
 #include <iterator>
 
-#include <thread>
-#include <mutex>
-
 
 namespace sbbdep {
 namespace cli{
@@ -149,6 +146,18 @@ getRequiredInfosLDD(const Pkg& pkg)
   using namespace a4sqlt3;
 
   NotFoundMap not_found;
+
+  utils::StringSet notFoundIgnore;
+  if(pkg.getType() == PkgType::DestDir)
+    {
+        for(auto& f : pkg.getDynLinked())
+          {
+            if(f.soName()!="")
+              notFoundIgnore.insert(f.soName());
+          }
+    }
+
+
   utils::ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
 
 
@@ -173,9 +182,11 @@ getRequiredInfosLDD(const Pkg& pkg)
       utils::StringSet rem_so; // for delete an insert as problems
       for(auto so_needed : ldmap)
         { // is 'not found', but search for on "/"
-          if( so_needed.second.find("/") == std::string::npos ) {
-              rem_so.insert(so_needed.first); // bookmark for later delete from map
-          }
+          if( so_needed.second.find("/") == std::string::npos )
+            {
+              if( notFoundIgnore.find(so_needed.first) == notFoundIgnore.end() )
+                rem_so.insert(so_needed.first); // bookmark for later delete from map
+            }
         }
 
       if(not rem_so.empty())
@@ -253,6 +264,19 @@ getRequiredInfos(const Pkg& pkg)
 
   NotFoundMap not_found;
 
+  utils::StringSet notFoundIgnore;
+  if(pkg.getType() == PkgType::DestDir)
+    {
+        for(auto& f : pkg.getDynLinked())
+          {
+            if(f.soName()!="")
+              notFoundIgnore.insert(f.soName());
+          }
+    }
+
+
+
+
   utils::ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
 
   for(const ElfFile& elf : pkg.getDynLinked())
@@ -290,7 +314,17 @@ getRequiredInfos(const Pkg& pkg)
 
       // if something was not found, it's now at the begin
       utils::StringSet notFounds;
-      notFounds.insert(needed.begin(), notfound_end);
+
+      auto nfiter = needed.begin();
+      while(nfiter != notfound_end)
+        {
+          if(notFoundIgnore.find(*nfiter) == notFoundIgnore.end())
+            notFounds.insert(*nfiter);
+          ++nfiter;
+        }
+
+
+
       if(not notFounds.empty())
           not_found.insert(NotFoundMap::value_type(elf.getName().Str(), notFounds));
 
@@ -339,10 +373,28 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
 
   if( pkg.getType() == PkgType::BinLib )
     {
+      a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
+      Log::AppMessage() << "\n" ;
+      Log::AppMessage() << "check " << pkg.getPath() ;
+      Log::AppMessage() << ", " << pkg.getDynLinked().begin()->getArch() << "bit " ;
+      if(pkg.getDynLinked().begin()->getType() == ElfFile::Binary)
+        Log::AppMessage() << "binary " ;
+      else if(pkg.getDynLinked().begin()->getType() == ElfFile::Library)
+        Log::AppMessage() << "library (" << pkg.getDynLinked().begin()->soName()  << ")" ;
 
-      //a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
-      // TODO , add some infos about the file
+      Log::AppMessage() << std::endl ;
 
+      if(ds.getRowCount()==0)
+        {
+          Log::AppMessage() << " .. not in a known package" << std::endl;
+        }
+      else
+        {
+          for(auto flds : ds)
+            Log::AppMessage() << " .. from package " <<  flds.getField(0).getString() <<std::endl;
+
+        }
+      Log::AppMessage() << std::endl ;
     }
 
   auto makename = [addversion, xdl](const std::string val)
@@ -415,6 +467,7 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
     Log::AppMessage() << std::endl;
 
 
+
     if(not notFounds.empty())
       {
         Log::AppMessage() <<std::endl;
@@ -440,7 +493,7 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
         Log::AppMessage() << std::endl;
       }
 
-
+    Log::AppMessage() << std::endl;
 }
 
 

@@ -144,8 +144,8 @@ bool
 Pkg::doLoadDestDir()
 {
   // recursive go through given dir, check for dynlinked in it, if found , added to m_dlinfos
-  std::function<void(const std::string&)> checkdir =
-      [this, checkdir ]( const std::string& dname ) -> void
+  std::function<void(const std::string&)> checkdir;
+  checkdir = [this, &checkdir ]( const std::string& dname ) -> void
   {
     DirContent dcont(dname);
     dcont.Open(); // TODO , could throw
