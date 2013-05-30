@@ -113,7 +113,7 @@ ElfFile::load()
 
           for(ELFIO::Elf_Xword i = 0; i < dynamic.get_entries_num(); ++i)
             {
-              ELFIO::Elf_Xword tag;
+              ELFIO::Elf_Xword tag = DT_NULL;
               ELFIO::Elf_Xword value;
               std::string val;
               dynamic.get_entry(i, tag, value, val);
