@@ -312,40 +312,40 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
     }
 
   // get db schema version from v
-  auto calcDbVersion = [](int ma, int mi ) noexcept -> int
+  auto calcMajorMinorVersion = [](int ma, int mi ) noexcept -> int
     {
       return (100000 + ma * 10000) + (1000 + mi * 100);
     };
-  auto calcFullVersion = [](int ma, int mi, int pl ) noexcept -> int
+  auto calcVersion = [](int ma, int mi, int pl ) noexcept -> int
     {
       return (100000 + ma * 10000) + (1000 + mi * 100) + pl;
     };
   using namespace a4sqlt3;
-  auto getDbVersion = [calcDbVersion, this]() -> int
+  auto getDbMajorMinorVersion = [calcMajorMinorVersion, this]() -> int
     {
       Dataset ds( {DbValueType::Int64, DbValueType::Int64} );
       this->Execute("SELECT major, minor FROM version", ds);
-      return calcDbVersion(ds.getField(0).getInt64(), ds.getField(1).getInt64());
+      return calcMajorMinorVersion(ds.getField(0).getInt64(), ds.getField(1).getInt64());
     };
-  auto getDbAppVersion = [calcFullVersion, this]() -> int
+  auto getDbVersion = [calcVersion, this]() -> int
     {
       Dataset ds({DbValueType::Int64, DbValueType::Int64, DbValueType::Int64});
       this->Execute("SELECT major, minor , patchlevel FROM version", ds);
-      return calcFullVersion(ds.getField(0).getInt64(),
+      return calcVersion(ds.getField(0).getInt64(),
           ds.getField(1).getInt64(),ds.getField(2).getInt64());
     };
 
-  if( calcFullVersion(major, minor, patchlevel) == getDbAppVersion() )
+  if( calcVersion(major, minor, patchlevel) == getDbVersion() )
     return ;
 
 
 
-  int app_dbversion = calcDbVersion(major, minor);
-  int db_dbversion = getDbVersion();
+  int app_version = calcVersion(major, minor, patchlevel);
+  int db_version = getDbVersion();
 
-  while( db_dbversion < app_dbversion )
+  if( db_version < app_version )
     {
-      if( db_dbversion ==  calcDbVersion(0, 1) )
+      if( getDbMajorMinorVersion() ==  calcMajorMinorVersion(0, 1) )
         {
           LogError() << "existing cache db was build with an old version of sbbdep.\n";
           LogError() << "please create a new cache by using the -c option or removing " <<
@@ -353,27 +353,26 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
           LogError() << "Sorry for the inconvenience caused.\n\n" ;
           throw a4z::ErrorMessage("old db version in use");
         }
-//      // for the future
-//      else if( db_dbversion ==  calcDbVersion(0, 2) )
-//        {
-//          // update form 0.2.x to 0.3.x
-//        }
-      else
-        throw a4z::ErrorTodo("Cache version update failed in compare version number");
+
+      Transaction trans(*this);
+      if(db_version < calcVersion(0, 2, 1))
+        {
+          Execute("CREATE TABLE keyvalstore (key  NOT NULL,  value  NOT NULL);");
+          Execute("create unique index  idx_keyvalstore_key on keyvalstore (key);");
+          Execute("insert into keyvalstore (key, value ) values ('ldsoconf', 0);");
+        }
 
 
-      db_dbversion = getDbVersion();
+      std::string sqcmd = "UPDATE version set major = " + std::to_string(major) +
+          ", minor = " + std::to_string(minor) +
+          ", patchlevel = " + std::to_string(patchlevel) + ";" ;
+      Execute(sqcmd);
+      trans.commit();
    }
 
 
-  if( calcFullVersion(major, minor, patchlevel) > getDbAppVersion() )
-    {
-      std::string sqcmd = "UPDATE version set patchlevel=" + std::to_string(patchlevel) + ";" ;
-      Execute(sqcmd);
-    }
-
 #ifdef DEBUG
-  if( calcFullVersion(major, minor, patchlevel) != getDbAppVersion() )
+  if( calcVersion(major, minor, patchlevel) != getDbVersion() )
     throw a4z::ErrorNeverReach("version update incorrect");
 #endif
 
@@ -383,6 +382,21 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
 void
 CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 {
+
+  LDDirs lddirs;
+
+  a4sqlt3::Dataset dsldtime ;
+  Execute("SELECT value FROM keyvalstore WHERE key='ldsoconf';", dsldtime);
+
+  if(dsldtime.getRowCount()!= 1)
+    throw a4z::ErrorMessage("keyval ldsoconf coutn != 1");
+
+  if(lddirs.getLdSoConfTime() > dsldtime.getField(0).asInt64())
+      {
+        Transaction trans(*this);
+        updateLdDirOnly(  StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end()) ) ;
+        trans.commit();
+      }
 
   if(toremove.size()== 0 && toinsert.size()==0)
     {
@@ -394,7 +408,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
   LogInfo() << "apply changes "<< std::endl;
 
 // todo this needs only to be done if toinsert has data, if we just remove, this could be ignored
-  LDDirs lddirs;
+
   std::thread loadlddirs( [&lddirs] (){
     lddirs.getLdDirs();
     lddirs.getLdLnkDirs();
@@ -580,6 +594,39 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 //--------------------------------------------------------------------------------------------------
 
 void
+CacheDB::updateLdDirOnly(const StringVec& lddirs)
+{
+  using namespace a4sqlt3;
+
+
+  SqlCommand* cmdlddir = getCommand("cmdlddir");
+  if(not cmdlddir){
+      cmdlddir = createStoredCommand("cmdlddir",
+          CacheSQL::InsertLdDirSQL(),{DbValueType::Text});
+  }
+
+  Execute("DELETE FROM lddirs;");
+
+  for(const std::string val : lddirs)
+    {
+      cmdlddir->Parameters().Nr(1).set(val);
+      Execute(cmdlddir);
+    }
+
+  persistLdSoTime();
+
+}
+//--------------------------------------------------------------------------------------------------
+
+void
+CacheDB::persistLdSoTime()
+{
+  LDDirs lddirs;
+  Execute("update keyvalstore set value = " +  std::to_string(lddirs.getLdSoConfTime()) + " ;") ;
+}
+//--------------------------------------------------------------------------------------------------
+
+void
 CacheDB::updateLdDirs(const StringVec& lddirs, const StringVec& ldlinkdirs)
 {
   using namespace a4sqlt3;
@@ -614,6 +661,7 @@ CacheDB::updateLdDirs(const StringVec& lddirs, const StringVec& ldlinkdirs)
       Execute(cmdldlnkdir);
     }
 
+  persistLdSoTime();
 }
 //--------------------------------------------------------------------------------------------------
 

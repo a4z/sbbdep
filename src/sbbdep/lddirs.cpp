@@ -88,6 +88,18 @@ LDDirs::readLdDirs() -> const LDDirs::StringSet&
   
   return m_lddirs; 
 }
+
+int64_t
+LDDirs::getLdSoConfTime()
+{
+  Path p("/etc/ld.so.conf");
+
+  if(p.isValid())
+    return p.getLastModificationTime();
+
+  return 0 ;
+}
+
 //--------------------------------------------------------------------------------------------------
 
 

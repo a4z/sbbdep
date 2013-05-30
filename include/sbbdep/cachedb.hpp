@@ -101,6 +101,10 @@ private:
 
     void updateLdDirs(const StringVec& lddirs, const StringVec& ldlinkdirs);
 
+    void updateLdDirOnly(const StringVec& lddirs);
+
+    void persistLdSoTime() ;
+
 
 };
 

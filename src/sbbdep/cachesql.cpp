@@ -74,6 +74,12 @@ CacheSQL::CreateSchemaSQL()
       ldpath TEXT NOT NULL, 
       lddir TEXT  
   );
+ CREATE TABLE keyvalstore ( 
+      key  NOT NULL, 
+      value  NOT NULL
+ ); 
+
+
   CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs 
     FOR EACH ROW  BEGIN
     DELETE from dynlinked WHERE pkg_id = OLD.id;
@@ -180,6 +186,7 @@ CacheSQL::CreateIndexes()
   create index  idx_rrunpath_dynlinked_id on rrunpath(dynlinked_id);
   create index  idx_rrunpath_lddir on rrunpath(lddir);
   
+  create unique index  idx_keyvalstore_key on keyvalstore (key);
 
 )~";
 }

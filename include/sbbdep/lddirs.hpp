@@ -40,6 +40,8 @@ public:
   LDDirs();
   ~LDDirs();
   
+  int64_t getLdSoConfTime();
+
   const StringSet& getLdDirs()  { if (m_lddirs.size()==0) readLdDirs(); return m_lddirs;}
   const StringSet& getLdLnkDirs() { if (m_ldlnkdirs.size()==0) readLdLinkDirs(); return m_ldlnkdirs;}
   
