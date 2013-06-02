@@ -389,7 +389,12 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
   Execute("SELECT value FROM keyvalstore WHERE key='ldsoconf';", dsldtime);
 
   if(dsldtime.getRowCount()!= 1)
-    throw a4z::ErrorMessage("keyval ldsoconf coutn != 1");
+    Execute("INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);");
+
+  dsldtime.Reset();
+  Execute("SELECT value FROM keyvalstore WHERE key='ldsoconf';", dsldtime);
+  if(dsldtime.getRowCount()!= 1)
+    throw a4z::ErrorMessage("keyval ldsoconf count != 1");
 
   if(lddirs.getLdSoConfTime() > dsldtime.getField(0).asInt64())
       {
@@ -622,7 +627,9 @@ void
 CacheDB::persistLdSoTime()
 {
   LDDirs lddirs;
-  Execute("update keyvalstore set value = " +  std::to_string(lddirs.getLdSoConfTime()) + " ;") ;
+  Execute("update keyvalstore set value = " +
+      std::to_string(lddirs.getLdSoConfTime()) +
+      " where key = 'ldsoconf' ;") ;
 }
 //--------------------------------------------------------------------------------------------------
 

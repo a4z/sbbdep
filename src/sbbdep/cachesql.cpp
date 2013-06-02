@@ -79,7 +79,6 @@ CacheSQL::CreateSchemaSQL()
       value  NOT NULL
  ); 
 
-
   CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs 
     FOR EACH ROW  BEGIN
     DELETE from dynlinked WHERE pkg_id = OLD.id;
@@ -93,7 +92,9 @@ CacheSQL::CreateSchemaSQL()
 
   CREATE TABLE ldlnkdirs (dirname TEXT PRIMARY KEY NOT NULL);      
   CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL); 
-        
+
+  INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);        
+
 )~";
 
   sql+=CreateVersion(MAJOR_VERSION , MINOR_VERSION , PATCH_VERSION);
