@@ -103,6 +103,7 @@ src/sbbdep/cache.cpp
 src/sbbdep/cachedb.cpp
 src/sbbdep/cachesql.cpp
 src/sbbdep/dircontent.cpp
+src/sbbdep/error.cpp
 src/sbbdep/elffile.cpp
 src/sbbdep/lddmap.cpp
 src/sbbdep/lddirs.cpp

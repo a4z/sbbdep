@@ -374,27 +374,27 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
   if( pkg.getType() == PkgType::BinLib )
     {
       a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
-      Log::AppMessage() << "\n" ;
-      Log::AppMessage() << "check " << pkg.getPath() ;
-      Log::AppMessage() << ", " << pkg.getDynLinked().begin()->getArch() << "bit " ;
+      WriteAppMsg() << "\n" ;
+      WriteAppMsg() << "check " << pkg.getPath() ;
+      WriteAppMsg() << ", " << pkg.getDynLinked().begin()->getArch() << "bit " ;
       if(pkg.getDynLinked().begin()->getType() == ElfFile::Binary)
-        Log::AppMessage() << "binary " ;
+        WriteAppMsg() << "binary " ;
       else if(pkg.getDynLinked().begin()->getType() == ElfFile::Library)
-        Log::AppMessage() << "library (" << pkg.getDynLinked().begin()->soName()  << ")" ;
+        WriteAppMsg() << "library (" << pkg.getDynLinked().begin()->soName()  << ")" ;
 
-      Log::AppMessage() << std::endl ;
+      WriteAppMsg() << std::endl ;
 
       if(ds.getRowCount()==0)
         {
-          Log::AppMessage() << " .. not in a known package" << std::endl;
+          WriteAppMsg() << " .. not in a known package" << std::endl;
         }
       else
         {
           for(auto flds : ds)
-            Log::AppMessage() << " .. from package " <<  flds.getField(0).getString() <<std::endl;
+            WriteAppMsg() << " .. from package " <<  flds.getField(0).getString() <<std::endl;
 
         }
-      Log::AppMessage() << std::endl ;
+      WriteAppMsg() << std::endl ;
     }
 
   auto makename = [addversion, xdl](const std::string val)
@@ -421,13 +421,13 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
     {
       for(auto requiredby_sos : reptree.node)
         {
-          Log::AppMessage() << "file " << requiredby_sos.first << " needs:\n";
+          WriteAppMsg() << "file " << requiredby_sos.first << " needs:\n";
           for(auto so_files : requiredby_sos.second.node)
             {
-              Log::AppMessage() << "  " << so_files.first << " found in:\n";
+              WriteAppMsg() << "  " << so_files.first << " found in:\n";
               for(auto file_pkgs : so_files.second.node)
                 {
-                  Log::AppMessage() << "    " << file_pkgs.first << "( "
+                  WriteAppMsg() << "    " << file_pkgs.first << "( "
                       << utils::joinToString(getKeySet(file_pkgs.second.node), " | ", makename)
                       << " )\n";
                 }
@@ -461,39 +461,39 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
             pkglist.insert( utils::joinToString(pkgsofso, " | ", makename ) ) ;
         }
 
-      Log::AppMessage() << utils::joinToString(pkglist, addversion ? "\n" : ", " ) ;
+      WriteAppMsg() << utils::joinToString(pkglist, addversion ? "\n" : ", " ) ;
 
     }
-    Log::AppMessage() << std::endl;
+    WriteAppMsg() << std::endl;
 
 
 
     if(not notFounds.empty())
       {
-        Log::AppMessage() <<std::endl;
-        Log::AppMessage() << "sonames not found via " <<
+        WriteAppMsg() <<std::endl;
+        WriteAppMsg() << "sonames not found via " <<
             (ldd ? "ldd\n" : "standard paths: \n") ;
 
         for(auto val : notFounds){
-            Log::AppMessage() << " for " << val.first << ": "<<utils::joinToString(val.second, ", ")
+            WriteAppMsg() << " for " << val.first << ": "<<utils::joinToString(val.second, ", ")
             << "\n" ;
         }
 
-        Log::AppMessage() << "this does not necessarily mean there is a problem\n";
+        WriteAppMsg() << "this does not necessarily mean there is a problem\n";
         if(not ldd)
           {
-            Log::AppMessage() << "the application can either have its own environment or the soname is resolved via a link name \n" ;
-            Log::AppMessage() << "you can re-check the affected files with --ldd \n" ;
+            WriteAppMsg() << "the application can either have its own environment or the soname is resolved via a link name \n" ;
+            WriteAppMsg() << "you can re-check the affected files with --ldd \n" ;
           }
         else
           {
-            Log::AppMessage() << "but it's very likely that there is one\n";
+            WriteAppMsg() << "but it's very likely that there is one\n";
           }
 
-        Log::AppMessage() << std::endl;
+        WriteAppMsg() << std::endl;
       }
 
-    Log::AppMessage() << std::endl;
+    WriteAppMsg() << std::endl;
 }
 
 
@@ -644,19 +644,19 @@ void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
           [&printChild]( utils::ReportElement elem , int level ){
         for(auto node: elem.node){
            for(int i = 0; i < level; ++i)
-             Log::AppMessage() << " " ;
+             WriteAppMsg() << " " ;
 
-           Log::AppMessage() << node.first << "\n";
+           WriteAppMsg() << node.first << "\n";
           printChild(node.second, level+2);
         }
       };
 
       for( auto elem : reptree.node )
       {
-        Log::AppMessage() << elem.first << " is used from:"<<std::endl;
+        WriteAppMsg() << elem.first << " is used from:"<<std::endl;
         printChild(elem.second, 2) ;
       }
-      Log::AppMessage() << std::endl;
+      WriteAppMsg() << std::endl;
       //printTree(reptree) ; // TODO, better format
     }
   else
@@ -668,7 +668,7 @@ void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
               row.getField(0).getString() : PkgName(row.getField(0).getString()).Name() ) ;
         }
 
-      Log::AppMessage()<< utils::joinToString( pkgnames, addversion ? "\n": ", " ) << std::endl ;
+      WriteAppMsg()<< utils::joinToString( pkgnames, addversion ? "\n": ", " ) << std::endl ;
     }
 
 

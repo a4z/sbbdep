@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2013 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2009-2013 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,88 +21,64 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
-#include <sbbdep/dircontent.hpp>
-
 #include <sbbdep/error.hpp>
 
-#include <sys/types.h>
-//#include <dirent.h>
+#include <ostream>
+#include <map>
+
+namespace sbbdep{
 
 
+namespace {
+  std::string ErrCodeName(ErrCode ec)
+  {
+    static const std::map<ErrCode, std::string> names{
+      { ErrCode::TODO               , "TODO" } ,
+      { ErrCode::UNEXPECTED         , "UNEXPECTED" }
+    };
 
+    auto i = names.find( ec );
+    if( i != std::end( names ) )
+      return i->second;
 
-namespace sbbdep {
+    return std::to_string( (int)ec );
+  }
+}//------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
-
-DirContent::DirContent( const std::string& name )
-: m_name( name )
-, m_dirstm(0)
+Error::Error( std::string info )
+:_info(std::move(info))
+{
+}
+//--------------------------------------------------------------------------------------------------
+Error::~Error() noexcept
 {
 }
 //--------------------------------------------------------------------------------------------------
 
-DirContent::DirContent( const char* name )
-: m_name(name)
-, m_dirstm(0)
+const std::string&
+Error::info() const
 {
-
-}
-//--------------------------------------------------------------------------------------------------
-
-
-DirContent::~DirContent()
-{
-  Close(); 
+  return _info ;
 }
 //--------------------------------------------------------------------------------------------------
 
 void
-DirContent::Open()
+Error::toStream(std::ostream& os) const
 {
-  
-  m_dirstm = opendir(m_name.c_str());
-
-  if( !m_dirstm )
-    throw ErrGeneric ("opendir(" + m_name + ") faild");
-
+  os << "sbbdep::" << ErrCodeName(id()) << ":" << info();
 }
 //--------------------------------------------------------------------------------------------------
 
-void
-DirContent::Close()
+
+//--------------------------------------------------------------------------------------------------
+
+std::ostream& operator<< (std::ostream& os, const Error& e)
 {
-  if ( isOpen() )
-      closedir(m_dirstm);
-
-  m_dirstm = 0; 
+  e.toStream(os) ;
+  return os;
 }
 //--------------------------------------------------------------------------------------------------
 
-// TODO, add test what happens if dir was not opened ...
-bool 
-DirContent::getNext(std::string& outname)
-{
 
-  bool retVal = false;
-  dirent*  dentry = readdir(m_dirstm);
-  if( dentry )
-    {
-      retVal = true;
-      outname = dentry->d_name;
-    }
-
-  return retVal;  
-  
 }
-//-------------------------------------------------------------------------------------------------- 
-
-
-
-
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-}
-
-
-

@@ -82,7 +82,7 @@ LDDirs::readLdDirs() -> const LDDirs::StringSet&
     }
   else 
     {
-      throw ErrStat("unable to read /etc/ld.so.conf");                
+      throw ErrGeneric("unable to read /etc/ld.so.conf");
     }
   
   

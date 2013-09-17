@@ -31,13 +31,14 @@ THE SOFTWARE.
 #include <sbbdep/pkgadmdir.hpp>
 #include <sbbdep/config.hpp> // generated
 #include <sbbdep/lddirs.hpp>
+#include <sbbdep/error.hpp>
 
 #include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/dataset.hpp>
 
 #include <a4sqlt3/error.hpp>
 
-#include <a4z/err.hpp>
+
 
 #include <cstdlib>
 #include <algorithm>
@@ -255,10 +256,15 @@ CacheDB::Create()
 
           transact.commit();
         }
-      catch ( const a4z::Err& e )
+      catch ( const a4sqlt3::Error& e )
         {
-          LogError() << e << "\n ^ at creating db schema\n";
-          A4Z_THROW_NESTED("");
+          LogError() << e << "\n ^ at creating schema\n";
+          throw;
+        }
+      catch ( ... )
+        {
+          LogError() << "Unknown exception" << " at creating  schema\n";
+          throw;
         }
 
       CacheSQL::register_own_sql_functions(_sql3db);
@@ -272,12 +278,16 @@ CacheDB::Create()
           Execute(CacheSQL::CreateViews());
           transact.commit();
         }
-      catch ( const a4z::Err& e )
+      catch ( const a4sqlt3::Error& e )
         {
-          LogError() << e << "\n ^ at creating db indexes\n";
-          A4Z_THROW_NESTED("");
+          LogError() << e << "\n ^ at creating indexes\n";
+          throw;
         }
-
+      catch ( ... )
+        {
+          LogError() << "Unknown exception " << " at creating indexes\n";
+          throw;
+        }
 
     }
   else
@@ -298,14 +308,14 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
       a4sqlt3::DbValue rc = this->selectSingleValue(sql);
 
       if(rc.isNull())
-        throw a4z::ErrorTodo();
+        throw ErrToDo();
 
       if( rc.getInt64() != 1 )
         {
           if( rc.getInt64() > 1 )
             {
               LogError() << "more than one entry in version table, confused and can not continue\n";
-              throw a4z::ErrorTodo();
+              throw ErrToDo();
             }
           Execute(CacheSQL::CreateVersion(0, 1, 0)); // set default to 1, so update steps gi from one.
         }
@@ -351,7 +361,7 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
           LogError() << "please create a new cache by using the -c option or removing " <<
               _name << ".\n";
           LogError() << "Sorry for the inconvenience caused.\n\n" ;
-          throw a4z::ErrorMessage("old db version in use");
+          throw ErrGeneric("old db version in use");
         }
 
       Transaction trans(*this);
@@ -373,7 +383,7 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
 
 #ifdef DEBUG
   if( calcVersion(major, minor, patchlevel) != getDbVersion() )
-    throw a4z::ErrorNeverReach("version update incorrect");
+    throw ErrUnexpected("version update incorrect");
 #endif
 
 }
@@ -394,7 +404,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
   dsldtime.Reset();
   Execute("SELECT value FROM keyvalstore WHERE key='ldsoconf';", dsldtime);
   if(dsldtime.getRowCount()!= 1)
-    throw a4z::ErrorMessage("keyval ldsoconf count != 1");
+    throw ErrGeneric("keyval ldsoconf count != 1");
 
   if(lddirs.getLdSoConfTime() > dsldtime.getField(0).asInt64())
       {

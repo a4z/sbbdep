@@ -24,7 +24,7 @@
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/pkgadmdir.hpp>
-
+#include <sbbdep/error.hpp>
 #include <sbbdep/log.hpp>
 
 #include <fstream>
@@ -261,9 +261,15 @@ Pkg::doLoadInstalled()
           if(isToCheck(pn))
             checkFile(pn);
         }
-      catch( const a4z::Err& e )
+      catch( const Error& e )
         {
-          LogError() << e << " (readpkg " << m_path.getURL() << " line:"<< line << ")\n";
+          LogError() << e
+              << " (readpkg " << m_path.getURL() << " line:"<< line << ")\n";
+        }
+      catch( ... )
+        {
+          LogError() << "Unknown exception (readpkg "
+              << m_path.getURL() << " line:"<< line << ")\n";
         }
     }
 

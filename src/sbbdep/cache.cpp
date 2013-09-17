@@ -67,11 +67,12 @@ Cache::Cache( const std::string& dbname ) :
       catch ( const a4sqlt3::SQLite3Error& e )
         {
           LogError() << e << "\n" ;
-          A4Z_THROW_NESTED("");
+          throw ErrGeneric("sqlite error");
         }
-      catch ( const a4z::Err& e )
+      catch ( ... )
         {
-          A4Z_THROW_NESTED("");
+          LogError() << "Unknown exception" << "\n" ;
+          throw;
         }
       
     }
@@ -99,7 +100,7 @@ Cache::doSync()
 
   if (m_db.isNew())
     {
-      Log::Info() << "create cache (" << m_db.Name() <<")" << std::endl;
+      LogInfo() << "create cache (" << m_db.Name() <<")" << std::endl;
 
       auto newfiles_cb = [&toinsert](const std::string& d,const std::string&& f) -> bool {
         toinsert.emplace_back( f);
@@ -113,7 +114,7 @@ Cache::doSync()
     }
   else
     {
-      Log::Info() << "sync cache (" << m_db.Name() <<")" << std::endl;
+      LogInfo() << "sync cache (" << m_db.Name() <<")" << std::endl;
 
       syncdata = getSyncData() ;
 

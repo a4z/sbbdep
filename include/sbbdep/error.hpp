@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2013 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2009-2013 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,47 +21,71 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
-
 #ifndef SBBDEP_ERROR_HPP_
 #define SBBDEP_ERROR_HPP_
 
-#include <a4z/err.hpp>
 
+#include <iosfwd>
+#include <string>
 
 namespace sbbdep{
 
-  A4Z_NAME_AS(sbbdep) sbbdepDomainName ;
-  /// defines the root domain 
-  typedef a4z::ErrDomain<sbbdepDomainName> ErrorDomain;
-  
-  // TODO , this is all very old and not used anymore, review, remove, and add whats needed
-  struct ErrorCodes 
+
+  /// map error reason to enum value
+  enum class ErrCode
   {
-    enum Value{
-      Generic = 1,
-      StatErr = 2, 
-      MagicErr = 3,  
-      DepCheckErr = 4 ,
-      PkgErr = 5 ,
-      DirContentErr = 6
-    };  
-     
+     GENERIC    = 1 ,
+     TODO       = 98 ,
+     UNEXPECTED = 99 
+  };
+  
+
+
+  class Error
+  {
+
+  public:
+    Error( std::string info ) ;
+    virtual ~Error() noexcept ;
+
+    virtual ErrCode id() const = 0 ;
+
+    const std::string& info() const ;
+
+  protected:
+    const std::string _info;
+
+    friend std::ostream& operator<<(std::ostream& os, const Error& e);
+
+    virtual void toStream(std::ostream& os) const;
   };
 
-  ///defines the err name
-  A4Z_NAME_AS(Error) ErrorName ;
-  ///defines err type
-  typedef a4z::ErrType< ErrorName, ErrorDomain , ErrorCodes::Value  > Error;
+  std::ostream& operator<< (std::ostream& os, const Error& e);
 
 
-  typedef a4z::ErrObject< Error , ErrorCodes::Generic > ErrGeneric ;
-  typedef a4z::ErrObject< Error , ErrorCodes::StatErr > ErrStat ;
-  typedef a4z::ErrObject< Error , ErrorCodes::MagicErr > ErrMagic ;
-  typedef a4z::ErrObject< Error , ErrorCodes::DepCheckErr > ErrDepCheck ;
-  typedef a4z::ErrObject< Error , ErrorCodes::PkgErr > ErrPkg ;
-  typedef a4z::ErrObject< Error , ErrorCodes::DirContentErr > ErrDirContent ; 
+  template<ErrCode ec>
+  class ErrType: public Error
+  {
+
+  public:
+    ErrType( std::string msg = "" )
+      : Error( std::move(msg) )
+    {
+    }
+
+    virtual ~ErrType() noexcept {}
+
+    ErrCode id() const override  { return ec ; }
+
+  };
   
-} // ns
+  using ErrGeneric      =  ErrType<ErrCode::GENERIC>;
+  using ErrToDo         =  ErrType<ErrCode::TODO>;
+  using ErrUnexpected   =  ErrType<ErrCode::UNEXPECTED>;
 
-#endif /* ERROR_HPP_ */
+
+
+} // ns 
+
+
+#endif /* ...ERROR_HPP_ */

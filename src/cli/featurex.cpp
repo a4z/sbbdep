@@ -45,7 +45,7 @@ void runFx()
 {
   
 
-  Log::AppMessage() << " internal test function " << __PRETTY_FUNCTION__ << "\n";
+  WriteAppMsg() << " internal test function " << __PRETTY_FUNCTION__ << "\n";
 
 #ifndef DEBUG
   Log::AppMessage() << "not enabled in non debug builds\n";

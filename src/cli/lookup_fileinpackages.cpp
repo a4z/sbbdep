@@ -29,6 +29,7 @@
 #include <sbbdep/log.hpp>
 
 #include <fstream>
+#include <vector>
 
 
 using namespace sbbdep;
@@ -86,9 +87,9 @@ namespace {
             PathName match("/"+line);
 
             if (path_is_same_or_incoming(match))
-                WriteAppMsg()  << "absolute match in " << pkgfile << ": " << search  << "\n";
+              WriteAppMsg()  << "absolute match in " << pkgfile << ": " << search  << "\n";
             else
-                WriteAppMsg()  << " filename found in " << pkgfile << ": " << search.getBase() << "\n"
+              WriteAppMsg()  << " filename found in " << pkgfile << ": " << search.getBase() << "\n"
                 << " -> line was :" << line << "\n";
 
             // if there was a match, no need to proceed

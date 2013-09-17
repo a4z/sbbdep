@@ -43,8 +43,8 @@
 
 // should possible not be required here
 #include <sbbdep/pkg.hpp>
+#include <sbbdep/error.hpp>
 
-#include <a4z/err.hpp>
 #include <a4z/singlecollector.hpp>
 
 namespace sbbdep {
@@ -81,7 +81,7 @@ prepairCache(bool syncflag)
           sbbdep::MINOR_VERSION ,
           sbbdep::PATCH_VERSION );
     }
-  catch (const a4z::Err& e)
+  catch (const Error& e)
     {
       LogError() << e << std::endl;
       return false;
@@ -93,10 +93,15 @@ prepairCache(bool syncflag)
         {
           cli::printSyncReport( Cache::get()->doSync() );
         }
-      catch (const a4z::Err& e)
+      catch (const Error& e)
         {
           LogError() << e << std::endl;
            return false;
+        }
+      catch (...)
+        { // TODO, cou
+          LogError() << "Unknown exception" << std::endl;
+          return false;
         }
     }
   // TODO; here I could reopen the cache read only!!
@@ -116,15 +121,16 @@ AppCli::Run(const AppArgs& appargs)
       return 0;
     }
 
-  // log must be the first thing that is initialised !!
-  Log::create();
-  Log::getInstance()->addChannel(Log::ChannelId::Debug, std::cerr , "Debug");
-  Log::getInstance()->addChannel(Log::ChannelId::Error, std::cerr , "Error");
-
-  if( appargs.getQuiet() )
-    Log::getInstance()->addChannel(Log::ChannelId::Info, DevNull , "Info");
+  std::ofstream outfile;
+  if( appargs.getOutFile().size() )
+    {
+      outfile.open(appargs.getOutFile().c_str(), std::ofstream::out | std::ofstream::trunc);
+      LogSetup::create(outfile, appargs.getQuiet()) ;
+    }
   else
-    Log::getInstance()->addChannel(Log::ChannelId::Info, std::cout , "Info");
+    {
+      LogSetup::create(std::cout, appargs.getQuiet()) ;
+    }
 
 
   try
@@ -134,22 +140,15 @@ AppCli::Run(const AppArgs& appargs)
       if( !prepairCache(appargs.getNoSync()) )
         return -2;
     }
-  catch (const a4z::Err& e)
+  catch (const Error& e)
     {
       std::cerr << e << std::endl;
       return -1;
     }
-
-
-  std::ofstream outfile;
-  if( appargs.getOutFile().size() )
+  catch (...)
     {
-      outfile.open(appargs.getOutFile().c_str(), std::ofstream::out | std::ofstream::trunc);
-      Log::getInstance()->addChannel(Log::ChannelId::AppMessage, outfile, "AppMessage");
-    }
-  else
-    {
-      Log::getInstance()->addChannel(Log::ChannelId::AppMessage, std::cout, "AppMessage");
+      std::cerr << "Unknown error" << std::endl;
+      return -1;
     }
 
   Path querypath(appargs.getQuery());
@@ -181,9 +180,14 @@ AppCli::Run(const AppArgs& appargs)
 
           return 0;
         }
-      catch (const a4z::Err& e)
+      catch (const Error& e)
         {
           LogError() << e << std::endl;
+          return -3;
+        }
+      catch (...)
+        {
+          LogError() << "Unknown error" << std::endl;
           return -3;
         }
     }
@@ -192,12 +196,16 @@ AppCli::Run(const AppArgs& appargs)
     {
       pkg.Load(); // TODO , check the return value
     }
-  catch (const a4z::Err& e)
+  catch (const Error& e)
     {
       LogError() << e << std::endl;
       return -4;
     }
-
+  catch (...)
+    {
+      LogError() << "Unknown error" << std::endl;
+      return -4;
+    }
   if(appargs.getFeatureX())
     {
       sbbdep::cli::runFx() ;
@@ -211,12 +219,16 @@ AppCli::Run(const AppArgs& appargs)
         {
           cli::printWhoNeed( pkg , appargs.getAppendVersions(), appargs.getXDL() ) ;
         }
-      catch (const a4z::Err& e)
+      catch (const Error& e)
         {
           LogError() << e << std::endl;
           return -5;
         }
-
+      catch (...)
+        {
+          LogError() << "Unknown error" << std::endl;
+          return -5;
+        }
     }
   else if( !appargs.getWhoNeeds()  )
     {

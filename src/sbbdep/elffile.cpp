@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <sbbdep/elffile.hpp>
 #include <sbbdep/log.hpp>
 #include <sbbdep/path.hpp>
+#include <sbbdep/error.hpp>
 
 #include <elfio/elfio.hpp>
 
@@ -74,13 +75,13 @@ ElfFile::load()
 
   int elfclass = elfreader.get_class();
   if (elfclass == ELFCLASSNONE)
-    throw a4z::ErrorNeverReach("should already have returned false");
+    throw ErrUnexpected("should already have returned false");
   else if (elfclass == ELFCLASS32)
     m_arch = Arch32;
   else if (elfclass == ELFCLASS64)
     m_arch = Arch64;
   else
-    throw a4z::ErrorNeverReach("unknown arch should not happen");
+    throw ErrUnexpected("unknown arch should not happen");
 
 
   ELFIO::Elf_Half type = elfreader.get_type();
