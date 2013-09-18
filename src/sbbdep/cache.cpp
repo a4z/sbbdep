@@ -45,6 +45,29 @@ THE SOFTWARE.
 
 namespace sbbdep {
 
+std::unique_ptr<Cache> Cache::_instance{nullptr};
+
+void
+Cache::open(const std::string& dbname)
+{
+  if( _instance != nullptr )
+    throw ErrGeneric("cache already open") ;
+
+  _instance.reset(new Cache(dbname)) ;
+}
+
+void Cache::close()
+{
+  _instance.reset() ;
+}
+
+Cache&
+Cache::get()
+{
+  return *_instance;
+}
+
+
 
 
 Cache::Cache( const std::string& dbname ) :

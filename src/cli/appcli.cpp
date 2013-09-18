@@ -45,7 +45,7 @@
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/error.hpp>
 
-#include <a4z/singlecollector.hpp>
+
 
 namespace sbbdep {
 
@@ -57,7 +57,7 @@ AppCli::AppCli()
 
 AppCli::~AppCli()
 {
-  a4z::SingleCollector::destroy();
+
 }
 //--------------------------------------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ namespace {
 bool
 prepairCache(bool syncflag)
 {
-  if( Cache::get()->DB().isNew() )
+  if( Cache::get().DB().isNew() )
     {
       if( syncflag )
         {
@@ -76,7 +76,7 @@ prepairCache(bool syncflag)
 
   try // TODO in new implementation this will be automatically called at open db
     { //us major minor combination to see if schema has changed in an way that it needs to be re-created
-      Cache::get()->DB().checkVersion(
+      Cache::get().DB().checkVersion(
           sbbdep::MAJOR_VERSION,
           sbbdep::MINOR_VERSION ,
           sbbdep::PATCH_VERSION );
@@ -91,7 +91,7 @@ prepairCache(bool syncflag)
     {
       try
         {
-          cli::printSyncReport( Cache::get()->doSync() );
+          cli::printSyncReport( Cache::get().doSync() );
         }
       catch (const Error& e)
         {
@@ -135,9 +135,9 @@ AppCli::Run(const AppArgs& appargs)
 
   try
     {
-      Cache::create( appargs.getDBName() );
+      Cache::open( appargs.getDBName() );
 
-      if( !prepairCache(appargs.getNoSync()) )
+      if( !prepairCache( appargs.getNoSync() ) )
         return -2;
     }
   catch (const Error& e)
@@ -151,7 +151,7 @@ AppCli::Run(const AppArgs& appargs)
       return -1;
     }
 
-  Path querypath(appargs.getQuery());
+  Path querypath( appargs.getQuery() );
 
   if( querypath.isEmpty() )
     return 0; // was a sync only call ....
@@ -242,6 +242,7 @@ AppCli::Run(const AppArgs& appargs)
       return -6;
     }
 
+  Cache::close(); // would auto clean but call it
   return 0;
 }
 //--------------------------------------------------------------------------------------------------

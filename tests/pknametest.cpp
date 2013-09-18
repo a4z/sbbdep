@@ -1,6 +1,6 @@
 
 
-#include <a4z/testpack.hpp>
+#include "a4testing.hpp"
 
 #include <sbbdep/pkgname.hpp>
 
@@ -10,13 +10,8 @@ namespace sbbdep {
 namespace test_pkname {
 
 
-A4Z_NAMETYPE(pkgname) ;
 
-
-struct PkNameSuite : public a4z::TestPack<PkNameSuite, pkgname>
-{
-
-  static void PrintInfo(const sbbdep::PkgName& pkn)
+  void PrintInfo(const sbbdep::PkgName& pkn)
   {
     std::cout <<"FullName       : "<< pkn.FullName() <<"\n";
     std::cout <<"Name           : "<< pkn.Name() <<"\n";
@@ -28,7 +23,7 @@ struct PkNameSuite : public a4z::TestPack<PkNameSuite, pkgname>
     std::cout << "------------------------------------" << std::endl; 
   }
   
-  static void RunDefault()
+  void RunDefault()
   {
     PkgName pkn1("mesa-7.8.1-i486-1");
     BOOST_REQUIRE( pkn1.Name() == "mesa" );
@@ -79,13 +74,7 @@ struct PkNameSuite : public a4z::TestPack<PkNameSuite, pkgname>
 
 
 
-  void assemble(Binder& addcase)
-  {
-    addcase(NAME_CALL(RunDefault)) ;
-  }
-  
-};
-A4Z_ADD_PACK(PkNameSuite) ;
+a4TestSimple("pkgname", RunDefault) ;
 
 }
 }

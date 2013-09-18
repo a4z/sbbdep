@@ -61,7 +61,6 @@ endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
 include( a4cmk/myBoostSetup.cmake )
-include( a4cmk/mya4zSetup.cmake )
 include( a4cmk/mya4sqlt3Setup.cmake )
 
 
@@ -156,7 +155,7 @@ ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
 #TODO, sqlite & dl only needed  if a4sqlt3 was build with that requirement ...
 #set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl ) 
-set(SBBDEP_REQURIED_LIBS sbbdep ${a4sqlt3_library} ${a4z_library} )
+set(SBBDEP_REQURIED_LIBS sbbdep ${a4sqlt3_library} )
 
 set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
 

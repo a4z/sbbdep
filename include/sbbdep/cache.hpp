@@ -28,28 +28,27 @@ THE SOFTWARE.
 
 
 #include <sbbdep/cachedb.hpp>
-#include <a4z/single.hpp>
 #include <vector>
 #include <string>
 
 namespace sbbdep {
 
-class Cache : public a4z::Single<Cache>
+class Cache
 {
   
-  friend class a4z::Single<Cache> ; 
-  
-  
   Cache(const std::string& dbname);
+
+public:
+
   ~Cache();
 
-  
-public:
- 
+
   typedef std::vector<std::string> StringVec;
   
 
-  
+  static void open(const std::string& dbname);
+  static void close();
+  static Cache& get() ;
   
   CacheDB& DB() { return m_db ;}
   
@@ -73,6 +72,7 @@ private:
 
   CacheDB m_db;
 
+  static std::unique_ptr<Cache> _instance;
     
   
 };

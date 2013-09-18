@@ -55,9 +55,9 @@ void runFx()
   using namespace a4sqlt3;
   Dataset rs_cnt, rs_files ;
 
-  Cache::getInstance()->DB().Execute("SELECT COUNT(*) FROM dynlinked;", rs_cnt);
+  Cache::get().DB().Execute("SELECT COUNT(*) FROM dynlinked;", rs_cnt);
 
-  Cache::getInstance()->DB().Execute("SELECT filename FROM dynlinked;", rs_files);
+  Cache::get().DB().Execute("SELECT filename FROM dynlinked;", rs_files);
 
   int counter = 0;
   for(auto& row : rs_files)

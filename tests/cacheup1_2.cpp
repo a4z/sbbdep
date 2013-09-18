@@ -1,6 +1,6 @@
 
 
-#include <a4z/testsuitebuilder.hpp>
+#include "a4testing.hpp"
 
 #include <sbbdep/cachesql.hpp>
 #include <sbbdep/cachedb.hpp>
@@ -107,23 +107,14 @@ struct Case
 
 };
 
-
-
-
-struct CacheVersionSuite : public a4z::TestSuiteBuilder< Case >
-{
-  
-  void
-  assembleCases()
-  {
-    A4Z_TEST_ADDCLASSCASE( Case::mkTestEnviroment );
-    A4Z_TEST_ADDCLASSCASE( Case::CheckAlterTable );
-    A4Z_TEST_ADDCLASSCASE( Case::UpdateData );
-  }
-  
-};
-A4Z_TEST_CHECK_IN( CacheVersionSuite , up1_2 );
-
+/* this is obsolete, since the decision was taken to recreate the cache
+a4TestAdd(
+    a4test::suite<Case>("cacheup_1_2")
+    .addTest("mktestenvironment", &Case::mkTestEnviroment)
+    .addTest("check alter table", &Case::CheckAlterTable)
+    .addTest("update data", &Case::UpdateData)
+    );
+*/
 
 }
 }

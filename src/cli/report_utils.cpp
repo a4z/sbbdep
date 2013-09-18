@@ -111,21 +111,21 @@ void printTree(ReportTree& tree)
 bool isRRunPath(const std::string& dirname)
 {
   using namespace a4sqlt3;
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand("isRRunpathDirectory");
+  SqlCommand* cmd = Cache::get().DB().getCommand("isRRunpathDirectory");
   if( cmd == nullptr )
     {
       std::string sql = "SELECT count(*)  FROM rrunpath WHERE rrunpath.lddir NOT IN "
           " (SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs) "
           " AND rrunpath.lddir = ? ;" ;
 
-      cmd = Cache::getInstance()->DB().createStoredCommand(
+      cmd = Cache::get().DB().createStoredCommand(
           "isRRunpathDirectory" ,  sql );
     }
 
   cmd->Parameters().Nr(1).set(dirname);
 
   Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, ds);
+  Cache::get().DB().Execute(cmd, ds);
   return ds.getField(0).getInt64() > 0 ;
 
 }
@@ -134,21 +134,21 @@ bool isRRunPath(const std::string& dirname)
 bool isLinkPath(const std::string& dirname)
 {
   using namespace a4sqlt3;
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand("isLinkPathDirectory");
+  SqlCommand* cmd = Cache::get().DB().getCommand("isLinkPathDirectory");
   if( cmd == nullptr )
     {
       std::string sql =" SELECT count(*) FROM "
          " (SELECT dirname FROM lddirs WHERE dirname = ? "
             " UNION SELECT dirname FROM ldlnkdirs WHERE dirname = ?) ";
 
-      cmd = Cache::getInstance()->DB().createStoredCommand(
+      cmd = Cache::get().DB().createStoredCommand(
           "isLinkPathDirectory" ,  sql );
     }
 
   cmd->Parameters().setValues( {DbValue(dirname), DbValue(dirname)} ) ;
 
   Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, ds);
+  Cache::get().DB().Execute(cmd, ds);
   return ds.getField(0).getInt64() > 0 ;
 
 }

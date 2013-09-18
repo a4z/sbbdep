@@ -1,11 +1,8 @@
 
 
-#include <a4z/testsuitebuilder.hpp>
+#include "a4testing.hpp"
 #include <a4sqlt3/database.hpp>
-
-
 #include <sbbdep/cachesql.hpp>
-
 #include <iostream>
 
 namespace sbbdep {
@@ -46,19 +43,7 @@ void RunDefault()
   
 }
 
-
-struct ReplOrigSuite : public a4z::TestSuiteBuilder< >
-{
-  
-  void
-  assembleCases()
-  {
-    A4Z_TEST_ADDCASEFUNC( RunDefault );
-  }
-  
-};
-A4Z_TEST_CHECK_IN ( ReplOrigSuite , replorig );
-
+a4TestSimple("replorig", RunDefault ) ;
 
 }
 }

@@ -60,20 +60,20 @@ getPkgsOfFile(const PathName& fname, int arch)
 {
   using namespace a4sqlt3;
   const std::string cmdname = "getPkgsOfFilebyFile" ;
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand(cmdname);
+  SqlCommand* cmd = Cache::get().DB().getCommand(cmdname);
   if( cmd == nullptr )
     {
       std::string sql = R"~(
     SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
      WHERE dynlinked.filename=?  AND dynlinked.arch=? ; 
     )~";
-      cmd = Cache::getInstance()->DB().createStoredCommand(cmdname, sql);
+      cmd = Cache::get().DB().createStoredCommand(cmdname, sql);
     }
 
   cmd->Parameters().setValues( { fname.Str(), arch }) ;
 
   Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, ds);
+  Cache::get().DB().Execute(cmd, ds);
   return ds;
 }
 
@@ -132,7 +132,7 @@ utils::ReportSet elfdeps(const PathName& fromfile, const ElfFile::StringVec& nee
 
 
   utils::ReportSet ds{{}} ;
-  Cache::getInstance()->DB().Execute(sql, ds) ;
+  Cache::get().DB().Execute(sql, ds) ;
   return ds;
 
 
@@ -573,15 +573,15 @@ getWhoNeeds(const ElfFile& elf)
     return ds;
 
   const std::string spname = "get_whoneed_file";
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand(spname);
+  SqlCommand* cmd = Cache::get().DB().getCommand(spname);
   if( cmd == nullptr )
     {
-      cmd = Cache::getInstance()->DB().createStoredCommand(spname, getWhoNeedFileQuery());
+      cmd = Cache::get().DB().createStoredCommand(spname, getWhoNeedFileQuery());
     }
 
   cmd->Parameters().setValues({ elf.getName().Str() });
 
-  Cache::getInstance()->DB().Execute(cmd, ds);
+  Cache::get().DB().Execute(cmd, ds);
   return ds ;
 }
 //--------------------------------------------------------------------------------------------------
@@ -594,16 +594,16 @@ getWhoNeedsPkg(const std::string& name)
   using namespace a4sqlt3;
 
   const std::string spname = "get_whoneed_pkg";
-  SqlCommand* cmd = Cache::getInstance()->DB().getCommand(spname);
+  SqlCommand* cmd = Cache::get().DB().getCommand(spname);
   if( cmd == nullptr )
     { //select
-      cmd = Cache::getInstance()->DB().createStoredCommand(spname, getWhoNeedPkgQuery());
+      cmd = Cache::get().DB().createStoredCommand(spname, getWhoNeedPkgQuery());
     }
 
   cmd->Parameters().setValues({ name });
 
   Dataset ds;
-  Cache::getInstance()->DB().Execute(cmd, ds);
+  Cache::get().DB().Execute(cmd, ds);
   return ds ;
 
 }

@@ -12,12 +12,13 @@ add_definitions(${sbbdep_TEST_DEFINES})
 #endif(USE_BOOSTTESTING_DYNLINK)
 
 SET( sbbtest_SRC
-main.cpp
+a4testing.cpp
+a4testing.hpp
 findbinpath.cpp
 pathtest.cpp
 pknametest.cpp
 replorig.cpp
-varadmdir.cpp
+
 cacheup1_2.cpp
 )
 
