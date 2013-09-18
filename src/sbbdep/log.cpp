@@ -26,6 +26,8 @@ THE SOFTWARE.
 
 #include <mutex>
 
+#include <iostream>
+
 
 namespace sbbdep
 {
@@ -144,7 +146,7 @@ LogChannel LogDebug()
 {
 #ifdef DEBUG
   static std::shared_ptr<LogWriter> writer = std::make_shared<LogWriter>(std::cerr) ;
-  return LogChannel( std::make_shared<DevNullStream>() ) ;  
+  return LogChannel( std::make_shared<LogStream>(writer) ) ;  
 #else
   return LogChannel( std::make_shared<DevNullStream>() ) ;  
 #endif
