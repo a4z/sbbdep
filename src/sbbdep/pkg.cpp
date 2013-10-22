@@ -220,7 +220,7 @@ Pkg::doLoadInstalled()
         else if ( pnTmp.getBase() =="incoming" ) p = pnTmp.getDir() + "/" + pn.getBase() ;
         else if ( p.getBase() =="incoming" ) return ;
         // place a warning here if file still not exists...
-        if ( !p.isValid() ) LogInfo() << "Note: indexing file " << p << ": file not found\n" ;
+        if ( !p.isValid() ) LogInfo() << "Note: can not read file: " << p << "\n" ;
       }
 
     if(p.isRegularFile())
