@@ -26,7 +26,7 @@ if(NOT ALL_A4_TESTING_DISABLED)
 
         endif(${CMAKE_BINARY_DIR} STREQUAL ${PROJECT_BINARY_DIR})
 
-        message (STATUS "** set "${PROJECT_NAME}_TEST_BINARY_DIR" to "${${PROJECT_NAME}_TEST_BINARY_DIR} )
+        message (STATUS "** set " ${PROJECT_NAME}_TEST_BINARY_DIR " to " ${${PROJECT_NAME}_TEST_BINARY_DIR} )
              
         
         add_subdirectory(tests)        
