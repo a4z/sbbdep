@@ -64,7 +64,8 @@ AppCli::~AppCli()
 namespace {
 bool
 prepairCache(bool syncflag)
-{
+{ // TODO name this nosync ? or add docu other wise its always hard to read first time comming here
+  bool chache_was_new{false};
   if( Cache::get().DB().isNew() )
     {
       if( syncflag )
@@ -72,6 +73,7 @@ prepairCache(bool syncflag)
           LogInfo() << "Cache is new, overrule nosync\n";
           syncflag = false;
         }
+      chache_was_new = true;
     }
 
   try // TODO in new implementation this will be automatically called at open db
@@ -91,7 +93,7 @@ prepairCache(bool syncflag)
     {
       try
         {
-          cli::printSyncReport( Cache::get().doSync() );
+          cli::printSyncReport( Cache::get().doSync(), chache_was_new );
         }
       catch (const Error& e)
         {
@@ -153,6 +155,14 @@ AppCli::Run(const AppArgs& appargs)
 
   Path querypath( appargs.getQuery() );
 
+
+  if(appargs.getFeatureX())
+    {
+      sbbdep::cli::runFx() ;
+      return 0  ;
+    }
+
+
   if( querypath.isEmpty() )
     return 0; // was a sync only call ....
 
@@ -205,11 +215,6 @@ AppCli::Run(const AppArgs& appargs)
     {
       LogError() << "Unknown error" << std::endl;
       return -4;
-    }
-  if(appargs.getFeatureX())
-    {
-      sbbdep::cli::runFx() ;
-      return 0  ;
     }
 
 

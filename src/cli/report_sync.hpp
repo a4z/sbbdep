@@ -34,7 +34,7 @@ namespace sbbdep{
 namespace cli{
 
 
-void printSyncReport(Cache::SyncData syncdata) ;
+void printSyncReport(Cache::SyncData syncdata, bool chache_was_new) ;
 
 
 

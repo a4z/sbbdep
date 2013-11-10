@@ -58,31 +58,29 @@ LDDirs::readLdDirs() -> const LDDirs::StringSet&
   if(Path("/lib64").isFolder() )m_lddirs.insert("/lib64");
   m_lddirs.insert("/usr/lib");
   if(Path("/usr/lib64").isFolder() )m_lddirs.insert("/usr/lib64");
-  
-  
-  std::string line;
+
   std::ifstream ldso_conf("/etc/ld.so.conf");
 
-  if (ldso_conf.is_open())
+  if( ldso_conf.is_open() )
     {
-      while (ldso_conf.good())
+      for( std::string line ; std::getline(ldso_conf, line) ; )
         {
-          std::getline(ldso_conf, line);
-          std::size_t commentpos = line.find_first_of("#");
-          if( commentpos!=std::string::npos ) line.erase(commentpos);
+          std::size_t commentpos = line.find_first_of("#") ;
+          if( commentpos != std::string::npos )
+            line.erase(commentpos) ;
           std::string dirname = boost::algorithm::trim_copy(line) ;
           if( dirname.size() )
             { //  folder path could also be a link
-              Path p(dirname);
-              p.makeRealPath();
+              Path p(dirname) ;
+              p.makeRealPath() ;
               if( p.isFolder() )
                 m_lddirs.insert(p.getURL()) ;
             }
         }
     }
-  else 
+  else
     {
-      throw ErrGeneric("unable to read /etc/ld.so.conf");
+      throw ErrGeneric("unable to read /etc/ld.so.conf") ;
     }
   
   
@@ -138,10 +136,11 @@ LDDirs::readLdLinkDirs() -> const LDDirs::StringSet&
               std::string orig = path.Str();
               path.makeRealPath();
               if (path.isRegularFile() && isElfLib( path ) )
-                { // filter out what is a regular ld dir
+                { // filter out what is a regular ld dir , TODO since this is a set lookup not reuqired
                   if(m_lddirs.find(path.getDir())== m_lddirs.end())
                     m_ldlnkdirs.insert(path.getDir());
 
+                  // TODO , why did I do this ? only for debug ??
                   if(path.getDir()=="/usr/bin" || path.getDir()=="/usr/sbin")
                     LogInfo()<<"in bin: " << orig << "->" << path.getURL() << std::endl;
                 }

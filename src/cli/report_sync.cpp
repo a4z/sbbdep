@@ -39,12 +39,21 @@ namespace cli{
 //--------------------------------------------------------------------------------------------------
 
 
-void printSyncReport(Cache::SyncData syncdata)
+void printSyncReport(Cache::SyncData syncdata, bool chache_was_new)
 {
+
+  if(chache_was_new)
+    {
+      LogInfo()  << "\n new cache created, "
+          << syncdata.installed.size()
+          << " packages indexed."
+          << std::endl;
+      return;
+    }
+
   using StringSet = std::set<std::string> ; //make it sortd
 
   StringSet deleted, reinstalled, installed, upgraded;
-
 
   // take removed, than check inserted, if inserted is also in deleted, its an update
   deleted.insert(syncdata.removed.begin(),syncdata.removed.end() );
