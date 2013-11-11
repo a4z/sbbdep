@@ -100,6 +100,80 @@ LDDirs::getLdSoConfTime()
 
 //--------------------------------------------------------------------------------------------------
 
+namespace
+{
+
+
+void fillFromLdSoCache(std::set<std::string>& s, const std::set<std::string>& ignore)
+{
+
+  const std::string cmd = "/sbin/ldconfig -p";
+  FILE* popin = popen(cmd.c_str(), "r");
+  if( popin )
+    {
+      char buff[512];
+      //TODO  first line always has some other infos..
+
+      while (std::fgets(buff, sizeof( buff ), popin) != NULL)
+        {
+          const char* buff_start = buff;
+          const char* buff_end = buff + sizeof( buff ) ;
+
+          auto posFound = [&buff](const char* pos) -> bool{
+            if(pos == buff + sizeof( buff ))
+              { // TODO
+                LogDebug()<< "Info: not to parse: " << buff << "\n";
+                return false;
+              }
+            return true;
+          };
+/*
+          const char* soname_begin = std::find_if( buff_start,  buff_end,
+              [](const char c)->bool{ return c != '\t' ; }
+              );
+          if (not posFound(soname_begin))
+              continue;
+
+
+          const char* soname_end = std::find_if( soname_begin,  buff_end,
+              [](const char c)->bool{ return c == ' '; }
+          );
+          if (not posFound(soname_end))
+              continue;
+*/
+
+          const std::string arrow = "=> ";
+          //const char* file_begin = std::search( soname_end, buff_end,
+          const char* file_begin = std::search( buff_start, buff_end,
+              std::begin(arrow), std::end(arrow)) + arrow.size();
+          if (not posFound(file_begin))
+              continue;
+
+          const std::string lineend = "\n";
+          const char* file_end = std::search( file_begin, buff_end,
+              std::begin(lineend), std::end(lineend)) ;
+          if (not posFound(file_end))
+              continue;
+
+         // std::cout << "here: '" << std::string(soname_begin, soname_end) << "'" ;
+         // std::cout << " to '" << std::string(file_begin, file_end) << "'" ;
+
+          Path path(std::string(file_begin, file_end));
+          path.makeRealPath();
+          //if (path.isRegularFile() && isElfLib( path ) ) // this should not be required anymore
+
+          if(ignore.find(path.getDir())== ignore.end())
+            s.insert(path.getDir());
+
+        }
+
+
+      pclose(popin);
+    }
+
+}
+}
+
 
 /*
  * get all directory names that have files with link in an lddir....
@@ -111,7 +185,11 @@ LDDirs::readLdLinkDirs() -> const LDDirs::StringSet&
     readLdDirs();
 
   m_ldlnkdirs.clear();
-  if(m_lddirs.size()== 0 )readLdDirs();
+
+  fillFromLdSoCache(m_ldlnkdirs, m_lddirs); // fill - ignore
+  return m_ldlnkdirs ;
+
+// TODO , remove the dead code below or use it just in case of problems with fillFromLdSoCache
 
   for (StringSet::const_iterator pos=m_lddirs.begin(); pos!=m_lddirs.end(); ++pos)
     {
