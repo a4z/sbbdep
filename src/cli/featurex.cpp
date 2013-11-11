@@ -267,6 +267,8 @@ runFx()
         pclose(popin);
       }
 
+    // TODO for the tree option check http://linux.about.com/library/cmd/blcmdl8_ld.so.htm
+    // and review elffile
 
 }
 
