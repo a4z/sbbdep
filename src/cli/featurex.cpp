@@ -181,6 +181,108 @@ printHRow(const HRow& hr, int level = 0)
 }
 //-------------------------------------------------------------------------------------------------
 
+
+class LdSoCache
+{
+  using LdSoMap = std::map<std::string, std::string>;
+  LdSoMap _map32 ;
+  LdSoMap _map64 ;
+
+  LdSoCache(){};
+
+  friend  LdSoCache& ldSoCache() ;
+
+public:
+  const LdSoMap& map32() { return _map32; }
+  const LdSoMap& map64() { return _map64; }
+
+
+};
+
+
+LdSoCache& ldSoCache()
+{
+  static LdSoCache ldsc;
+
+  if (ldsc.map32().empty() && ldsc.map64().empty())
+    {
+      const std::string cmd = "/sbin/ldconfig -p";
+      FILE* popin = popen(cmd.c_str(), "r");
+      if( popin )
+        {
+          char buff[512];
+          // first line, throw it away, its about nnn libs found in cache `/etc/ld.so.cache'
+          std::fgets(buff, sizeof( buff ), popin);
+          // TODO , but I could use this for validation??
+
+          while (std::fgets(buff, sizeof( buff ), popin) != NULL)
+            {
+              const char* buff_start = buff;
+              const char* buff_end = buff + sizeof( buff ) ;
+
+              const char* soname_begin = std::find_if( buff_start,  buff_end,
+                  [](const char c)->bool{ return c != '\t' ; }
+                  );
+
+              const char* soname_end = std::find_if( soname_begin,  buff_end,
+                  [](const char c)->bool{ return c == ' '; }
+              );
+
+              const char* info_begin = std::find_if( soname_end,  buff_end,
+                  [](const char c)->bool{ return c == '(' ; }
+                  );
+
+
+              const char* info_end = std::find_if( info_begin,  buff_end,
+                  [](const char c)->bool{ return c == ')'; }
+              );
+              // set info end to the ) so later serach works better
+
+              const std::string arrow = "=> ";
+
+              const char* file_begin = std::search( info_end, buff_end,
+                  std::begin(arrow), std::end(arrow)) + arrow.size();
+
+              const std::string lineend = "\n";
+              const char* file_end = std::search( file_begin, buff_end,
+                  std::begin(lineend), std::end(lineend)) ;
+
+
+              //std::cout << "here: '" << std::string(soname_begin, soname_end) << "'" ;
+              //std::cout << " info '" << std::string(info_begin, info_end+1) << "'" ;
+              //std::cout << " to '" << std::string(file_begin, file_end) << "'" ;
+              //std::cout << std::endl ;
+
+
+              const std::string tag64 = "x86-64";
+              if( std::search( info_begin, info_end + 1,
+                  std::begin(tag64), std::end(tag64)) == info_end + 1)
+                {
+                  ldsc._map32.emplace(
+                      std::make_pair(
+                          std::string(soname_begin, soname_end),
+                          std::string(file_begin, file_end)
+                  ));
+                }
+              else
+                {
+                  ldsc._map64.emplace(
+                      std::make_pair(
+                          std::string(soname_begin, soname_end),
+                          std::string(file_begin, file_end)
+                  ));
+                }
+
+            }
+
+
+          pclose(popin);
+        }
+    }
+  return ldsc ;
+}
+
+
 void
 runFx()
 {
@@ -225,6 +327,9 @@ runFx()
 
     }
 */
+
+  ldSoCache();
+  return ;
 
     const std::string cmd = "/sbin/ldconfig -p";
     FILE* popin = popen(cmd.c_str(), "r");
