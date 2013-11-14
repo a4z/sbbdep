@@ -454,7 +454,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 
   auto persiter =[this](ToStoreData& tostore, DbAction& dbaction){
 
-    while ( tostore.running )
+    while ( tostore.running.load(std::memory_order_relaxed) )
       {
         std::unique_lock<std::mutex> lock(tostore.mtx);
         while (not tostore.newdata)
@@ -546,7 +546,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 
 
   ToStoreData tostore;
-  tostore.running = true ;
+  tostore.running.store(true,std::memory_order_relaxed) ;
 
   // for indexing I need full path, so do this
   StringVec fullnames = toinsert;
@@ -579,7 +579,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
     std::unique_lock<std::mutex> monitorlock(tostore.mtx);
     tostore.newdata = true;
     tostore.condition.notify_one();
-    tostore.running = false;
+    tostore.running.store(false, std::memory_order_relaxed);  // might possible be a release cause publishing
     tostore.condition.notify_one(); // just to be sure to not run into troubles
   }
 
