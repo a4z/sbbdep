@@ -47,35 +47,40 @@ public:
   
   ~ElfFile();
 
-  const PathName& getName() const { return m_name; }
+  const PathName& getName() const { return _name; }
   
-  Arch getArch() const {return m_arch;}
+  Arch getArch() const {return _arch;}
 
-  Type getType()  const{ return m_type; }  
+  Type getType()  const{ return _type; }  
   
   std::string soName() const {
-    if(getType()== ElfFile::Library && m_soName.empty())
+    if(getType()== ElfFile::Library && _soName.empty())
       return getName().getBase();
 
-    return m_soName ;
+    return _soName ;
   }
   
-  const StringVec& getNeeded() const { return m_needed ; }
+  const StringVec& getNeeded() const { return _needed ; }
   
-  const StringVec& getRRunPaths() const { return m_rrunpaths ; }
+  const StringVec& getRRunPaths() const { return _rrunpaths ; }
   
   bool isBinaryOrLibrary(){ return getType() == ElfFile::Binary || getType() == ElfFile::Library ;}
+
+  bool hasRPath() const {return !_hasRunPath && !_rrunpaths.empty();}
+  bool hasRunPath() const {return _hasRunPath && !_rrunpaths.empty();}
 
 private:
   
 
-  PathName m_name;
-  Arch m_arch ;
-  Type m_type ;
+  PathName _name;
+  Arch _arch ;
+  Type _type ;
   
-  std::string m_soName;
-  StringVec m_needed;
-  StringVec m_rrunpaths;
+  std::string _soName;
+  StringVec _needed;
+  StringVec _rrunpaths;
+
+  bool _hasRunPath;
 
   void load();
  

@@ -34,12 +34,13 @@ namespace sbbdep {
 
 
 ElfFile::ElfFile(const PathName& name) noexcept
-  : m_name(name)
-  , m_arch(ArchNA)
-  , m_type(TypeNA)
-  , m_soName()
-  , m_needed()
-  , m_rrunpaths()
+  : _name{name}
+  , _arch{ArchNA}
+  , _type{TypeNA}
+  , _soName{}
+  , _needed{}
+  , _rrunpaths{}
+  , _hasRunPath{false}
 {
   try
   {
@@ -60,16 +61,17 @@ ElfFile::~ElfFile()
 }
 //--------------------------------------------------------------------------------------------------
 
+
 void
 ElfFile::load()
 {
   // firewall against invalid pathnames
-  if(not Path(m_name).isRegularFile())
+  if(not Path(_name).isRegularFile())
     return ;
 
   ELFIO::elfio elfreader;
 
-  if ( not elfreader.load( m_name ) ) {
+  if ( not elfreader.load( _name ) ) {
       return;
   }
 
@@ -77,9 +79,9 @@ ElfFile::load()
   if (elfclass == ELFCLASSNONE)
     throw ErrUnexpected("should already have returned false");
   else if (elfclass == ELFCLASS32)
-    m_arch = Arch32;
+    _arch = Arch32;
   else if (elfclass == ELFCLASS64)
-    m_arch = Arch64;
+    _arch = Arch64;
   else
     throw ErrUnexpected("unknown arch should not happen");
 
@@ -87,16 +89,16 @@ ElfFile::load()
   ELFIO::Elf_Half type = elfreader.get_type();
 
   if (type == ET_NONE)
-    m_type = TypeNA;
+    _type = TypeNA;
   else if (type == ET_EXEC)
-    m_type = Binary;
+    _type = Binary;
   else if (type == ET_DYN)
-    m_type = Library;
+    _type = Library;
   else
-    m_type=Other;
+    _type=Other;
 
 
-  if( !( m_type == Binary || m_type == Library ) )
+  if( !( _type == Binary || _type == Library ) )
     return ;
 
 
@@ -121,11 +123,11 @@ ElfFile::load()
 
               if( tag == DT_NEEDED )
                 {
-                  m_needed.push_back(std::string(val));
+                  _needed.push_back(std::string(val));
                 }
               else if( tag == DT_SONAME )
                 {
-                  m_soName = val;
+                  _soName = val;
                 }
               else if( tag == DT_RPATH )
                 {
@@ -135,14 +137,16 @@ ElfFile::load()
                       spos != epos && spos != pathes.size(); epos = pathes.find(":", spos))
                     {
                       std::string rpath = pathes.substr(spos, epos - spos);
-                      m_rrunpaths.push_back(rpath);
+                      _rrunpaths.push_back(rpath);
                       spos = epos == std::string::npos ? std::string::npos : epos + 1;
                     }
 
                 }
               else if( tag == DT_RUNPATH )
                 { // assume that runpath is always after rpath
-                  m_rrunpaths.clear();
+                  // what should be the case, rpath only if runpath does not exist
+                  _rrunpaths.clear();
+                  _hasRunPath = true;
 
                   std::string pathes = val;
 
@@ -150,7 +154,7 @@ ElfFile::load()
                       spos != epos && spos != pathes.size(); epos = pathes.find(":", spos))
                     {
                       std::string rpath = pathes.substr(spos, epos - spos);
-                      m_rrunpaths.push_back(rpath);
+                      _rrunpaths.push_back(rpath);
                       spos = epos == std::string::npos ? std::string::npos : epos + 1;
                     }
 
@@ -213,7 +217,7 @@ bool isElfLib(const PathName& pn)
 
   return retval;
 }
-
+//--------------------------------------------------------------------------------------------------
 
 
 //--------------------------------------------------------------------------------------------------
