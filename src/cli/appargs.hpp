@@ -44,6 +44,8 @@ class AppArgs
   int _quiet;
   int _ldd;
   int _featureX;
+  std::string _featureXArgs;
+
   
 public:
   AppArgs();
@@ -63,6 +65,7 @@ public:
   bool getQuiet() const { return _quiet ; }
   bool getLdd() const { return _ldd ; }
   bool getFeatureX() const { return _featureX ; }
+  const std::string& getFeatureXArgs() const { return _featureXArgs ; }
   
   void PrintHelp();
  

@@ -45,6 +45,7 @@ AppArgs::AppArgs()
   , _quiet(0)
   , _ldd(0)
   , _featureX(0)
+  , _featureXArgs{""}
 {
   
 }
@@ -199,7 +200,7 @@ AppArgs::Parse( int argc, char** argv )
       { "whoneeds", no_argument, &_whoneeds, 1 },
       { "xdl", no_argument, &_explain_dynlinked, 1 },
       { "ldd", no_argument, &_ldd, 1 },
-      { "fx", no_argument, &_featureX, 1 }, // undocumented option for the next test...
+      { "fx", optional_argument, 0, 1 }, // undocumented option for the next test...
       { 0, 0, 0, 0 } // Required end   
     };
   
@@ -219,6 +220,10 @@ AppArgs::Parse( int argc, char** argv )
             _outfile = optarg ? optarg : "";
           else if(optionName == "cache")
             _dbname = optarg ? optarg : "";
+          else if(optionName == "fx") {
+        	_featureX = 1 ;
+        	_featureXArgs = optarg ? optarg : "";
+          }
 
           break;
 

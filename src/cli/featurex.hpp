@@ -33,7 +33,7 @@
 namespace sbbdep {
 namespace cli {
 
-void runFx();
+void runFx(const std::string& args);
   
 
 

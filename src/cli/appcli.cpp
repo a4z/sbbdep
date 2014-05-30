@@ -158,7 +158,7 @@ AppCli::Run(const AppArgs& appargs)
 
   if(appargs.getFeatureX())
     {
-      sbbdep::cli::runFx() ;
+      sbbdep::cli::runFx(appargs.getFeatureXArgs()) ;
       return 0  ;
     }
 
