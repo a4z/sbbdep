@@ -36,10 +36,13 @@ namespace utils{
 
 
 //--------------------------------------------------------------------------------------------------
-ReportSet::ReportSet(const std::vector<std::string> fieldnames)
+ReportSet::ReportSet(const std::vector<std::string>& fieldnames)
 {
   for(std::size_t i = 0; i < fieldnames.size(); ++i)
       _namemap.insert( NameMap::value_type(fieldnames[i], i) ) ;
+  
+  // TODO , not that it matters, but would it be possible (and make sense)
+  // to get rid of the map and use some other structure for the name mpaaings?
 }
 
 void

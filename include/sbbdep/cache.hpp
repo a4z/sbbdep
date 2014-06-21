@@ -45,7 +45,8 @@ public:
 
   typedef std::vector<std::string> StringVec;
   
-
+  // TODO check, here or elsewhere, that dbname is not empty
+  // would open a private db and that gives a wrong error message
   static void open(const std::string& dbname);
   static void close();
   static Cache& get() ;

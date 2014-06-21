@@ -47,7 +47,7 @@ using StringMap = std::map<std::string, std::string>;
 class ReportSet : public a4sqlt3::Dataset
 {
 public:
-  ReportSet(const std::vector<std::string> fieldnames);
+  ReportSet(const std::vector<std::string>& fieldnames);
 
   void addFields(a4sqlt3::DbValueList fields);
 
