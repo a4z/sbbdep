@@ -121,7 +121,7 @@ public:
 
 
     auto store_pkg = [this](const PkgName& pkgname, const int64_t& timestamp) -> int64_t {
-        a4sqlt3::DbValueList param_vals = {
+        a4sqlt3::DbValues param_vals = {
            DbValue( pkgname.FullName() ) ,
            DbValue( pkgname.Name() ) ,
            DbValue( pkgname.Version() ) ,
@@ -137,7 +137,7 @@ public:
 
 
     auto store_dynlinked = [this](int64_t pkgid, const ElfFile& elf) -> int64_t {
-      a4sqlt3::DbValueList param_vals = {
+      a4sqlt3::DbValues param_vals = {
          DbValue( pkgid ) ,
          DbValue( elf.getName().Str() ) ,
          DbValue( elf.getName().getDir() ) ,
@@ -401,7 +401,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
   if(dsldtime.getRowCount()!= 1)
     Execute("INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);");
 
-  dsldtime.Reset();
+  dsldtime.reset();
   Execute("SELECT value FROM keyvalstore WHERE key='ldsoconf';", dsldtime);
   if(dsldtime.getRowCount()!= 1)
     throw ErrGeneric("keyval ldsoconf count != 1");

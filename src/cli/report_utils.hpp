@@ -49,7 +49,7 @@ class ReportSet : public a4sqlt3::Dataset
 public:
   ReportSet(const std::vector<std::string>& fieldnames);
 
-  void addFields(a4sqlt3::DbValueList fields);
+  void addFields(a4sqlt3::DbValues fields);
 
 } ;
 //--------------------------------------------------------------------------------------------------

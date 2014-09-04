@@ -46,14 +46,14 @@ ReportSet::ReportSet(const std::vector<std::string>& fieldnames)
 }
 
 void
-ReportSet::addFields(a4sqlt3::DbValueList fields)
+ReportSet::addFields(a4sqlt3::DbValues fields)
 {
   if( fields.size() != _namemap.size() )
     throw "TODO"; //TODO
 
   _rows.emplace_back(fields);
 
-  this->_rowcount = _rows.size();
+
 }
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------

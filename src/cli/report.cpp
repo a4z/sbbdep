@@ -234,7 +234,7 @@ getRequiredInfosLDD(const Pkg& pkg)
           for(auto f : ldsym_files.second)
           {
 
-            DbValueList vals = {
+            DbValues vals = {
             pkgval.getField(0) ,
             DbValue( path.getURL()), DbValue(sym) ,
             DbValue(f)
