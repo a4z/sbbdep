@@ -22,8 +22,6 @@ THE SOFTWARE.
 */
 
 
-#include <iostream>
-
 #include "appcli.hpp"
 #include "appargs.hpp"
 
@@ -36,15 +34,14 @@ main( int argc, char** argv )
   int retVal = 0;
 
   sbbdep::AppArgs args ;
-  if( !args.Parse(argc, argv) ) return 1; 
+  if( !args.Parse(argc, argv) )
+      return 1; 
   
-  if ( args.getHelp() ) args.PrintHelp() ;
+  if ( args.getHelp() )
+    args.PrintHelp() ;
   else 
-    {
-      sbbdep::AppCli app;
-      retVal = app.Run(args) ; 
-    }
-  
-    
+    retVal = sbbdep::AppCli().Run(args) ; 
+
+
   return retVal;
 }
