@@ -39,7 +39,7 @@ namespace utils{
 ReportSet::ReportSet(const std::vector<std::string>& fieldnames)
 {
   for(std::size_t i = 0; i < fieldnames.size(); ++i)
-      _namemap.insert( NameMap::value_type(fieldnames[i], i) ) ;
+      _names.insert( NameMap::value_type(fieldnames[i], i) ) ;
   
   // TODO , not that it matters, but would it be possible (and make sense)
   // to get rid of the map and use some other structure for the name mpaaings?
@@ -48,10 +48,10 @@ ReportSet::ReportSet(const std::vector<std::string>& fieldnames)
 void
 ReportSet::addFields(a4sqlt3::DbValues fields)
 {
-  if( fields.size() != _namemap.size() )
+  if( fields.size() != _names.size() )
     throw "TODO"; //TODO
 
-  _rows.emplace_back(&_namemap,fields);
+  _rows.emplace_back(fields);
 
 }
 //--------------------------------------------------------------------------------------------------
