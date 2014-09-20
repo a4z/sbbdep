@@ -51,7 +51,7 @@ ReportSet::addFields(a4sqlt3::DbValues fields)
   if( fields.size() != _names.size() )
     throw "TODO"; //TODO
 
-  _data.emplace_back(fields);
+  _rows.emplace_back(fields);
 
 }
 //--------------------------------------------------------------------------------------------------

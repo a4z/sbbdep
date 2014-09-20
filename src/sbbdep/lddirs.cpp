@@ -104,7 +104,8 @@ namespace
 {
 
 
-void fillFromLdSoCache(std::set<std::string>& s, const std::set<std::string>& ignore)
+void fillFromLdSoCache(std::set<std::string>& s,
+                       const std::set<std::string>& ignore)
 {
 
   const std::string cmd = "/sbin/ldconfig -p";
@@ -121,7 +122,9 @@ void fillFromLdSoCache(std::set<std::string>& s, const std::set<std::string>& ig
 
           auto posFound = [&buff](const char* pos) -> bool{
             if(pos == buff + sizeof( buff ))
-              { // TODO
+              { // TODO first line might look like
+                // 2683 libs found in cache `/etc/ld.so.cache
+                // it's not good to have a debug message for this
                 LogDebug()<< "Info: not to parse: " << buff << "\n";
                 return false;
               }
@@ -159,7 +162,8 @@ void fillFromLdSoCache(std::set<std::string>& s, const std::set<std::string>& ig
          // std::cout << " to '" << std::string(file_begin, file_end) << "'" ;
 
           Path path(std::string(file_begin, file_end));
-          path.makeRealPath();
+          path.makeRealPath(); // should alswayr return ture,
+          // TODO care about this...
           //if (path.isRegularFile() && isElfLib( path ) ) // this should not be required anymore
 
           if(ignore.find(path.getDir())== ignore.end())

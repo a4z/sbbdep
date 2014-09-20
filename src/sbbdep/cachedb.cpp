@@ -395,18 +395,22 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 
   LDDirs lddirs;
 
-  a4sqlt3::Dataset dsldtime ;
+  a4sqlt3::Dataset dsldtime ({ a4sqlt3::DbValueType::Int64 });
   Execute("SELECT value FROM keyvalstore WHERE key='ldsoconf';", dsldtime);
 
   if(dsldtime.getRowCount()!= 1)
-    Execute("INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);");
+    {
+      Execute("INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);");
+      dsldtime.reset();
+      Execute("SELECT value FROM keyvalstore WHERE key='ldsoconf';", dsldtime);
 
-  dsldtime.reset();
-  Execute("SELECT value FROM keyvalstore WHERE key='ldsoconf';", dsldtime);
-  if(dsldtime.getRowCount()!= 1)
-    throw ErrGeneric("keyval ldsoconf count != 1");
+      if(dsldtime.getRowCount()!= 1)
+        throw ErrGeneric("keyval ldsoconf count != 1");
 
-  if(lddirs.getLdSoConfTime() > dsldtime.getField(0).asInt64())
+    }
+
+
+  if(lddirs.getLdSoConfTime() > dsldtime.getField(0).getInt64())
       {
         Transaction trans(*this);
         updateLdDirOnly(  StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end()) ) ;
