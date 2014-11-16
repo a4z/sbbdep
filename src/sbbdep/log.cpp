@@ -104,6 +104,7 @@ struct DevNullSink
   std::streamsize
   write( const char_type* c, std::streamsize n )
   {
+    (void)(c);
     return n;
   }
 };

@@ -76,8 +76,7 @@ include
 SET ( libsbbdep_HDR
 
 include/sbbdep/cache.hpp
-include/sbbdep/cachedb.hpp
-include/sbbdep/cachesql.hpp
+
 include/sbbdep/dircontent.hpp
 include/sbbdep/elffile.hpp
 include/sbbdep/error.hpp
@@ -87,19 +86,20 @@ include/sbbdep/log.hpp
 include/sbbdep/path.hpp
 include/sbbdep/pathname.hpp
 include/sbbdep/pkg.hpp
-include/sbbdep/pkgadmdir.hpp
 include/sbbdep/pkgname.hpp
 
 ${sbbdep_CONFIG_HEADER}
 )
 #-----------------------------------------------------------------------------------------
 SET ( libsbbdep_SRCHDR
+src/sbbdep/cachesql.hpp
+src/sbbdep/conststr.hpp
 )
 #-----------------------------------------------------------------------------------------
 SET ( libsbbdep_SRC
 
 src/sbbdep/cache.cpp
-src/sbbdep/cachedb.cpp
+
 src/sbbdep/cachesql.cpp
 src/sbbdep/dircontent.cpp
 src/sbbdep/error.cpp
@@ -110,7 +110,6 @@ src/sbbdep/log.cpp
 src/sbbdep/path.cpp
 src/sbbdep/pathname.cpp
 src/sbbdep/pkg.cpp
-src/sbbdep/pkgadmdir.cpp
 src/sbbdep/pkgname.cpp
 
 
@@ -150,8 +149,9 @@ SET ( sbbdepcli_SRC
     src/cli/featurex.cpp
 )
 
-
-ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
+  
+ADD_EXECUTABLE( sbbdepcli src/dummy.cpp )
+#ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
 #TODO, sqlite & dl only needed  if a4sqlt3 was build with that requirement ...
 #set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl ) 
@@ -168,18 +168,6 @@ FIND_PACKAGE( OpenMP )
 set_target_properties(sbbdep sbbdepcli PROPERTIES COMPILE_FLAGS ${OpenMP_CXX_FLAGS})
 set_target_properties(sbbdepcli PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
 
-
-include( a4cmk/myTestSetup.cmake )
-
-#add_subdirectory(tests)
-
-#optional enable personal test/trial dir
-include(CMakeLocalOpts.cmake OPTIONAL)
-if(sbbdep_LOCAL_TRIALS)
-    add_subdirectory(trials)  
-endif(sbbdep_LOCAL_TRIALS)
-
-
 #only add install target if this is the top level project
 if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     INSTALL(FILES ${sbbdep_HDR} DESTINATION include/sbbdep)
@@ -189,5 +177,19 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
       ARCHIVE DESTINATION lib${LIB_SUFFIX}
     )
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+
+
+#add_subdirectory(tests)
+include( a4cmk/myTestSetup.cmake )
+
+
+#optional enable personal test/trial dir
+include(CMakeLocalOpts.cmake OPTIONAL)
+if(sbbdep_LOCAL_TRIALS)
+    add_subdirectory(trials)  
+endif(sbbdep_LOCAL_TRIALS)
+
+
+
 
 

@@ -215,22 +215,6 @@ Path::getLastStatusChangeTime() const
 //--------------------------------------------------------------------------------------------------
 
 
-bool
-Path::followLink() 
-{
-  
-  char result[PATH_MAX] ;
-  ssize_t len = readlink( getURL().c_str() , &result[0] , PATH_MAX) ;
-  if ( len == 0 ) return false;  
-  result[len] = '\0';
-
-  if ( isRelative() ) setURL( getDir() + "/" + &result[0] );
-  else setURL( &result[0] );
-  
-  return isValid();   
-  
-}
-//--------------------------------------------------------------------------------------------------
 
 bool 
 Path::makeAbsolute()

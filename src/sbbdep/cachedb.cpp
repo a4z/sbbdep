@@ -38,7 +38,7 @@ THE SOFTWARE.
 
 #include <a4sqlt3/error.hpp>
 
-
+#include <sqlite3.h>
 
 #include <cstdlib>
 #include <algorithm>
@@ -47,8 +47,75 @@ THE SOFTWARE.
 #include <condition_variable>
 #include <atomic>
 #include <queue>
+#include <map>
+
+#include "conststr.hpp"
 
 namespace sbbdep {
+
+using a4sqlt3::Database;
+using a4sqlt3::SqlCommand;
+using a4sqlt3::DbValue;
+using a4sqlt3::DbValueType ;
+
+
+namespace {
+
+
+
+void replace_origin_func(sqlite3_context *context,
+                                int argc, sqlite3_value **argv)
+{
+  if (argc != 2)
+    { // TODO this needs a test
+      conststr errmsg { "incorrect count of arguments, should be 2" };
+      sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
+    }
+
+  std::string filepath = (const char*)sqlite3_value_text(argv[0]);
+  std::string homepath = (const char*)sqlite3_value_text(argv[1]);
+
+  std::string result= replaceORIGIN(filepath, homepath);
+
+  sqlite3_result_text(context, result.c_str(), -1, SQLITE_TRANSIENT);
+
+}//-----------------------------------------------------------------------------
+
+
+void make_realpath_func(sqlite3_context *context,
+                               int argc, sqlite3_value **argv)
+{
+  if (argc != 1)
+    { // TODO this needs a test
+      conststr errmsg {"incorrect count of arguments, should be 1"} ;
+      sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
+    }
+
+  Path p((const char*)sqlite3_value_text(argv[0]));
+  p.makeAbsolute();
+  p.makeRealPath();
+
+  if ( p.isValid() )
+    sqlite3_result_text(context, p.getURL().c_str(), -1, SQLITE_TRANSIENT);
+  else
+    sqlite3_result_null(context);
+}//-----------------------------------------------------------------------------
+} // anno ns
+
+void register_own_functions(sqlite3* db)
+{
+//todo fuer parameter 4 ?? re check docu
+//auto flag = SQLITE_UTF8 | SQLITE_DETERMINISTIC ;
+sqlite3_create_function(db, "replaceOrigin", 2, 0,0,
+                        &replace_origin_func , 0 , 0 );
+
+sqlite3_create_function(db, "mkRealPath", 1, 0,0,
+                        &make_realpath_func , 0 , 0 );
+// mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
+
+}
+
+
 
 
 class DbAction
@@ -142,10 +209,11 @@ public:
          DbValue( elf.getName().Str() ) ,
          DbValue( elf.getName().getDir() ) ,
          DbValue( elf.getName().getBase() ) ,
-          (elf.soName().size()> 0 ? DbValue(elf.soName()) : DbValue(a4sqlt3::DbValueType::Null) ) ,
+          (elf.soName().size()> 0 ?
+              DbValue(elf.soName()) : DbValue(a4sqlt3::DbValueType::Null) ) ,
          DbValue( elf.getArch() )
       };
-      this->m_cmddynlinked->Parameters().setValues(std::move(param_vals)) ;;
+      this->m_cmddynlinked->setParameters(param_vals) ;
       this->m_dbref.Execute(this->m_cmddynlinked);
       return this->m_dbref.getLastInsertRowid() ;
 
@@ -197,24 +265,24 @@ public:
 
 
 
-
-CacheDB::CacheDB()
-: a4sqlt3::Database(std::string(std::getenv("HOME")) + std::string("/sbbdep.cache")) //TODO wenn test vorbei nach .config/.. oder sonst wo
-{
- 
-  Path p( _name );
-  m_isNew = !p.isValid();
-
-}
-//--------------------------------------------------------------------------------------------------
-
 CacheDB::CacheDB( const std::string& name )
 : a4sqlt3::Database( name )
-// , m_isNew( !Path(name).isValid() ) better readable in body
-{
 
-  Path p( _name );
-  m_isNew = !p.isValid();
+{
+  sql::register_own_functions(_sql3db);
+
+  //if I do not have pkgs table, than I am new, or something is horrible wrong
+  // later I can use select count from pkgs to find out ...
+  // i think this could be a good idea
+
+  // if i am new, than i need to create me and sett the new flag
+
+  // if i am not new, check the version for possible updates ..
+
+  // question , shall I take the new flag from extern,
+  // could be found if file exist
+
+
 
 }
 //--------------------------------------------------------------------------------------------------
@@ -226,7 +294,6 @@ CacheDB::Open()
   
   if(  a4sqlt3::Database::Open() )
     {
-      CacheSQL::register_own_sql_functions(_sql3db);
 
       checkVersion(
                 sbbdep::MAJOR_VERSION,
@@ -310,6 +377,8 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
       if(rc.isNull())
         throw ErrToDo();
 
+
+
       if( rc.getInt64() != 1 )
         {
           if( rc.getInt64() > 1 )
@@ -364,19 +433,20 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
           throw ErrGeneric("old db version in use");
         }
 
-      Transaction trans(*this);
+      auto trans = transactionGuard();
       if(db_version < calcVersion(0, 2, 1))
         {
-          Execute("CREATE TABLE keyvalstore (key  NOT NULL,  value  NOT NULL);");
-          Execute("create unique index  idx_keyvalstore_key on keyvalstore (key);");
-          Execute("insert into keyvalstore (key, value ) values ('ldsoconf', 0);");
+          execute("CREATE TABLE keyvalstore (key  NOT NULL,  value  NOT NULL);");
+          execute("create unique index  idx_keyvalstore_key on keyvalstore (key);");
+          execute("insert into keyvalstore (key, value ) values ('ldsoconf', 0);");
         }
 
 
-      std::string sqcmd = "UPDATE version set major = " + std::to_string(major) +
+      std::string sqcmd =
+          "UPDATE version set major = " + std::to_string(major) +
           ", minor = " + std::to_string(minor) +
           ", patchlevel = " + std::to_string(patchlevel) + ";" ;
-      Execute(sqcmd);
+      execute(sqcmd);
       trans.commit();
    }
 
@@ -410,7 +480,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
     }
 
 
-  if(lddirs.getLdSoConfTime() > dsldtime.getField(0).getInt64())
+  if(lddirs.getLdSoConfTime() > dsldtime.at(0).getInt64())
       {
         Transaction trans(*this);
         updateLdDirOnly(  StringVec(lddirs.getLdDirs().begin(), lddirs.getLdDirs().end()) ) ;
@@ -428,6 +498,8 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
 
 // todo this needs only to be done if toinsert has data, if we just remove, this could be ignored
 
+  // TODO ich brauch das sowieso, fertig
+  // daher sollt das immer sein waerend man die aenderungen sucht
   std::thread loadlddirs( [&lddirs] (){
     lddirs.getLdDirs();
     lddirs.getLdLnkDirs();
@@ -479,7 +551,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
       }
 
       // check if something left to do
-      { // here no lock should be required anymor cause if monitor is not running, no producers..
+      { // here no lock should be required  cause if monitor is not running, no producers..
         std::vector<Pkg> pkgs;
         std::swap(pkgs, tostore.pkgs);
         for(Pkg& pkg : pkgs)
@@ -640,10 +712,12 @@ CacheDB::updateLdDirOnly(const StringVec& lddirs)
 void
 CacheDB::persistLdSoTime()
 {
-  LDDirs lddirs;
-  Execute("update keyvalstore set value = " +
+  LDDirs lddirs; // TODO cache sql
+  execute("update keyvalstore set value = " +
       std::to_string(lddirs.getLdSoConfTime()) +
       " where key = 'ldsoconf' ;") ;
+  // TODO das wird ein command,
+
 }
 //--------------------------------------------------------------------------------------------------
 
@@ -690,7 +764,7 @@ int64_t
 CacheDB::getLatestPkgTimeStamp()
 {
 
-  a4sqlt3::DbValue val = selectSingleValue(CacheSQL::MaxPkgTimeStamp());
+  a4sqlt3::DbValue val = selectValue(sql::maxPkgTimeStamp());
 
   return val.isNull() ? 0 : val.getInt64() ;
 

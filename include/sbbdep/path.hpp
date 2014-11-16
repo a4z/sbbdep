@@ -113,12 +113,14 @@ public:
   
   /// only if isAbsolut to not imply pwd by accident,  expand symlinks and  /./ /../ in path
   bool makeRealPath()  ;
+  // TODO this should always work and return pathname,
   
+
   /// relpaces ./ or ../ at begin with the current working dir
   bool makeAbsolute();
-  
-  /// if isLink sets the path to linktarget
-  bool followLink() ;   
+  // TODO this needs to become something else
+  // this needs either to call make realpath, or be renamed...
+
 
   friend std::ostream& operator<<(std::ostream& os, const Path& p);  
   

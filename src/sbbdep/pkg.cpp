@@ -23,7 +23,7 @@
 
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/path.hpp>
-#include <sbbdep/pkgadmdir.hpp>
+#include <sbbdep/dircontent.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/log.hpp>
 
@@ -34,6 +34,8 @@ namespace sbbdep {
 // check also #include <sbbdep/lddirs.hpp>
 // they contain a bit more
 // TODO , check if they are still required, the are also in the database
+
+// this is just used to load destdir, so it can be local there TODO
 const Pkg::StringSet&
 Pkg::usualBinDirs()
 {
@@ -54,47 +56,77 @@ Pkg::usualLibDirs()
 // former pkg fab, try to work without fmagic, should work, ...
 // will possily change in future
 Pkg
-Pkg::create(Path path)
+Pkg::create(const Path& path, PkgType type_hint)
 {
 
+  Path pkgpath = path ;
+  PkgType pkgtype= PkgType::Unknown ;
 
-  if( !path.isAbsolute() )
+// TODO , this succcs, make soemthing usefull with pkgpath type Path
+  if( !pkgpath.isAbsolute() )
     {
-      path.makeAbsolute();
+      pkgpath.makeAbsolute();
     }
-  path.makeRealPath();
+  pkgpath.makeRealPath();
 
-  // assume is is a install dest dir,
-  // if someting else is given as pathname, like for example "/" ,
-  // it is possible senseless and will take a long time , put there is no problem
-  if( path.isFolder() )
-    {
-      return Pkg(std::move(path), PkgType::DestDir);
-    }
 
-  if( path.isRegularFile() )
+  if(type_hint==PkgType::Unknown)
     {
-      PkgAdmDir admdir;
-      Path admpath(admdir.getDirName());
-      admpath.makeRealPath();
-      if( path.getDir() == admpath.getURL() )
+      if( pkgpath.isFolder() )
         {
-          return Pkg(std::move(path), PkgType::Installed);
+          pkgtype = PkgType::DestDir ;
         }
-
-      if( isElfBinOrElfLib(path) )
+      else if( pkgpath.isRegularFile() )
         {
-          return Pkg(std::move(path), PkgType::BinLib);
+          Path admpath(PkgAdmDir.getName());
+          admpath.makeRealPath();
+          if( pkgpath.getDir() == admpath.getURL() )
+            {
+              pkgtype = PkgType::Installed;
+            }
+          else if( isElfBinOrElfLib(pkgpath) )
+            {
+              pkgtype = PkgType::BinLib;
+            }
         }
+    }
+  else
+    {
+      if(type_hint == PkgType::DestDir)
+        {
+          if( pkgpath.isFolder() )
+            {
+              pkgtype = PkgType::DestDir ;
+            }
 
+        }
+      else if (type_hint == PkgType::Installed)
+        {
+          Path admpath(PkgAdmDir.getName());
+          admpath.makeRealPath();
+          if( pkgpath.getDir() == admpath.getURL() )
+            {
+              pkgtype = PkgType::Installed ;
+            }
+         }
+      else if (type_hint == PkgType::BinLib)
+        {
+          if( isElfBinOrElfLib(pkgpath) )
+            {
+              pkgtype = PkgType::Installed ;
+            }
+        }
     }
 
-  return Pkg(std::move(path), PkgType::Unknown);
+  // if we have nothing usefull we create an unknow package...
+  return Pkg(std::move(pkgpath), pkgtype);
 
 }
+//------------------------------------------------------------------------------
 
-Pkg::Pkg(const Path&& pname, PkgType type)
-    : m_path(pname), m_type(type), m_floaded(false)
+
+Pkg::Pkg(Path pname, PkgType type)
+    : m_path(std::move(pname)), m_type(type), m_floaded(false)
 {
 
 }
@@ -147,14 +179,11 @@ Pkg::doLoadDestDir()
   std::function<void(const std::string&)> checkdir;
   checkdir = [this, &checkdir ]( const std::string& dname ) -> void
   {
-    DirContent dcont(dname);
-    dcont.Open(); // TODO , could throw
-    std::string contend;
-    while (dcont.getNext(contend))
-      {
-        if (contend == "." || contend == "..") continue;
+    auto entries = Dir{dname}.getContent();
 
-        Path path(dcont.getDirName() + "/" + contend);
+    for(auto&& entrie: entries)
+      {
+        Path path(dname + "/" + entrie);
 
         if (path.isFolder())
           {
@@ -167,6 +196,7 @@ Pkg::doLoadDestDir()
               m_dlfiles.push_back(elfile);
           }
       }
+
   };
 
   auto dirhandler = [this, checkdir](const std::string& dirname)

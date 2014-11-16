@@ -28,55 +28,41 @@ THE SOFTWARE.
 
 #include <string>
 
+#include <a4sqlt3/database.hpp>
+#include <a4sqlt3/sqlcommand.hpp>
+#include <sbbdep/error.hpp>
 
-struct sqlite3;
+
 
 namespace sbbdep {
 
-struct CacheSQL
-{
-  // TODO check what of these chould  be const char* / constexpr
-  
-  // cache stuff 
-  static std::string CreateSchemaSQL();
-  
-  static std::string CreateVersion(int major, int minor, int patchlevel);
-  
-  static std::string CheckVersion(int major, int minor, int patchlevel);
 
-  // create indexes...
-  static std::string CreateIndexes();
-  
-  static std::string InsertPkgSQL();
-  
-  static std::string InsertDynLinkedSQL();
-  
-  static std::string InsertRequiredSQL();
-  
-  static std::string InsertRRunPathSQL();
-  
-  static std::string InsertLdDirSQL();
-  
-  static std::string InsertLdLnkDirSQL();
-  
-  static std::string DeletePkgByFullnameSQL();
-  
-  static std::string MaxPkgTimeStamp();
-  
-
-  static std::string CreateViews();
+namespace sql {
 
 
-  static std::string SearchPgkOfFile(); // dir , name
-
-
-  // this is for rpath $ORIGIN replacement,
-  static std::string replaceORIGIN(const std::string& originstr, const std::string& fromfile);
-  static void register_own_sql_functions(sqlite3* db);
+  a4sqlt3::SqlCommand makeCommand(a4sqlt3::Database& db, sql_id id);
   
+  void createSchema(a4sqlt3::Database& db);
+  
+  void addVersionTable(a4sqlt3::Database& db);
+  
+  void register_own_functions(sqlite3* db);
+
+  constexpr const char* maxPkgTimeStamp()
+  {
+    return "SELECT MAX(timestamp) FROM pkgs;"
+    ;
+  }//-----------------------------------------------------------------------------
 
 
-};
+
+} // ns sql
+
+
+
+
+
+
 
 }
 

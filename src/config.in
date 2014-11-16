@@ -8,8 +8,13 @@
 #ifndef sbbdep_CONFIG
 #define sbbdep_CONFIG 1
 
-namespace sbbdep{
 
+#define SBBDEP_MAJOR_VERSION = ${sbbdep_MAJOR_VERSION} ;
+#define SBBDEP_MINOR_VERSION = ${sbbdep_MINOR_VERSION} ;
+#define SBBDEP_PATCH_VERSION = ${sbbdep_PATCH_VERSION} ;
+
+
+namespace sbbdep{
 
 static const int MAJOR_VERSION = ${sbbdep_MAJOR_VERSION} ;
 static const int MINOR_VERSION = ${sbbdep_MINOR_VERSION} ;

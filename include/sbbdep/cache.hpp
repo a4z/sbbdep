@@ -26,55 +26,80 @@ THE SOFTWARE.
 #ifndef SBBDEP_CACHE_HPP_
 #define SBBDEP_CACHE_HPP_
 
-
-#include <sbbdep/cachedb.hpp>
-#include <vector>
-#include <string>
+#include <a4sqlt3/database.hpp>
+#include <sbbdep/error.hpp>
 
 namespace sbbdep {
 
-class Cache
+
+
+class Cache : public a4sqlt3::Database
 {
-  
-  Cache(const std::string& dbname);
 
 public:
 
+  using StringVec = std::vector<std::string> ;
+
+
+  Cache(const std::string& dbname);
   ~Cache();
 
-
-  typedef std::vector<std::string> StringVec;
-  
-  // TODO check, here or elsewhere, that dbname is not empty
-  // would open a private db and that gives a wrong error message
-  static void open(const std::string& dbname);
-  static void close();
-  static Cache& get() ;
-  
-  CacheDB& DB() { return m_db ;}
   
 
   struct SyncData{
+
     StringVec removed;
     StringVec installed;
     StringVec reinstalled;
+    bool wasNewCache;
   };
 
-  // lets see which I will prefer to use in future
+
+
   SyncData doSync();
-
-
 
 
 private:
 
+  // 01 check if there is a schema,
+  // if not create it and return that the db is new
+  bool isNewDb();
 
-  SyncData getSyncData();
+  void createDbSchema() ;
+  // 01 b if not a new db, need to check if the schema is actual
+  void checkDbSchemaVersion() ;
 
-  CacheDB m_db;
+  // 02 get the sync data
+  SyncData createNewSyncData(); //must set wasNewCache true
 
-  static std::unique_ptr<Cache> _instance;
-    
+  SyncData createUpdateSyncData();
+
+  // for new cache, create db data
+  void createIndex(const SyncData& data);
+
+  // for existing cache, update db data
+  void updateIndex(const SyncData& data);
+
+// internal helpers for above
+
+
+  // stored sql command names
+
+  // get stored command, if it does not exist, its created
+  a4sqlt3::SqlCommand& getCommand(sql_id id) ;
+
+  // stored sql commands
+  using commandMap = std::map<sql_id,a4sqlt3::SqlCommand> ;
+  commandMap _commands;
+  const std::string _name;
+
+
+  void updateLdDirs(const StringVec& dirs);  // do not forget to implements this here persistLdSoTime
+
+  void updateLdLinkDirs(const StringVec& dirs); // is there a way to make this table obsolete and find the links in a different way
+
+  int64_t latesPkgTimeStampInDb();
+
   
 };
 

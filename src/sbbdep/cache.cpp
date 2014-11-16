@@ -24,14 +24,18 @@ THE SOFTWARE.
 
 #include <sbbdep/cache.hpp>
 
+
+#include <sbbdep/config.hpp>
+
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/pkgname.hpp>
-
+#include <sbbdep/error.hpp>
+#include <sbbdep/log.hpp>
 #include <sbbdep/error.hpp>
 
-#include <sbbdep/pkgadmdir.hpp>
-#include <sbbdep/log.hpp>
+#include "cachesql.hpp"
+#include "backgroundjob.hpp"
 
 
 #include <a4sqlt3/error.hpp>
@@ -45,125 +49,233 @@ THE SOFTWARE.
 
 namespace sbbdep {
 
-std::unique_ptr<Cache> Cache::_instance{nullptr};
 
-void
-Cache::open(const std::string& dbname)
-{
-  if( _instance != nullptr )
-    throw ErrGeneric("cache already open") ;
-
-  _instance.reset(new Cache(dbname)) ;
-}
-
-void Cache::close()
-{
-  _instance.reset() ;
-}
-
-Cache&
-Cache::get()
-{
-  return *_instance;
-}
+using a4sqlt3::Dataset;
+using a4sqlt3::SqlCommand;
+using a4sqlt3::DbValue;
+using a4sqlt3::DbValueType;
 
 
-
-
-Cache::Cache( const std::string& dbname ) :
-  m_db(dbname)
+Cache::Cache(const std::string& dbname)
+:Database(dbname)
+,_name(dbname)
 {
   
-  
-
-  try
-    {
-      m_db.Open();
-    }
-  catch ( const a4sqlt3::SQLite3Error& e )
-    {
-      
-      try
-        {
-          m_db.Create();
-        }
-      catch ( const a4sqlt3::SQLite3Error& e )
-        {
-          LogError() << e << "\n" ;
-          throw ErrGeneric("sqlite error");
-        }
-      catch ( ... )
-        {
-          LogError() << "Unknown exception" << "\n" ;
-          throw;
-        }
-      
-    }
-  
+  // TODO register own functions
+  sql::register_own_functions(_sql3db.get()) ;
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 
 Cache::~Cache()
 {
   
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
+
+bool
+Cache::isNewDb()
+{
+  const std::string sql =
+      "SELECT COUNT (*) FROM sqlite_master WHERE name = 'pkgs' ;" ;
+
+  const DbValue countStar = selectValue(sql) ;
+
+  return countStar.getInt64() == 0;
+
+}
+//------------------------------------------------------------------------------
+
+
+void
+Cache::createDbSchema()
+{
+  auto transaction = transactionGuard();
+  sql::createSchema(*this);
+
+  // ensure we have this, for future ensureDefaults ... ?
+  execute("INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);");
+
+  transaction.commit();
+}
+//------------------------------------------------------------------------------
+
+
+/*
+ * update db for the current version,
+ * this code will change form time to time, old version will be dropped
+ * for the future, think about, if there is an old cache if not simply
+ * re-creating would be better, could be less and less complex code
+ */
+void
+Cache::checkDbSchemaVersion()
+{
+
+  { // ensure there is a version table
+    // sooner or later this code will go away, no support for old db or so ...
+    const auto sql =
+        "select count(*) from sqlite_master where name='version';";
+    DbValue rc = this->selectValue(sql);
+    if(rc.getInt64() == 0)
+      {
+        sql::addVersionTable(*this);
+      }
+  }
+
+  // helpers to get a useful version number that can be compared
+  auto calcMajorMinorVersion = [](int ma, int mi ) noexcept -> int
+    {
+      return (100000 + ma * 10000) + (1000 + mi * 100);
+    };
+  auto calcVersion = [](int ma, int mi, int pl ) noexcept -> int
+    {
+      return (100000 + ma * 10000) + (1000 + mi * 100) + pl;
+    };
+
+
+  auto getDbMajorMinorVersion = [calcMajorMinorVersion, this]() -> int
+    {
+      Dataset ds( {DbValueType::Int64, DbValueType::Int64} );
+      execute("SELECT major, minor FROM version", ds);
+      // TODO assert ds.size() == 1
+      return calcMajorMinorVersion(ds[0][0].getInt64(), ds[0][1].getInt64());
+    };
+  auto getDbVersion = [calcVersion, this]() -> int
+    {
+      Dataset ds({DbValueType::Int64, DbValueType::Int64, DbValueType::Int64});
+      execute("SELECT major, minor , patchlevel FROM version", ds);
+      // TODO assert ds.size() == 1
+      return calcVersion(ds[0][0].getInt64(),
+                         ds[0][1].getInt64(),
+                         ds[0][2].getInt64());
+    };
+
+  const auto app_version = calcVersion(MAJOR_VERSION,
+                                       MINOR_VERSION,
+                                       PATCH_VERSION);
+
+  const auto db_version = getDbVersion();
+
+  if( app_version == db_version )
+    { // nothting to do
+      return ;
+    }
+
+
+  if( db_version < app_version )
+    {
+      if( getDbMajorMinorVersion() ==  calcMajorMinorVersion(0, 1) )
+        {
+          LogError() << "existing cache db was build with an old version of "
+                        "sbbdep.\n"
+                        "please create a new cache by using the -c option "
+                        "or removing " << _name << ".\n"
+                        "Sorry for the inconvenience caused.\n\n" ;
+          throw ErrGeneric("old databaes version in use");
+        }
+
+      auto trans = transactionGuard();
+      if(db_version < calcVersion(0, 2, 1))
+        {
+          auto transaction = transactionGuard() ;
+          const char* sql =
+          "CREATE TABLE keyvalstore (key  NOT NULL,  value  NOT NULL); "
+          "create unique index  idx_keyvalstore_key on keyvalstore (key); "
+          "insert into keyvalstore (key, value) values ('ldsoconf', 0);" ;
+          execute(sql) ;
+          transaction.commit();
+        }
+
+
+      std::string sqcmd =
+          "UPDATE version set major = " + std::to_string(MAJOR_VERSION) +
+          ", minor = " + std::to_string(MINOR_VERSION) +
+          ", patchlevel = " + std::to_string(MINOR_VERSION) + ";" ;
+      execute(sqcmd);
+      trans.commit();
+   }
+
+
+  { // should this be in ensureDefault ..  TODO
+    const std::string sql=
+      "SELECT COUNT(*) FROM keyvalstore WHERE key='ldsoconf';";
+
+    if(selectValue(sql).getInt64() == 0)
+      {
+        execute("INSERT INTO keyvalstore (key, value) "
+                "VALUES ('ldsoconf', 0);");
+      }
+  }
+
+
+#ifdef DEBUG
+  const auto calcver = calcVersion(MAJOR_VERSION, MINOR_VERSION, MINOR_VERSION);
+  if( calcver != getDbVersion() )
+    throw ErrUnexpected("version update incorrect");
+#endif
+
+
+}
+//------------------------------------------------------------------------------
 
 
 Cache::SyncData
 Cache::doSync()
 {
 
-  StringVec toremove;
-  StringVec toinsert;
-
   SyncData syncdata;
 
-  if (m_db.isNew())
+
+  if(isNewDb())
     {
-      LogInfo() << "create cache (" << m_db.Name() <<")" << std::endl;
-
-      auto newfiles_cb = [&toinsert](const std::string& d,const std::string&& f) -> bool {
-        toinsert.emplace_back( f);
-        return true ;
-      };
-      PkgAdmDir().apply(newfiles_cb) ;
-
-      // for the report
-      syncdata = {toremove, toinsert, StringVec() } ;
-
-    }
+      createDbSchema();
+      syncdata = createNewSyncData() ; // here, ld dirs im background
+      createIndex(syncdata);
+     }
   else
     {
-      LogInfo() << "sync cache (" << m_db.Name() <<")" << std::endl;
+      checkDbSchemaVersion() ;
+      syncdata = createUpdateSyncData() ; // here, ld dirs im background
+                                          // was nicht geht, da ich da auf die db zugreif
 
-      syncdata = getSyncData() ;
-
-      toremove = syncdata.removed;
-      toinsert = syncdata.installed;
-
-      //merge reinstalled into installed and removed, need to be handled both
-      // but them on the begin, think looks nicer in the output
-      toremove.insert(toremove.begin(), syncdata.reinstalled.begin(), syncdata.reinstalled.end());
-      toinsert.insert(toinsert.begin(), syncdata.reinstalled.begin(), syncdata.reinstalled.end());
-
+      updateIndex(syncdata);
     }
- 
-
-  m_db.updateData( toremove , toinsert) ;
 
 
-  return syncdata  ;
+  return syncdata ;
+
+
 
 }
-//--------------------------------------------------------------------------------------------------
-
+//------------------------------------------------------------------------------
 
 
 Cache::SyncData
-Cache::getSyncData()
+Cache::createNewSyncData()
+{
+  Cache::SyncData retval;
+  retval.wasNewCache = true ;
+
+  // add all files to installed,
+  auto newfiles_cb = [&retval]( const std::string& dirname,
+                                const std::string& filename ) -> bool
+    {
+      (void)(dirname);
+      retval.installed.emplace_back(filename);
+      return true ;
+    };
+
+  PkgAdmDir.apply(newfiles_cb) ;
+
+  return retval ;
+
+
+}
+//------------------------------------------------------------------------------
+
+Cache::SyncData
+Cache::createUpdateSyncData()
 {
 
   // get diff from filesystem and db, remove old stuff from db and insert new
@@ -175,38 +287,45 @@ Cache::getSyncData()
 
   using StringSet  = std::set<std::string> ;
 
-
   Cache::SyncData retval;
+  retval.wasNewCache = false ;
 
-
+  // todo i use them later in threads, so they have to be const
+  // check if the next thing could return something, 2 values
+  // to init this will work with c++17 but has to tie for now
   StringSet allpkgfiles; // all pks in file system
-  StringSet newpkgs; // // all pks in file system with a newer date as the latest known date
-  const time_t maxknownftime = m_db.getLatestPkgTimeStamp() ;
+  StringSet newpkgs; // // all pks in file system with a newer date
+  const time_t maxknownftime = latesPkgTimeStampInDb() ;
 
   // helper to wait for a thread
   auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
 
-  // filter for pkgadm dir
-  auto checkFileSystem = [&allpkgfiles, &newpkgs, &maxknownftime]
-                          (const std::string& d,const std::string&& f) -> bool
+  // cakback for pkgadm dir, check pkg files add to all and new, if new
+  auto fillAllAndNew = [&allpkgfiles, &newpkgs, &maxknownftime]
+                              (const std::string& dirname,
+                               const std::string& filename) -> bool
         {
-          Path path(d + "/" + f); //
-          if ( path.isRegularFile() )
-            {
-              allpkgfiles.insert(f); // insert filename in all existing file_pkgs,
+          Path path(dirname + "/" + filename);
+          if ( path.isRegularFile() ) // this could/should? be an assert, TODO
+            { // insert filename in all existing file_pkgs,
+              allpkgfiles.insert(filename);
               // and if newer as the latest known file time
               if ( path.getLastModificationTime() > maxknownftime )
-                    newpkgs.insert(f); // insert into new pkgs
+                { // insert into new pkgs
+                  newpkgs.insert(filename);
+                }
             }
           return true ;
         };
 
 
 
-  PkgAdmDir admdir;
-  std::thread checkFS(&PkgAdmDir::apply, &admdir, checkFileSystem);
-// while this runs, get all from the db
+  std::thread checkFS(&Dir::apply, &PkgAdmDir,
+                      fillAllAndNew, Dir::defaultFilter);
+ // TODO default arg does not work, shall I change the interface?
 
+
+// while this runs, get all from the db
   StringSet allpkgindb; // all pks in the db
   // get all in the database
   auto rh = [&allpkgindb](a4sqlt3::SqlQueryRow& qrow) -> bool
@@ -215,9 +334,12 @@ Cache::getSyncData()
           return true ;
         } ;
 
-  m_db.Execute("SELECT fullname FROM pkgs;", rh);
+  execute("SELECT fullname FROM pkgs;", rh);
 
   waitfor(checkFS);
+
+  // TODO allpkgfiles , newpkgs create const here cause of shared access
+
 
   //get the removed ones, these are not in the filesystem but in the db
   std::thread searchdeleted ( [&allpkgindb, &allpkgfiles , &retval]()->void{
@@ -227,14 +349,14 @@ Cache::getSyncData()
   });
 
 
-  // all that are in filesystem but not in db are new and need to be added to installed
+  // all that are in filesystem but not in db
+  // are new and need to be added to installed
   std::set_difference(allpkgfiles.begin(), allpkgfiles.end(),
       allpkgindb.begin(), allpkgindb.end(),
       std::inserter(retval.installed, retval.installed.begin() ));
 
-  // check sorted, should not be required but ensure that next difference will work
-  if(not std::is_sorted(std::begin(retval.installed), std::end(retval.installed)))
-    std::sort(std::begin(retval.installed), std::end(retval.installed));
+  // ensure sorted, should not be required ... TODO
+  std::sort(std::begin(retval.installed), std::end(retval.installed));
 
   // new pkgs that are not in the installed list are re-installed
   std::set_difference(newpkgs.begin(), newpkgs.end(),
@@ -245,10 +367,119 @@ Cache::getSyncData()
 
   return retval;
 }
+//------------------------------------------------------------------------------
 
 
 
+void
+Cache::createIndex(const SyncData& data)
+{
+// TODO das muss was anderes werden
+  if(data.removed.size() != 0 || data.reinstalled.size() != 0 )
+    {
+      throw ErrUnexpected("Invalid argument in createIndex") ;
+    }
+  if(not data.wasNewCache)
+    {
+      throw ErrUnexpected("Invalid argument, SyncData not new") ;
+    }
 
-//--------------------------------------------------------------------------------------------------
+  auto transaction = transactionGuard() ;
+
+  struct dbmsg {
+    sql_id id ;
+    a4sqlt3::DbValues args;
+  };
+
+
+  BackgroundJob<dbmsg> dbjob(
+      [this](const dbmsg& msg)
+      {
+        this->getCommand(msg.id).execute(msg.args) ;
+      });
+
+
+  // t could be a type.. encapsulate ...
+  std::mutex mtx;
+  StringVec::const_iterator pos;
+  auto picker = [&]() -> std::string
+      {
+        std::unique_lock<std::mutex> lock(mtx);
+        return (pos not_eq data.installed.end()) ? *pos++ : std::string() ;
+      };
+
+
+  auto indexer = [&dbjob, picker]()
+    {
+      auto todo = picker();
+      while(not todo.empty())
+        {
+          // stroe...
+          //dbjob.push() .. what ..
+          todo = picker();
+        }
+    };
+
+  // fuers update muss das anders aussehen .... , wie
+
+
+  // so soll der neue output sein
+  // update index package name
+  // create index package name
+  // remove index package name
+  // doch nicht, remove is schlecht
+
+
+  // what is basically to do, go through all installed,
+  // index and push to the db.
+  // q: does a thread accelerate this or not
+  // well, shoul run in paralle, something ..
+
+  // TODO , schau da die timigs an, ob die sb action
+
+  transaction.commit() ;
+
+
+}
+//------------------------------------------------------------------------------
+
+void
+Cache::updateIndex(const SyncData& data)
+{
+  if(data.wasNewCache)
+    {
+      // fail !
+    }
+}
+//------------------------------------------------------------------------------
+
+
+a4sqlt3::SqlCommand&
+Cache::getCommand(sql_id id)
+{
+  auto fi = _commands.find(id);
+  if(fi != _commands.end())
+    return fi->second;
+
+
+  auto init = _commands.emplace(id, sql::makeCommand(*this,id)) ;
+
+  if(not init.second)
+    throw ErrUnexpected("create command failed") ; // TODO add id to message
+
+  return init.first->second ;
+
+
+}
+
+int64_t
+Cache::latesPkgTimeStampInDb()
+{
+
+  a4sqlt3::DbValue val = selectValue(sql::maxPkgTimeStamp());
+
+   return val.isNull() ? 0 : val.getInt64() ;
+
+}
 
 } // ns

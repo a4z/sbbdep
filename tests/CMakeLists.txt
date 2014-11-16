@@ -19,7 +19,7 @@ pathtest.cpp
 pknametest.cpp
 replorig.cpp
 
-cacheup1_2.cpp
+#cacheup1_2.cppnot supported anymore
 )
 
 
@@ -30,3 +30,4 @@ TARGET_LINK_LIBRARIES( sbbtest pthread ${SBBDEP_REQURIED_LIBS} ${myBoostLibs} )
 
 
 
+add_subdirectory(quicktest)

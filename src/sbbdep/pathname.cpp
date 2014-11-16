@@ -34,67 +34,20 @@ THE SOFTWARE.
 namespace sbbdep{
 
 
-PathName::PathName()
+PathName::PathName() noexcept
 : m_url() 
 {
   
 }  
 //--------------------------------------------------------------------------------------------------
 
-PathName::PathName(const std::string& url)
-: m_url(url) 
+PathName::PathName(std::string url) noexcept
+: m_url(std::move(url))
 {
   
 }  
 //--------------------------------------------------------------------------------------------------
 
-PathName::PathName(const PathName& other)
-: m_url(other.getURL())
-{
-  
-}
-//--------------------------------------------------------------------------------------------------
-
-PathName::PathName(const char* url)
-: m_url(url) 
-{
-
-}  
-//--------------------------------------------------------------------------------------------------
-
-
-PathName::~PathName()
-{
-  
-}
-
-//--------------------------------------------------------------------------------------------------
-
-PathName& 
-PathName::operator=(const PathName& rhs)
-{
-  if ( &rhs != this) m_url = rhs.getURL() ;
-  return *this;
-}
-//--------------------------------------------------------------------------------------------------
-
-
-PathName& 
-PathName::operator=(const std::string& rhs)
-{
-  m_url = rhs;
-  return *this;
-}
-//--------------------------------------------------------------------------------------------------
-
-PathName& 
-PathName::operator=(const char* rhs)
-{
-  m_url = rhs;
-  return *this;
-}
-
-//--------------------------------------------------------------------------------------------------
 
 /*
 path         dirname    basename
@@ -183,23 +136,7 @@ PathName::getDir() const
 bool 
 PathName::isPath() const
 {
-  if ( isEmpty() ) return false;
-  
-  
-  const std::string checks[] = {
-      std::string("/"), 
-          std::string("./"),
-              std::string("../")
-  };
-  // 3
-  
-  for ( int i = 0 ; i < 3 ; ++i)
-    {
-      const std::string& check =checks[i] ; 
-      if( m_url.compare( 0 ,  check.size(), check  ) == 0 ) return true ;
-    }
-  
-  return false; 
+  return  m_url.find("/") != std::string::npos;
 }
 //--------------------------------------------------------------------------------------------------
 
@@ -207,18 +144,17 @@ PathName::isPath() const
 bool 
 PathName::isRelative() const
 {
-  
-  if( m_url.compare( 0 ,  2, "./"  ) == 0 ) return true ;
-  if( m_url.compare( 0 ,  3, "../"  ) == 0 ) return true ;
-  
-  return false;
+  return  !isAbsolute();
 }
 //--------------------------------------------------------------------------------------------------
 
 bool 
 PathName::isAbsolute() const
 {
-  return  m_url.compare( 0 ,  1, "/"  ) == 0   ;
+  if(isPath())
+    return  m_url.find("./") == std::string::npos;
+  else
+    return false;
 }
 //--------------------------------------------------------------------------------------------------
 

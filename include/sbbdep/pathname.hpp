@@ -38,19 +38,19 @@ class PathName
 
 public:
   
-  PathName();
-  PathName(const std::string& url);
-  PathName(const char* url);
-  
-  virtual ~PathName();
-  
-  PathName(const PathName& other);
+  PathName() noexcept ;
+  PathName(std::string url) noexcept ;
   
   
+  PathName(const PathName& ) = default ;
+  PathName& operator=(const PathName& ) = default ;
   
-  PathName& operator=(const PathName& rhs);
-  PathName& operator=(const std::string& rhs);
-  PathName& operator=(const char* rhs);
+  PathName(PathName&&) noexcept  = default ;
+  PathName& operator=(PathName&&) = default ;
+
+  virtual ~PathName() noexcept = default;
+
+
   
   const std::string& getURL() const { return m_url; }
   const std::string& Str() const { return m_url; } // 
@@ -61,15 +61,17 @@ public:
   bool isEmpty() const { return m_url.empty() ;}
   
   // kann ja auch nur ein datei name sein..
-  bool isPath() const;
+  bool isPath() const; // TODO , seems to be unused, rmove
   
   // beginnt mit ./ or ../
-  bool isRelative() const;
+  bool isRelative() const; // TODO, should be not isAbsolute
+                            // or remove and let user us
 
   // beginnt mit /
   bool isAbsolute() const ;
 
   
+
   operator const char*() const { return m_url.c_str() ; }
   operator const std::string&() const { return m_url ; }
   
@@ -80,10 +82,6 @@ public:
   { return m_url == other ; }
   
 
-  struct LessCompair {
-    bool operator() (const PathName& lhs, const PathName& rhs) const {return lhs.getURL() < rhs.getURL();}
-  };
-  
 protected:
   // for encapsulation in Path,..
   virtual void setURL(const std::string& url){m_url=url;}

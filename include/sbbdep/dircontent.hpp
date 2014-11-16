@@ -25,45 +25,84 @@ THE SOFTWARE.
 #ifndef SBBDEP_DIRCONTENT_HPP_
 #define SBBDEP_DIRCONTENT_HPP_
 
+#include <vector>
 #include <string>
-
-#include <dirent.h>
-
-
-class dirent;
+#include <functional>
 
 namespace sbbdep {
 
-class DirContent
+
+/**
+ * \brief Helper to get or iterate over entries in a directory
+ *
+ */
+class Dir
 {
 public:
-  
-  DirContent(const std::string& name );
-  DirContent(const char* name );
-  
-  ~DirContent();
-   
 
-  
-  bool getNext(std::string& outname) ;
+  ///Callback functor, taking the directory and the file name.
+  using ContentCall  = std::function< bool(const std::string&,
+                                             const std::string&)> ;
 
-  const std::string& getDirName() const { return m_name; }  
-  
-  void Open();
-  void Close();
-  bool isOpen() { return m_dirstm ; } 
-  
+  /// filter function.
+  /// returns true it the given name shall be ignored, false otherwise
+  using IgnorFilter = std::function<bool(const std::string&)> ;
+
+  /**
+   * \brief c'tor.
+   *
+   */
+  Dir(std::string name);
+
+  /// property access
+  const std::string&
+  getName() const ;
+
+
+  /**
+   * \brief A default filter function
+   *
+   * ignores
+   *    - hidden files/dirs .*  \n
+   *    - backup files *~ \n
+   *    - emacs backup files #*# \n
+   *
+   * \sa getContent \sa apply
+   */
+  static bool
+  defaultFilter(const std::string& f) ;
+
+
+  /**
+   * \brief get a list of all entries in a directory.
+   *
+   * \throw ErrGeneric if the directory can not be opened
+   *
+   * \return list of names within the direcotry
+   */
+  std::vector<std::string>
+  getContent(IgnorFilter = defaultFilter ) const ;
+
+  /**
+   * \brief get a list of all entries in a directory.
+   *
+   * \throw ErrGeneric if the directory can not be opened
+   * \throw whatever ContentCall might throw
+   *
+   * \param cb, if of the callback is false, function exits
+   */
+  void
+  apply(ContentCall cb, IgnorFilter = defaultFilter) const ;
+
+
 private:
-  DirContent(const DirContent&);
-  const DirContent& operator=(const DirContent&);
   
-   std::string m_name;
-   
-   DIR* m_dirstm;
-   
+   std::string _name;
 
    
 };
+
+static const Dir PkgAdmDir {"/var/adm/packages"} ; // todo
 
 }
 

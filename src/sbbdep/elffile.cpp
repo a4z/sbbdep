@@ -29,6 +29,8 @@ THE SOFTWARE.
 
 #include <elfio/elfio.hpp>
 
+#include <boost/algorithm/string/replace.hpp>
+
 
 namespace sbbdep {
 
@@ -218,6 +220,24 @@ bool isElfLib(const PathName& pn)
   return retval;
 }
 //--------------------------------------------------------------------------------------------------
+
+
+std::string
+replaceORIGIN(const std::string& originstr,
+                       const std::string& fromfile)
+{
+  sbbdep::PathName destfile(fromfile);
+  using boost::algorithm::replace_first_copy;
+
+  // there is either $ORIGIN/.. or $ORIGIN in the name
+  // which we need to make absolute
+
+  return replace_first_copy(
+           replace_first_copy(originstr,"$ORIGIN/..",destfile.getDir()),
+           "$ORIGIN",
+           destfile.getURL()) ;
+}
+
 
 
 //--------------------------------------------------------------------------------------------------

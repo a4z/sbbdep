@@ -43,12 +43,12 @@ namespace sbbdep
 LDDirs::LDDirs()
 {
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 LDDirs::~LDDirs()
 {
 }
-//-------------------------------------------------------------------------------------------------- 
+//------------------------------------------------------------------------------
 
 auto
 LDDirs::readLdDirs() -> const LDDirs::StringSet&
@@ -98,7 +98,7 @@ LDDirs::getLdSoConfTime()
   return 0 ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 namespace
 {
@@ -183,7 +183,7 @@ void fillFromLdSoCache(std::set<std::string>& s,
  * get all directory names that have files with link in an lddir....
  */
 auto
-LDDirs::readLdLinkDirs() -> const LDDirs::StringSet&
+LDDirs::readLdLinkDirs() -> const StringSet&
 {
   if(m_lddirs.empty()) // ensure loading cause need it later to filter what already exists
     readLdDirs();
@@ -193,46 +193,6 @@ LDDirs::readLdLinkDirs() -> const LDDirs::StringSet&
   fillFromLdSoCache(m_ldlnkdirs, m_lddirs); // fill - ignore
   return m_ldlnkdirs ;
 
-// TODO , remove the dead code below or use it just in case of problems with fillFromLdSoCache
-
-  for (StringSet::const_iterator pos=m_lddirs.begin(); pos!=m_lddirs.end(); ++pos)
-    {
-      DirContent dir(*pos) ;
-      try
-        {
-          dir.Open();
-        }
-      catch ( const Error& e )
-        {
-          LogError()<< "read linked dirs, unable to read " << *pos << std::endl;
-          //throw ErrStat("unable to open dir " + *pos);
-        }
-      
-      std::string contend;
-      while (dir.getNext(contend))
-        {  
-          if (contend == "." || contend == "..") continue;
-          Path path(dir.getDirName() + "/" + contend);
-          if ( path.isLink() )
-            {
-              std::string orig = path.Str();
-              path.makeRealPath();
-              if (path.isRegularFile() && isElfLib( path ) )
-                { // filter out what is a regular ld dir , TODO since this is a set lookup not reuqired
-                  if(m_lddirs.find(path.getDir())== m_lddirs.end())
-                    m_ldlnkdirs.insert(path.getDir());
-
-                  // TODO , why did I do this ? only for debug ??
-                  if(path.getDir()=="/usr/bin" || path.getDir()=="/usr/sbin")
-                    LogInfo()<<"in bin: " << orig << "->" << path.getURL() << std::endl;
-                }
-            }
-          
-        }      
-      
-    }
-  
-  return m_ldlnkdirs; 
 }
 //--------------------------------------------------------------------------------------------------  
 

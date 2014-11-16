@@ -27,81 +27,138 @@ THE SOFTWARE.
 #include <sbbdep/error.hpp>
 
 #include <sys/types.h>
-//#include <dirent.h>
+#include <dirent.h>
+#include <errno.h>
 
 
+#include <memory>
 
 
 namespace sbbdep {
 
 
-DirContent::DirContent( const std::string& name )
-: m_name( name )
-, m_dirstm(0)
+namespace
 {
-}
-//--------------------------------------------------------------------------------------------------
+  struct close_dir
+  {
+    void operator()(DIR* d)  const noexcept {closedir(d);}
+  };
+  using dir_ptr = std::unique_ptr<DIR, close_dir> ;
+}//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-DirContent::DirContent( const char* name )
-: m_name(name)
-, m_dirstm(0)
+
+Dir::Dir(std::string name )
+:_name(name)
 {
-
-}
-//--------------------------------------------------------------------------------------------------
-
-
-DirContent::~DirContent()
-{
-  Close(); 
-}
-//--------------------------------------------------------------------------------------------------
-
-void
-DirContent::Open()
-{
-  
-  m_dirstm = opendir(m_name.c_str());
-
-  if( !m_dirstm )
-    throw ErrGeneric ("opendir(" + m_name + ") faild");
 
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-void
-DirContent::Close()
+const std::string&
+Dir::getName() const
 {
-  if ( isOpen() )
-      closedir(m_dirstm);
-
-  m_dirstm = 0; 
+  return _name ;
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-// TODO, add test what happens if dir was not opened ...
-bool 
-DirContent::getNext(std::string& outname)
+bool
+Dir::defaultFilter(const std::string& f)
+{
+  // hidden and dirs, hidden should not exist in var/adm/package
+  if(f[0] == '.' ) return true;
+  if(*(f.rbegin()) == '~') return true; // backuo files,
+  if(f[0] == '#' && *(f.rbegin()) == '#') return true; // emacs backup files
+
+  return false;
+}
+//------------------------------------------------------------------------------
+
+
+
+std::vector<std::string>
+Dir::getContent(IgnorFilter filter) const
 {
 
-  bool retVal = false;
-  dirent*  dentry = readdir(m_dirstm);
-  if( dentry )
+  std::vector<std::string> retval;
+
+  dir_ptr dirstm { opendir(_name.c_str()) };
+
+  if(dirstm == nullptr)
     {
-      retVal = true;
-      outname = dentry->d_name;
+      throw ErrGeneric ("open directory " + _name );
     }
 
-  return retVal;  
-  
+
+  dirent entry;
+  auto result = &entry;
+
+  for(;;)
+    {
+      if(readdir_r (dirstm.get(), &entry, &result) > 0)
+        {
+          throw ErrGeneric ("readdir_r: bad return value");
+          break;
+        }
+      if(result != nullptr)
+        {
+          if(not filter (entry.d_name))
+            {
+              retval.emplace_back(entry.d_name);
+            }
+        }
+      else
+        {
+          break;
+        }
+    }
+
+  return retval ;
+
 }
-//-------------------------------------------------------------------------------------------------- 
+//------------------------------------------------------------------------------
+
+void
+Dir::apply(ContentCall cb, IgnorFilter filter ) const
+{
+  dir_ptr dirstm {opendir (_name.c_str ())};
+
+  if(dirstm == nullptr)
+    throw ErrGeneric ("open directory " + _name);
+
+  dirent entry;
+  auto result = &entry;
+
+  for(;;)
+    {
+      if(readdir_r (dirstm.get(), &entry, &result) > 0)
+        {
+          throw ErrGeneric ("readdir_r: bad return value");
+          // TODO check errno
+          break;
+        }
+      if(result != nullptr)
+        {
+          if(not filter (entry.d_name))
+            {
+              if(not cb (_name, entry.d_name))
+                {
+                  break;
+                }
+            }
+        }
+      else
+        {
+          break;
+        }
+    }
+
+}
+//------------------------------------------------------------------------------
 
 
-
-
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 }
 
 

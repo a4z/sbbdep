@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 
 
-#include <a4sqlt3/database.hpp>
+#include <a4sqlt3/sqlcommand.hpp>
 
 
 
@@ -35,54 +35,20 @@ THE SOFTWARE.
 namespace sbbdep {
 
 
+
+
+
 class CacheDB : public a4sqlt3::Database 
 {
 public:
 
-  class Transaction{
-    a4sqlt3::Database& m_db;
-    bool m_commited;
 
-  public:
-    Transaction(a4sqlt3::Database& db)
-    : m_db(db), m_commited(false)
-    {
-      m_db.Execute("BEGIN TRANSACTION");
-    }
-    ~Transaction()
-    {
-      if(!m_commited) m_db.Execute("ROLLBACK TRANSACTION");
-    }
-
-    Transaction(const Transaction&) = delete;
-    Transaction(Transaction&&) = delete; //could do this, other commit to true that nothing is executed
-    Transaction& operator=(const Transaction&) = delete;
-    Transaction& operator=(Transaction&&) = delete;
-
-
-    void commit()
-    {
-      m_db.Execute("COMMIT TRANSACTION"); m_commited = true ;
-    }
-  };
-
-
-
-  // ~/sbbdep.cache bzw noch anpassen  
-  CacheDB();
   
   CacheDB( const std::string& name );
   
   ~CacheDB() = default;
   
-  // don't forget , SQLITE_OPEN_READWRITE no mtx
-  bool Open() ;
-  
-  bool Create();
 
-  // TODO , put the db version / schema check here ...
-  
-  bool isNew() { return m_isNew; }
 
   //us major minor combination to see if schema has changed in an way that it needs to be re-created
   void checkVersion( int major, int minor, int patchlevel );
@@ -93,11 +59,13 @@ public:
   void updateData(const StringVec& toremove, const StringVec& toinsert);
 
 
-
-
   int64_t getLatestPkgTimeStamp();
+
 private:
-    bool m_isNew;
+
+
+
+
 
     void updateLdDirs(const StringVec& lddirs, const StringVec& ldlinkdirs);
 
@@ -105,6 +73,13 @@ private:
 
     void persistLdSoTime() ;
 
+
+    //void // TODO const Pkg& pkg
+    //Store( const PkgName& pkgname, const Pkg::DynLinkedFiles& dllist, const int64_t& timestamp)
+
+
+    void storePkg(const Pkg& pkg) ;
+    void removePkg(const std::string& fullname) ;
 
 };
 

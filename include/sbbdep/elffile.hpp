@@ -32,6 +32,11 @@ THE SOFTWARE.
 
 namespace sbbdep {
 
+
+
+
+
+
 // opens the file and reads the info, if file is n
 class ElfFile
 {
@@ -64,10 +69,14 @@ public:
   
   const StringVec& getRRunPaths() const { return _rrunpaths ; }
   
-  bool isBinaryOrLibrary(){ return getType() == ElfFile::Binary || getType() == ElfFile::Library ;}
+  bool isBinaryOrLibrary()
+  { return getType() == ElfFile::Binary || getType() == ElfFile::Library ;}
 
   bool hasRPath() const {return !_hasRunPath && !_rrunpaths.empty();}
   bool hasRunPath() const {return _hasRunPath && !_rrunpaths.empty();}
+
+
+
 
 private:
   
@@ -90,6 +99,11 @@ private:
 // if just the info is required if given path points to a bin or lib file, this is ok
 bool isElfBinOrElfLib(const PathName& pn);
 bool isElfLib(const PathName& pn);
+
+// since this comes form elf files, this seems to be the right location
+// will not use this in here, so elf info will have ORIGIN in the dyn paths
+std::string replaceORIGIN(const std::string& originstr,
+                                 const std::string& fromfile);
 
 
 }

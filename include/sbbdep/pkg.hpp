@@ -54,21 +54,21 @@ class Pkg
 public:  
 
   using StringSet = std::set<std::string> ;
-
-  typedef std::vector<ElfFile> DynLinkedFiles; // TODO rename this into something better
+  typedef std::vector<ElfFile> DynLinkedFiles; // TODO rename this into something better, ElfFiles till example
 
   // TODO, merge this into something like SpecialDirs together with lddir
   static const StringSet& usualBinDirs(); // need review, see comment in cpp
   static const StringSet& usualLibDirs(); // need review, see comment in cpp
 
-  
-  static Pkg create(Path pn);
+  // must take the
+  //static Pkg create(const Path& p);
 
+  static Pkg create(const Path& p, PkgType type_hint = PkgType::Unknown);
 
-//  Pkg( const Pkg& other ) = default;
-//  Pkg& operator=( const Pkg& other )= default;
-//  Pkg( Pkg&& other ) = default;
-//  Pkg& operator=( Pkg&& other )= default;
+  Pkg( const Pkg& other ) = default;
+  Pkg& operator=( const Pkg&  )= default;
+  Pkg( Pkg&&  ) = default;
+  Pkg& operator=( Pkg&& other )= default;
   ~Pkg() = default;
   
   const Path& getPath() const { return  m_path; }
@@ -86,7 +86,7 @@ public:
 protected:
 
   //will see if the factory method will go into this class...
-  Pkg( const Path&& pname , PkgType type);
+  Pkg( Path pname , PkgType type);
 
   
   //needs to be special for each pkg type
@@ -94,7 +94,7 @@ protected:
   bool doLoadDestDir() ;
   bool doLoadInstalled() ;
 
-  const Path m_path; // name  of
+  Path m_path; // name  of
   PkgType m_type ;
   bool m_floaded ; // files loaded...
 

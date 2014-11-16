@@ -75,6 +75,7 @@ prepairCache(bool syncflag)
         }
       chache_was_new = true;
     }
+// sollte das nicht ein else sein
 
   try // TODO in new implementation this will be automatically called at open db
     { //us major minor combination to see if schema has changed in an way that it needs to be re-created
@@ -136,7 +137,7 @@ AppCli::Run(const AppArgs& appargs)
 
 
   try
-    {
+    { // TODO, change auf create, , fang auch sqlite error ,
       Cache::open( appargs.getDBName() );
 
       if( !prepairCache( appargs.getNoSync() ) )

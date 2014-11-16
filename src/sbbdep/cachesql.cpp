@@ -22,324 +22,383 @@ THE SOFTWARE.
 */
 
 
-#include <sbbdep/cachesql.hpp>
 
-#include <sbbdep/pathname.hpp>
+#include "cachesql.hpp"
+#include "conststr.hpp"
+
+#include <sbbdep/elffile.hpp>
 #include <sbbdep/path.hpp>
-#include <boost/algorithm/string/replace.hpp>
-
-#include <sbbdep/config.hpp> // generated
 #include <sqlite3.h>
 
-#include <sstream>
+#define STRINGIZE(A) #A
+#define AS_STR(A) STRINGIZE(A)
+
+
 
 namespace sbbdep {
 
+namespace sql {
 
-
-// cache stuff 
-std::string 
-CacheSQL::CreateSchemaSQL()
-{
-  
-  
-  std::string sql= R"~( 
-  CREATE TABLE pkgs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
-      fullname TEXT NOT NULL, 
-      name TEXT NOT NULL, 
-      version TEXT NOT NULL, 
-      arch TEXT NOT NULL, 
-      build INTEGER NOT NULL, 
-      tag TEXT, 
-      timestamp INTEGER NOT NULL 
-  );
-  CREATE TABLE dynlinked ( 
-      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
-      pkg_id INTEGER NOT NULL,       
-      filename TEXT NOT NULL, 
-      dirname TEXT NOT NULL, 
-      basename TEXT NOT NULL, 
-      soname TEXT , 
-      arch INTEGER NOT NULL 
-  );
-  CREATE TABLE required ( 
-      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
-      dynlinked_id INTEGER NOT NULL, 
-      needed TEXT NOT NULL
-  );      
-  CREATE TABLE rrunpath( 
-      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-      dynlinked_id INTEGER NOT NULL,     
-      ldpath TEXT NOT NULL, 
-      lddir TEXT  
-  );
- CREATE TABLE keyvalstore ( 
-      key  NOT NULL, 
-      value  NOT NULL
- ); 
-
-  CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs 
-    FOR EACH ROW  BEGIN
-    DELETE from dynlinked WHERE pkg_id = OLD.id;
-    END;
-  CREATE TRIGGER on_before_delete_dynlinked BEFORE DELETE ON dynlinked 
-    FOR EACH ROW  BEGIN
-    DELETE from required WHERE dynlinked_id = OLD.id;
-    DELETE from rrunpath WHERE dynlinked_id = OLD.id;
-    END;
-  CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);
-
-  CREATE TABLE ldlnkdirs (dirname TEXT PRIMARY KEY NOT NULL);      
-  CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL); 
-
-  INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);        
-
-)~";
-
-  sql+=CreateVersion(MAJOR_VERSION , MINOR_VERSION , PATCH_VERSION);
-  return sql;
-
-
-  /*    INSERT INTO lddirs ( dirname ) VALUES ('/lib') ;
-        INSERT INTO lddirs ( dirname ) VALUES ('/lib64') ;
-        INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib') ;
-        INSERT INTO lddirs ( dirname ) VALUES ('/usr/lib64') ;
-  // moved to lddirs class
-  */
-
-}
-
-//--------------------------------------------------------------------------------------------------
-
-std::string
-CacheSQL::CreateVersion(int major, int minor, int patchlevel)
+constexpr const char*
+createSchema()
 {
 
-  std::stringstream sql ;
-  sql << "CREATE TABLE version (major INTEGER NOT NULL, minor INTEGER NOT NULL, patchlevel INTEGER NOT NULL);"
-      << "INSERT INTO VERSION (major, minor, patchlevel) "
-      <<    "VALUES(" << major << "," << minor << "," << patchlevel << ");";
+return R"~( 
+CREATE TABLE pkgs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+    fullname TEXT NOT NULL, 
+    name TEXT NOT NULL, 
+    version TEXT NOT NULL, 
+    arch TEXT NOT NULL, 
+    build INTEGER NOT NULL, 
+    tag TEXT, 
+    timestamp INTEGER NOT NULL 
+);
+CREATE TABLE dynlinked ( 
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+    pkg_id INTEGER NOT NULL,       
+    filename TEXT NOT NULL, 
+    dirname TEXT NOT NULL, 
+    basename TEXT NOT NULL, 
+    soname TEXT , 
+    arch INTEGER NOT NULL 
+);
+CREATE TABLE required ( 
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+    dynlinked_id INTEGER NOT NULL, 
+    needed TEXT NOT NULL
+);      
+CREATE TABLE rrunpath( 
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    dynlinked_id INTEGER NOT NULL,     
+    ldpath TEXT NOT NULL, 
+    lddir TEXT  
+);
+CREATE TABLE keyvalstore ( 
+    key  NOT NULL, 
+    value  NOT NULL
+); 
 
-  return sql.str();
-}
-//--------------------------------------------------------------------------------------------------
+CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs 
+  FOR EACH ROW  BEGIN
+  DELETE from dynlinked WHERE pkg_id = OLD.id;
+  END;
+CREATE TRIGGER on_before_delete_dynlinked BEFORE DELETE ON dynlinked 
+  FOR EACH ROW  BEGIN
+  DELETE from required WHERE dynlinked_id = OLD.id;
+  DELETE from rrunpath WHERE dynlinked_id = OLD.id;
+  END;
+CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);
 
-std::string
-CacheSQL::CheckVersion(int major, int minor, int patchlevel)
-{
-  std::stringstream sql (
-      "SELECT * FROM version"
-  );
-  sql << " WHERE "
-      << " major = " << major
-      << " AND minor = " << minor
-      << " AND patchlevel = " << patchlevel
-      << ";";
+CREATE TABLE ldlnkdirs (dirname TEXT PRIMARY KEY NOT NULL);      
+CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL); 
 
-  return sql.str();
-}
-//--------------------------------------------------------------------------------------------------
+INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);        
 
-std::string
-CacheSQL::CreateViews()
-{
-  // for future, will need this ...
-  return R"~(
+
+CREATE TABLE version ( major INTEGER NOT NULL,
+ minor INTEGER NOT NULL, patchlevel INTEGER NOT NULL);
+
 create view sbbdep_known_deplinks as
-select pkgs.fullname as pkg, dynlinked.filename as file , required.needed as needed , d2.filename as fromfile , p2.fullname as frompkg
- from
- pkgs 
- inner join dynlinked on pkgs.id = dynlinked.pkg_id
- inner join required on dynlinked.id = required.dynlinked_id
+select pkgs.fullname as pkg, dynlinked.filename as file , 
+required.needed as needed , d2.filename as fromfile , p2.fullname as frompkg
+from
+pkgs 
+inner join dynlinked on pkgs.id = dynlinked.pkg_id
+inner join required on dynlinked.id = required.dynlinked_id
 left join rrunpath on dynlinked.id = rrunpath.dynlinked_id 
 left join dynlinked d2 on required.needed = d2.soname 
 inner join pkgs p2 on p2.id = d2.pkg_id
- where  d2.arch = dynlinked.arch 
+where  d2.arch = dynlinked.arch 
 AND 
 ( 
-  ( rrunpath.lddir IS NOT NULL AND d2.dirname not in (  select distinct * from lddirs union select distinct * from ldlnkdirs )  and rrunpath.lddir = d2.dirname )
- OR 
-  (
-  d2.dirname in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) 
-  AND ( rrunpath.lddir IS  NULL OR rrunpath.lddir in (  select distinct * from lddirs union select distinct * from ldlnkdirs ) )
-  )
+( rrunpath.lddir IS NOT NULL AND d2.dirname not in 
+    (  select distinct * from lddirs union select distinct * from ldlnkdirs )
+  and rrunpath.lddir = d2.dirname )
+OR 
+(
+d2.dirname in 
+  ( select distinct * from lddirs union select distinct * from ldlnkdirs ) 
+AND ( rrunpath.lddir IS  NULL OR rrunpath.lddir in 
+  ( select distinct * from lddirs union select distinct * from ldlnkdirs ) )
+)
 )
 ;
-)~";
-}
-//--------------------------------------------------------------------------------------------------
 
-std::string
-CacheSQL::CreateIndexes()
+
+create index  idx_pkgs_fullname on pkgs(fullname); 
+
+create index  idx_dynlinked_soname on dynlinked(soname);
+create index  idx_dynlinked_pkg_id on dynlinked(pkg_id);
+create index  idx_dynlinked_dirname on dynlinked(dirname);
+create index  idx_dynlinked_basename on dynlinked(basename);
+
+create index  idx_required_dynlinked_id on required(dynlinked_id);
+create index  idx_required_needed on required(needed);
+
+create index  idx_rrunpath_dynlinked_id on rrunpath(dynlinked_id);
+create index  idx_rrunpath_lddir on rrunpath(lddir);
+
+create unique index  idx_keyvalstore_key on keyvalstore (key);
+
+
+)~"
+"INSERT INTO VERSION (major, minor, patchlevel) "
+"VALUES(" AS_STR(SBBDEP_MAJOR_VERSION) "," AS_STR(SBBDEP_MINOR_VERSION) ","
+ AS_STR(SBBDEP_PATCH_VERSION) ");"
+
+;
+
+}//-----------------------------------------------------------------------------
+
+
+constexpr const char*
+selectVersion()
 {
   return R"~(
-  create index  idx_pkgs_fullname on pkgs(fullname); 
-  
-  create index  idx_dynlinked_soname on dynlinked(soname);
-  create index  idx_dynlinked_pkg_id on dynlinked(pkg_id);
-  create index  idx_dynlinked_dirname on dynlinked(dirname);
-  create index  idx_dynlinked_basename on dynlinked(basename);
+SELECT * FROM version WHERE
+major = ? AND minor = ? AND patchlevel = ? ;
+)~" ;
 
-  create index  idx_required_dynlinked_id on required(dynlinked_id);
-  create index  idx_required_needed on required(needed);
+}//-----------------------------------------------------------------------------
 
-  create index  idx_rrunpath_dynlinked_id on rrunpath(dynlinked_id);
-  create index  idx_rrunpath_lddir on rrunpath(lddir);
-  
-  create unique index  idx_keyvalstore_key on keyvalstore (key);
 
-)~";
-}
-//--------------------------------------------------------------------------------------------------
-
-std::string 
-CacheSQL::InsertPkgSQL()
+constexpr const char*
+createVersion()
 {
-  return "INSERT INTO pkgs (fullname, name, version, arch, build, tag, timestamp)"
+  return R"~(
+CREATE TABLE version ( major INTEGER NOT NULL,
+ minor INTEGER NOT NULL, patchlevel INTEGER NOT NULL); )~"
+"INSERT INTO VERSION (major, minor, patchlevel) "
+"VALUES(" AS_STR(SBBDEP_MAJOR_VERSION) "," AS_STR(SBBDEP_MINOR_VERSION) ","
+ AS_STR(SBBDEP_PATCH_VERSION) ");"
+ ;
+
+}//-----------------------------------------------------------------------------
+
+
+constexpr const char* insertPkg()
+{
+  return "INSERT INTO pkgs "
+      " (fullname, name, version, arch, build, tag, timestamp) "
             " VALUES( ?, ?,?,?,?,?,? ) ; "
   ;
-}
-//--------------------------------------------------------------------------------------------------
+}//-----------------------------------------------------------------------------
 
-std::string 
-CacheSQL::InsertDynLinkedSQL()
+
+constexpr const char* insertDynLinked()
 {
-  return "INSERT INTO dynlinked ( pkg_id, filename, dirname, basename, soname, arch)"
+  return "INSERT INTO dynlinked "
+      "( pkg_id, filename, dirname, basename, soname, arch) "
          " VALUES( ?,?,?,?,?,? ) ; "
   ;
-}
-//--------------------------------------------------------------------------------------------------
-std::string 
-CacheSQL::InsertRequiredSQL()
+}//-----------------------------------------------------------------------------
+
+
+constexpr const char* insertRequired()
 {
   return "INSERT INTO required ( dynlinked_id, needed )"
            " VALUES( ?,? ) ; "
-    ;  
-}
-//--------------------------------------------------------------------------------------------------
+    ;
+}//-----------------------------------------------------------------------------
 
-std::string 
-CacheSQL::InsertRRunPathSQL()
+
+constexpr const char* insertRRunPath()
 {
   return "INSERT INTO rrunpath ( dynlinked_id, ldpath, lddir )"
            " VALUES( ?1,?2, mkRealPath( replaceOrigin(?2, ?3) ) ) ; "
-    ;  
-}
-//--------------------------------------------------------------------------------------------------
+    ;
+}//-----------------------------------------------------------------------------
 
-std::string 
-CacheSQL::InsertLdDirSQL()
+
+constexpr const char* insertLdDir()
 {
   return "INSERT INTO lddirs ( dirname ) VALUES(?)" ;
-}
-//--------------------------------------------------------------------------------------------------
+}//-----------------------------------------------------------------------------
 
-std::string 
-CacheSQL::InsertLdLnkDirSQL()
+
+constexpr const char* insertLdLnkDir()
 {
   return "INSERT INTO ldlnkdirs ( dirname ) VALUES(?)" ;
-}
-//--------------------------------------------------------------------------------------------------
+}//-----------------------------------------------------------------------------
 
-std::string 
-CacheSQL::DeletePkgByFullnameSQL()
+constexpr const char* insertKeyVal()
+{
+  return "INSERT INTO ldlnkdirs ( dirname ) VALUES(?)" ;
+}//-----------------------------------------------------------------------------
+
+
+
+constexpr const char* deletePkgByFullname()
 {
   return "DELETE from pkgs WHERE fullname=?" ;
-}
-//--------------------------------------------------------------------------------------------------
+}//-----------------------------------------------------------------------------
 
-std::string 
-CacheSQL::MaxPkgTimeStamp()
-{
-  return "SELECT MAX(timestamp) FROM pkgs;"
-  ;
-}
-//--------------------------------------------------------------------------------------------------
 
-std::string
-CacheSQL::SearchPgkOfFile()
+
+
+constexpr const char* SearchPgkOfFile()
 {
   return R"~(
 SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
  WHERE dynlinked.dirname=? AND dynlinked.basename=? AND dynlinked.arch=? ; 
 )~";
-}
+}//-----------------------------------------------------------------------------
 
 
-
-
-
-
-std::string
-CacheSQL::replaceORIGIN(const std::string& originstr, const std::string& fromfile)
+constexpr const char* insertKeyValStore()
 {
-  sbbdep::PathName destfile(fromfile);
-  using boost::algorithm::replace_first_copy;
-  std::string result=replace_first_copy(originstr,"$ORIGIN/..",destfile.getDir()) ;
-  return replace_first_copy(result ,"$ORIGIN", destfile.getURL()) ;
-}
+  return "INSERT INTO keyvalstore (key, value) VALUES ( ?1, ?2);" ;
+}//-----------------------------------------------------------------------------
 
-  namespace
-  {
+constexpr const char* updateKeyValStore()
+{
+  return "UPDATE keyvalstore SET value = ?2 WHERE key = ?1;" ;
+}//-----------------------------------------------------------------------------
 
-  // replaceOrigin( ld_elf_filepath, ld_homedir  )
-  static void replace_origin_func(sqlite3_context *context, int argc, sqlite3_value **argv)
+
+constexpr const char* setKeyVal()
+{
+  return "INSERT OR REPLACE INTO keyvalstore (key, value) VALUES ( ?1, ?2)";
+
+}//-----------------------------------------------------------------------------
+
+
+
+
+void createSchema(a4sqlt3::Database& db)
+{
+  db.execute(createSchema()) ;
+
+}//-----------------------------------------------------------------------------
+
+void addVersionTable(a4sqlt3::Database& db)
+{
+  db.execute(createVersion()) ;
+}//-----------------------------------------------------------------------------
+
+
+auto makeCommand(a4sqlt3::Database& db, sql_id id)
+  ->a4sqlt3::SqlCommand
+{
+
+  using a4sqlt3::DbValueType ;
+
+  switch (id)
   {
-    if (argc != 2)
-      {
-        static const std::string errmsg = "incorrect count of arguments, should be 2";
-        sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
-      }
-    
-    std::string filepath = (const char*)sqlite3_value_text(argv[0]);
-    std::string homepath = (const char*)sqlite3_value_text(argv[1]);
-    
-    std::string result=CacheSQL::replaceORIGIN(filepath, homepath);
-    
-    //void sqlite3_result_text(sqlite3_context*, const char*, int, void(*)(void*));
-    sqlite3_result_text(context, result.c_str(), -1, SQLITE_TRANSIENT);
-    
+    case sql_id::insert_pkg:
+      return db.command(sql::insertPkg(),{ DbValueType::Text,
+                                           DbValueType::Text,
+                                           DbValueType::Text,
+                                           DbValueType::Text,
+                                           DbValueType::Int64,
+                                           DbValueType::Text,
+                                           DbValueType::Int64 } );
+      break;
+
+    case sql_id::insert_dynlinked:
+      return db.command(sql::insertDynLinked(), {DbValueType::Int64,
+                                                DbValueType::Text,
+                                                DbValueType::Text,
+                                                DbValueType::Text,
+                                                DbValueType::Text,
+                                                DbValueType::Int64 });
+
+
+      break;
+
+    case sql_id::insert_required:
+      return db.command(sql::insertRequired(), { DbValueType::Int64,
+                                                  DbValueType::Text } );
+      break;
+
+    case sql_id::insert_rrunpath:
+      return db.command(sql::insertRRunPath(),{ DbValueType::Int64,
+                                                  DbValueType::Text,
+                                                  DbValueType::Text });
+      break;
+
+
+    case sql_id::insert_ldDir:
+      return db.command(sql::insertLdDir(), {DbValueType::Text});
+      break;
+
+    case sql_id::insert_ldLnkDir:
+      return db.command(sql::insertLdLnkDir(), {DbValueType::Text});
+      break;
+
+    case sql_id::del_byfullname :
+      return  db.command(sql::deletePkgByFullname(),{ DbValueType::Text });
+      break;
+
+    default:
+      throw ErrUnexpected("should never happen :-)");
   }
 
-  static void make_realpath_func(sqlite3_context *context, int argc, sqlite3_value **argv)
-  {
-    if (argc != 1)
-      {
-        static const std::string errmsg = "incorrect count of arguments, should be 1";
-        sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
-      }
+}//-----------------------------------------------------------------------------
 
-    Path p((const char*)sqlite3_value_text(argv[0]));
-    p.makeAbsolute();
-    p.makeRealPath();
 
-    if ( p.isValid() )
-      sqlite3_result_text(context, p.getURL().c_str(), -1, SQLITE_TRANSIENT);
-    else
-      sqlite3_result_null(context);
-  }
 
-}
+namespace {
 
-void 
-CacheSQL::register_own_sql_functions(sqlite3* db)
+
+
+void replace_origin_func(sqlite3_context *context,
+                                int argc, sqlite3_value **argv)
 {
-  sqlite3_create_function(db, "replaceOrigin", 2, 0,0, &replace_origin_func , 0 , 0 );
-  sqlite3_create_function(db, "mkRealPath", 1, 0,0, &make_realpath_func , 0 , 0 );
-  // mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
+  if (argc != 2)
+    { // TODO this needs a test
+      conststr errmsg { "incorrect count of arguments, should be 2" };
+      sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
+    }
 
+  std::string filepath = (const char*)sqlite3_value_text(argv[0]);
+  std::string homepath = (const char*)sqlite3_value_text(argv[1]);
+
+  std::string result= replaceORIGIN(filepath, homepath);
+
+  sqlite3_result_text(context, result.c_str(), -1, SQLITE_TRANSIENT);
+
+}//-----------------------------------------------------------------------------
+
+
+void make_realpath_func(sqlite3_context *context,
+                               int argc, sqlite3_value **argv)
+{
+  if (argc != 1)
+    { // TODO this needs a test
+      conststr errmsg {"incorrect count of arguments, should be 1"} ;
+      sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
+    }
+
+  Path p((const char*)sqlite3_value_text(argv[0]));
+  p.makeAbsolute();
+  p.makeRealPath();
+
+  if ( p.isValid() )
+    sqlite3_result_text(context, p.getURL().c_str(), -1, SQLITE_TRANSIENT);
+  else
+    sqlite3_result_null(context);
+}//-----------------------------------------------------------------------------
+} // anno ns
+
+void register_own_functions(sqlite3* db)
+{
+//todo fuer parameter 4 ?? re check docu
+//auto flag = SQLITE_UTF8 | SQLITE_DETERMINISTIC ;
+sqlite3_create_function(db, "replaceOrigin", 2, 0,0,
+                        &replace_origin_func , 0 , 0 );
+
+sqlite3_create_function(db, "mkRealPath", 1, 0,0,
+                        &make_realpath_func , 0 , 0 );
+// mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
+
+}//-----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+}
 }
 
 
 
 
-
-
-
-
-
-
-
-
-}

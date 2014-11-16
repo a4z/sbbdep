@@ -130,30 +130,30 @@ void TestDirBase()
 void TestDiv()
 {
   
-  PathName pn = "nix" ;
+  PathName pn {"nix"} ;
   
-  BOOST_REQUIRE ( !pn.isAbsolute()  ) ;
-  BOOST_REQUIRE ( !pn.isRelative()  ) ;
-  BOOST_REQUIRE ( !pn.isPath()  ) ;
+  BOOST_REQUIRE ( not pn.isAbsolute()  ) ;
+  BOOST_REQUIRE ( pn.isRelative()  ) ;
+  BOOST_REQUIRE ( not pn.isPath()  ) ;
   
-  PathName pathtonowhere = "/etc/../path/to/nowhere" ;
+  PathName pathtonowhere ( "/etc/../path/to/nowhere" ) ;
   {
     Path p(pathtonowhere);
     BOOST_REQUIRE_NO_THROW( p.makeAbsolute() );
     BOOST_REQUIRE_NO_THROW( p.makeRealPath() );
-
+  }
+  {
+    Path p(pathtonowhere);
     BOOST_REQUIRE( p.makeAbsolute() == false );
     BOOST_REQUIRE( p.makeRealPath() == false );
-
-
-    BOOST_REQUIRE( p.getURL() == pathtonowhere.getURL() ) ;
-
+   }
     // TODO check these , obviously broken, but I leave this as failing test to have a reminder
-
-    BOOST_REQUIRE ( !p.isAbsolute()  ) ;
-    //BOOST_REQUIRE ( !p.isRelative()  ) ;
-    //BOOST_REQUIRE ( !p.isPath()  ) ;
-    //BOOST_REQUIRE ( !p.isValid() ) ;
+  {
+    Path p(pathtonowhere);
+    BOOST_REQUIRE ( ! p.isAbsolute()  ) ;
+    BOOST_REQUIRE ( p.isRelative()  ) ;
+    BOOST_REQUIRE ( p.isPath()  ) ;
+    BOOST_REQUIRE ( !p.isValid() ) ;
   }
   {
     Path p(pathtonowhere);
