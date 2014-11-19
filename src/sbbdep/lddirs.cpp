@@ -35,78 +35,18 @@ THE SOFTWARE.
 #include <boost/algorithm/string/trim.hpp>
 
 
-
 namespace sbbdep
 {
 
 
-LDDirs::LDDirs()
-{
-}
-//------------------------------------------------------------------------------
-
-LDDirs::~LDDirs()
-{
-}
-//------------------------------------------------------------------------------
-
-auto
-LDDirs::readLdDirs() -> const LDDirs::StringSet&
-{
-  m_lddirs.clear();
-  m_lddirs.insert("/lib");
-  if(Path("/lib64").isFolder() )m_lddirs.insert("/lib64");
-  m_lddirs.insert("/usr/lib");
-  if(Path("/usr/lib64").isFolder() )m_lddirs.insert("/usr/lib64");
-
-  std::ifstream ldso_conf("/etc/ld.so.conf");
-
-  if( ldso_conf.is_open() )
-    {
-      for( std::string line ; std::getline(ldso_conf, line) ; )
-        {
-          std::size_t commentpos = line.find_first_of("#") ;
-          if( commentpos != std::string::npos )
-            line.erase(commentpos) ;
-          std::string dirname = boost::algorithm::trim_copy(line) ;
-          if( dirname.size() )
-            { //  folder path could also be a link
-              Path p(dirname) ;
-              p.makeRealPath() ;
-              if( p.isFolder() )
-                m_lddirs.insert(p.getURL()) ;
-            }
-        }
-    }
-  else
-    {
-      throw ErrGeneric("unable to read /etc/ld.so.conf") ;
-    }
-  
-  
-  return m_lddirs; 
-}
-
-int64_t
-LDDirs::getLdSoConfTime()
-{
-  Path p("/etc/ld.so.conf");
-
-  if(p.isValid())
-    return p.getLastModificationTime();
-
-  return 0 ;
-}
-
-//------------------------------------------------------------------------------
-
 namespace
 {
 
+std::vector<std::string>
+fillFromLdSoCache(const std::vector<std::string>& ignore)
+{ // ignore must be sorted, todo add check indebug
 
-void fillFromLdSoCache(std::set<std::string>& s,
-                       const std::set<std::string>& ignore)
-{
+  std::vector<std::string> retval;
 
   const std::string cmd = "/sbin/ldconfig -p";
   FILE* popin = popen(cmd.c_str(), "r");
@@ -166,8 +106,14 @@ void fillFromLdSoCache(std::set<std::string>& s,
           // TODO care about this...
           //if (path.isRegularFile() && isElfLib( path ) ) // this should not be required anymore
 
-          if(ignore.find(path.getDir())== ignore.end())
-            s.insert(path.getDir());
+          using std::begin;
+          using std::end;
+          using std::binary_search;
+
+          if(not binary_search(begin(ignore), end(ignore), path.getDir()))
+            {
+              retval.emplace_back(path.getDir());
+            }
 
         }
 
@@ -175,26 +121,81 @@ void fillFromLdSoCache(std::set<std::string>& s,
       pclose(popin);
     }
 
-}
-}
+  return retval;
+
+}//-----------------------------------------------------------------------------
+}//anno ns
 
 
-/*
- * get all directory names that have files with link in an lddir....
- */
-auto
-LDDirs::readLdLinkDirs() -> const StringSet&
+
+
+
+LDDirs::LDDirs()
 {
-  if(m_lddirs.empty()) // ensure loading cause need it later to filter what already exists
-    readLdDirs();
 
-  m_ldlnkdirs.clear();
+   _lddirs.emplace_back("/lib");
 
-  fillFromLdSoCache(m_ldlnkdirs, m_lddirs); // fill - ignore
-  return m_ldlnkdirs ;
+   if(Path("/lib64").isFolder() )
+    _lddirs.emplace_back("/lib64");
+
+  _lddirs.emplace_back("/usr/lib");
+
+  if(Path("/usr/lib64").isFolder() )
+    _lddirs.emplace_back("/usr/lib64");
+
+
+  const char* ldsoconf = "/etc/ld.so.conf" ;
+
+  Path p(ldsoconf);
+
+  if(p.isValid())
+    _ldSoConfTime = p.getLastModificationTime();
+  else
+    throw ErrGeneric("can not stat /etc/ld.so.conf") ;
+
+
+  std::ifstream ldso_conf(ldsoconf);
+
+  if( ldso_conf.is_open() )
+    {
+      for( std::string line ; std::getline(ldso_conf, line) ; )
+        {
+          std::size_t commentpos = line.find_first_of("#") ;
+          if( commentpos != std::string::npos )
+            {
+              line.erase(commentpos) ;
+            }
+          std::string dirname = boost::algorithm::trim_copy(line) ;
+          if( dirname.size() )
+            { //  folder path could also be a link
+              Path p(dirname) ;
+              p.makeRealPath() ;
+              if( p.isFolder() )
+                {
+                  _lddirs.emplace_back(p.getURL()) ;
+                }
+            }
+        }
+    }
+  else
+    {
+      throw ErrGeneric("unable to open /etc/ld.so.conf") ;
+    }
+
+
+  //so many lookups that set is useful?
+
+  std::sort(_lddirs.begin(), _lddirs.end());
+  _ldlnkdirs = fillFromLdSoCache(_lddirs);
 
 }
-//--------------------------------------------------------------------------------------------------  
+
+const LDDirs&
+getLDDirs()
+{
+  static const LDDirs lddirs;
+  return lddirs ;
+}
 
 
 //--------------------------------------------------------------------------------------------------

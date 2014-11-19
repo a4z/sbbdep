@@ -13,6 +13,12 @@
 namespace sbbdep
 {
 
+/**
+ * single consumer, multiple producer.
+ *
+ * with some special like i need at where its used
+ *
+ */
 template<typename T>
 class BackgroundJob
 {
@@ -39,10 +45,14 @@ public:
 
   bool isRunning();
 
+  bool push(const std::vector<T>&);
+
   bool push(T&&);
 
   bool push(const T&);
 
+  template<typename FT> // FT function or lambda ,how ..
+  auto runBlocked( FT f) -> decltype(f()) ;
 
 private:
 
@@ -220,6 +230,73 @@ BackgroundJob<T>::push(const T& val)
 
 }
 //------------------------------------------------------------------------------
+
+
+template<typename T>
+bool
+BackgroundJob<T>::push(const std::vector<T>& vals)
+{
+
+  bool retval{false};
+
+  if(_queue.running)
+    {
+      LockGuard lock(_queue.mtx);
+      _queue.messages.insert(_queue.messages.end(), vals.begin(), vals.end());
+      _queue.newData=true;
+      _queue.condt.notify_one();
+      lock.unlock();
+      retval = true;
+    }
+
+  return retval;
+
+}
+//------------------------------------------------------------------------------
+
+
+// this is a bit special and will not be used now, just for testing
+template<typename T>
+template<typename FT>
+auto BackgroundJob<T>::runBlocked(FT f) -> decltype(f())
+{
+  LockGuard lock(_queue.mtx);
+  return f() ;
+  // and if it would return void ...
+}
+
+
+/**
+ * utility for picking out elements of a vector concurrently
+ *
+ *
+ */
+template<typename T>
+struct ConcurrentPeek
+{
+  ConcurrentPeek(std::vector<T> data, const T& eolElem = T())
+    : _data(std::move(data)), _pos(_data.begin()) , _eolElem(eolElem)
+  {
+  }
+
+  T operator()()
+  {
+    std::unique_lock<std::mutex> lock(_mtx);
+    return _pos == _data.end() ?
+      _eolElem : std::move(*_pos++) ;
+  }
+
+private:
+  std::vector<T>  _data;
+  typename std::vector<T>::iterator _pos;
+  T _eolElem;
+  std::mutex _mtx;
+
+
+};
+
+
+
 
 } // ns
 

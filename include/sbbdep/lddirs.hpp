@@ -25,36 +25,44 @@ THE SOFTWARE.
 #ifndef SBBDEP_LDDIRS_HPP_
 #define SBBDEP_LDDIRS_HPP_
 
-#include <set>
+#include <vector>
 #include <string>
 
 namespace sbbdep
 {
-// get dir names from /etc/ld.so.conf
+
+
+
+
+
 class LDDirs
 {
+  using StringVec = std::vector<std::string> ;
 
-  using StringSet = std::set<std::string> ;
-  
-public:
+
+
+  friend const LDDirs& getLDDirs() ;
+
+
   LDDirs();
-  ~LDDirs();
-  
-  int64_t getLdSoConfTime();
+public:
 
-  const StringSet& getLdDirs()  { if (m_lddirs.size()==0) readLdDirs(); return m_lddirs;}
-  const StringSet& getLdLnkDirs() { if (m_ldlnkdirs.size()==0) readLdLinkDirs(); return m_ldlnkdirs;}
+  ~LDDirs() = default ;
   
+  int64_t getLdSoConfTime() const { return _ldSoConfTime;}
+  const StringVec& getLdDirs() const  { return _lddirs;}
+  const StringVec& getLdLnkDirs() const {  return _ldlnkdirs;}
 
 private:
 
-  const StringSet& readLdDirs();
-  const StringSet& readLdLinkDirs();
-  
-
-  StringSet m_lddirs;
-  StringSet m_ldlnkdirs;
+  int64_t _ldSoConfTime {0};
+  StringVec _lddirs;
+  StringVec _ldlnkdirs;
 };
+
+
+const LDDirs& getLDDirs() ;
+
 
 
 }

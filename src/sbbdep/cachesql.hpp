@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 #include <a4sqlt3/database.hpp>
 #include <a4sqlt3/sqlcommand.hpp>
-#include <sbbdep/error.hpp>
+#include <sbbdep/cache.hpp>
 
 
 
@@ -39,8 +39,7 @@ namespace sbbdep {
 
 namespace sql {
 
-
-  a4sqlt3::SqlCommand makeCommand(a4sqlt3::Database& db, sql_id id);
+  a4sqlt3::SqlCommand makeCommand(a4sqlt3::Database& db, Cache::sql_id id);
   
   void createSchema(a4sqlt3::Database& db);
   

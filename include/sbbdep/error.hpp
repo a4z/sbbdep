@@ -85,19 +85,6 @@ namespace sbbdep{
 
 
 
-  // till I have a better place, this is here, TODO to config ???
-    enum class sql_id {
-      insert_pkg,
-      insert_dynlinked,
-      insert_required,
-      insert_rrunpath,
-      insert_ldDir,
-      insert_ldLnkDir,
-      insert_keyval,
-      update_keyval,
-      del_byfullname
-
-    };
 
 
 } // ns 

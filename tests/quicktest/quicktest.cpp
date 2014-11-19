@@ -9,7 +9,7 @@
 #include <sbbdep/dircontent.hpp>
 
 
-/*
+
 template<typename T>
 void printCointainer(const T& c, const std::string& del = "\n"){
   for(auto&& v : c)
@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
   start = std::chrono::system_clock::now();
 
 
-  sbbdep::LDDirs ldd;
+  auto ldd = sbbdep::getLDDirs();
   auto a = ldd.getLdDirs();
   auto b = ldd.getLdLnkDirs();
 
@@ -41,7 +41,8 @@ int main(int argc, char* argv[])
 
 
 }
-*/
+
+/*
 int main(int argc, char* argv[])
 {
   (void)(argc) , (void)(argv);
@@ -52,4 +53,4 @@ int main(int argc, char* argv[])
     std::cout  << v << std::endl;
 
 }
-
+*/

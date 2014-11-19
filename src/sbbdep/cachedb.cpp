@@ -173,7 +173,7 @@ public:
 
 
   void
-  Store( const PkgName& pkgname, const Pkg::DynLinkedFiles& dllist, const int64_t& timestamp)
+  Store( const PkgName& pkgname, const Pkg::ElfFiles& dllist, const int64_t& timestamp)
   {
     using a4sqlt3::DbValue ;
 
@@ -433,7 +433,7 @@ CacheDB::checkVersion( int major, int minor, int patchlevel )
           throw ErrGeneric("old db version in use");
         }
 
-      auto trans = transactionGuard();
+      auto trans = beginTransaction();
       if(db_version < calcVersion(0, 2, 1))
         {
           execute("CREATE TABLE keyvalstore (key  NOT NULL,  value  NOT NULL);");
@@ -545,7 +545,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
           {
             dbaction.Store(
                 PkgName(pkg.getPath().getBase()),
-                pkg.getDynLinked(),
+                pkg.getElfFiles(),
                 pkg.getPath().getLastModificationTime()) ;
           }
       }
@@ -558,7 +558,7 @@ CacheDB::updateData(const StringVec& toremove, const StringVec& toinsert)
           {
             dbaction.Store(
                 PkgName(pkg.getPath().getBase()),
-                pkg.getDynLinked(),
+                pkg.getElfFiles(),
                 pkg.getPath().getLastModificationTime()) ;
           }
       }

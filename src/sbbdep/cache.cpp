@@ -29,10 +29,13 @@ THE SOFTWARE.
 
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/path.hpp>
+#include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgname.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/log.hpp>
 #include <sbbdep/error.hpp>
+#include <sbbdep/lddirs.hpp>
+
 
 #include "cachesql.hpp"
 #include "backgroundjob.hpp"
@@ -48,6 +51,16 @@ THE SOFTWARE.
 
 
 namespace sbbdep {
+
+
+namespace
+{
+
+
+auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
+
+}
+
 
 
 using a4sqlt3::Dataset;
@@ -91,7 +104,7 @@ Cache::isNewDb()
 void
 Cache::createDbSchema()
 {
-  auto transaction = transactionGuard();
+  auto transaction = beginTransaction();
   sql::createSchema(*this);
 
   // ensure we have this, for future ensureDefaults ... ?
@@ -175,10 +188,10 @@ Cache::checkDbSchemaVersion()
           throw ErrGeneric("old databaes version in use");
         }
 
-      auto trans = transactionGuard();
+      auto trans = beginTransaction();
       if(db_version < calcVersion(0, 2, 1))
         {
-          auto transaction = transactionGuard() ;
+          auto transaction = beginTransaction() ;
           const char* sql =
           "CREATE TABLE keyvalstore (key  NOT NULL,  value  NOT NULL); "
           "create unique index  idx_keyvalstore_key on keyvalstore (key); "
@@ -230,14 +243,17 @@ Cache::doSync()
   if(isNewDb())
     {
       createDbSchema();
-      syncdata = createNewSyncData() ; // here, ld dirs im background
+      syncdata = createNewSyncData() ;
+      // todo in background so data is loaded getLDDirs()
+      // muss natuerlich nacher extra speichern in sync mit anderem db zugrif
       createIndex(syncdata);
      }
   else
     {
       checkDbSchemaVersion() ;
-      syncdata = createUpdateSyncData() ; // here, ld dirs im background
-                                          // was nicht geht, da ich da auf die db zugreif
+      syncdata = createUpdateSyncData() ;
+      // todo in background so data is loaded getLDDirs()
+       // muss natuerlich nacher extra speichern in sync mit anderem db zugrif
 
       updateIndex(syncdata);
     }
@@ -266,7 +282,7 @@ Cache::createNewSyncData()
       return true ;
     };
 
-  PkgAdmDir.apply(newfiles_cb) ;
+  PkgAdmDir.forEach(newfiles_cb) ;
 
   return retval ;
 
@@ -320,7 +336,7 @@ Cache::createUpdateSyncData()
 
 
 
-  std::thread checkFS(&Dir::apply, &PkgAdmDir,
+  std::thread checkFS(&Dir::forEach, &PkgAdmDir,
                       fillAllAndNew, Dir::defaultFilter);
  // TODO default arg does not work, shall I change the interface?
 
@@ -384,58 +400,43 @@ Cache::createIndex(const SyncData& data)
       throw ErrUnexpected("Invalid argument, SyncData not new") ;
     }
 
-  auto transaction = transactionGuard() ;
+  auto transaction = beginTransaction() ;
 
-  struct dbmsg {
-    sql_id id ;
-    a4sqlt3::DbValues args;
-  };
+  // TODO, ldso conf ....
 
-
-  BackgroundJob<dbmsg> dbjob(
-      [this](const dbmsg& msg)
+  BackgroundJob<Pkg> dbjob(
+      [this](const Pkg& pkg)
       {
-        this->getCommand(msg.id).execute(msg.args) ;
+        this->indexPkg(pkg) ;
       });
 
+  auto f = []() -> int {return 1;};
+  auto i = dbjob.runBlocked(f) ;
 
-  // t could be a type.. encapsulate ...
-  std::mutex mtx;
-  StringVec::const_iterator pos;
-  auto picker = [&]() -> std::string
-      {
-        std::unique_lock<std::mutex> lock(mtx);
-        return (pos not_eq data.installed.end()) ? *pos++ : std::string() ;
-      };
+  LogDebug()<< "here " << i ;
 
+  ConcurrentPeek<std::string> picker(data.installed) ;
 
-  auto indexer = [&dbjob, picker]()
+  auto indexWorker = [&dbjob, &picker]()
     {
-      auto todo = picker();
+      std::string todo = picker();
       while(not todo.empty())
         {
-          // stroe...
-          //dbjob.push() .. what ..
+          const auto filename = PkgAdmDir.getName() + "/" + todo ;
+          auto pkg = Pkg::create(todo, PkgType::Installed);
+          pkg.Load() ;
+          dbjob.push(std::move(pkg));
           todo = picker();
         }
     };
 
-  // fuers update muss das anders aussehen .... , wie
 
+  std::thread t1(indexWorker) ;
+  std::thread t2(indexWorker) ;
 
-  // so soll der neue output sein
-  // update index package name
-  // create index package name
-  // remove index package name
-  // doch nicht, remove is schlecht
+  waitfor(t1);
+  waitfor(t2);
 
-
-  // what is basically to do, go through all installed,
-  // index and push to the db.
-  // q: does a thread accelerate this or not
-  // well, shoul run in paralle, something ..
-
-  // TODO , schau da die timigs an, ob die sb action
 
   transaction.commit() ;
 
@@ -471,8 +472,81 @@ Cache::getCommand(sql_id id)
 
 
 }
+//------------------------------------------------------------------------------
 
-int64_t
+
+void
+Cache::indexPkg(const Pkg& pkg)
+{
+  // TODO assert(pkg.isLoaded()) ;
+
+  // todo might change and use worker, runBlocked to
+  // but i must think about this
+
+  const auto pkgname = PkgName(pkg.getPath().getBase()) ;
+  const auto timestamp = pkg.getPath().getLastModificationTime() ;
+
+  getCommand(sql_id::insert_pkg).execute( {
+             { pkgname.FullName() } ,
+             { pkgname.Name() } ,
+             { pkgname.Version() } ,
+             { pkgname.Arch() } ,
+             { pkgname.Build().Num() } ,
+             { pkgname.Build().Tag() } ,
+             { timestamp }
+   });
+
+  const auto pkgid = getLastInsertRowid() ;
+
+  for(const ElfFile& elf : pkg.getElfFiles())
+    {
+      getCommand(sql_id::insert_dynlinked).execute( {
+               { pkgid } ,
+               { elf.getName().Str() } ,
+               { elf.getName().getDir() } ,
+               { elf.getName().getBase() } ,
+               (elf.soName().size()> 0 ?
+                       DbValue(elf.soName()) :
+                       DbValue(a4sqlt3::DbValueType::Null) ) ,
+               { elf.getArch() }
+      });
+
+     const auto dynlinked_id = getLastInsertRowid() ;
+
+     for(const auto& needed : elf.getNeeded())
+       {
+         getCommand(sql_id::insert_required).execute(
+             { {dynlinked_id}, {needed} }
+         );
+       }
+
+     for(const auto& rrunpaht : elf.getRRunPaths())
+       {
+         getCommand(sql_id::insert_rrunpath).execute(
+             { {dynlinked_id}, {rrunpaht} , {elf.getName().getDir()} }
+         );
+       }
+    }
+
+}
+//------------------------------------------------------------------------------
+
+void
+Cache::updateLdDirInfo()
+{
+  auto lddirs = getLDDirs() ;
+
+  auto transaction = beginTransaction();
+
+
+
+  transaction.commit();
+
+
+}
+//------------------------------------------------------------------------------
+
+int64_t // TODO is this  worth a own memmber function ...
 Cache::latesPkgTimeStampInDb()
 {
 

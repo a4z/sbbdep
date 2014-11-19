@@ -126,7 +126,7 @@ Pkg::create(const Path& path, PkgType type_hint)
 
 
 Pkg::Pkg(Path pname, PkgType type)
-    : m_path(std::move(pname)), m_type(type), m_floaded(false)
+    : _path(std::move(pname)), _type(type), _loaded(false)
 {
 
 }
@@ -137,7 +137,7 @@ bool
 Pkg::Load()
 {
   bool retval = false;
-  switch (m_type)
+  switch (_type)
     {
     case PkgType::Installed:
       retval =doLoadInstalled();
@@ -163,9 +163,9 @@ bool
 Pkg::doLoadOneBinLib()
 {
 
-  ElfFile elfile(m_path);
+  ElfFile elfile(_path);
   if( elfile.isBinaryOrLibrary() )
-    m_dlfiles.push_back(elfile);
+    _elfFiles.push_back(elfile);
 
 
   return true;
@@ -193,7 +193,7 @@ Pkg::doLoadDestDir()
           {
             ElfFile elfile(path);
             if( elfile.isBinaryOrLibrary() )
-              m_dlfiles.push_back(elfile);
+              _elfFiles.push_back(elfile);
           }
       }
 
@@ -201,7 +201,7 @@ Pkg::doLoadDestDir()
 
   auto dirhandler = [this, checkdir](const std::string& dirname)
     {
-    Path path(this->m_path.getURL() + "/" + dirname);
+    Path path(this->_path.getURL() + "/" + dirname);
     path.makeRealPath(); // remove // .. dir//usr/ ..
     if (path.isFolder())
       checkdir(path.getURL());
@@ -257,14 +257,14 @@ Pkg::doLoadInstalled()
       {
         ElfFile elfile(p);
         if( elfile.isBinaryOrLibrary() )
-          m_dlfiles.push_back(elfile);
+          _elfFiles.push_back(elfile);
       }
 
   };
 
 
   //open the file,
-  std::ifstream ins( m_path.getURL().c_str() );
+  std::ifstream ins( _path.getURL().c_str() );
   if ( !ins.good())
     return false;
 
@@ -294,12 +294,12 @@ Pkg::doLoadInstalled()
       catch( const Error& e )
         {
           LogError() << e
-              << " (readpkg " << m_path.getURL() << " line:"<< line << ")\n";
+              << " (readpkg " << _path.getURL() << " line:"<< line << ")\n";
         }
       catch( ... )
         {
           LogError() << "Unknown exception (readpkg "
-              << m_path.getURL() << " line:"<< line << ")\n";
+              << _path.getURL() << " line:"<< line << ")\n";
         }
     }
 
@@ -312,10 +312,10 @@ Pkg::getArch() const
 {
 // TODO , this could be done with more spezial case handling...
 
-  if( m_dlfiles.empty() )
+  if( _elfFiles.empty() )
     return ElfFile::ArchNA;
 
-  return m_dlfiles.begin()->getArch() ;
+  return _elfFiles.begin()->getArch() ;
 }
 
 //--------------------------------------------------------------------------------------------------

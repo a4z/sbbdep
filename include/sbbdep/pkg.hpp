@@ -54,7 +54,7 @@ class Pkg
 public:  
 
   using StringSet = std::set<std::string> ;
-  typedef std::vector<ElfFile> DynLinkedFiles; // TODO rename this into something better, ElfFiles till example
+  using ElfFiles = std::vector<ElfFile> ;
 
   // TODO, merge this into something like SpecialDirs together with lddir
   static const StringSet& usualBinDirs(); // need review, see comment in cpp
@@ -65,21 +65,21 @@ public:
 
   static Pkg create(const Path& p, PkgType type_hint = PkgType::Unknown);
 
-  Pkg( const Pkg& other ) = default;
+  Pkg( const Pkg&  ) = default;
   Pkg& operator=( const Pkg&  )= default;
   Pkg( Pkg&&  ) = default;
-  Pkg& operator=( Pkg&& other )= default;
+  Pkg& operator=( Pkg&& )= default;
   ~Pkg() = default;
   
-  const Path& getPath() const { return  m_path; }
+  const Path& getPath() const { return  _path; }
   
   // if ever required to have a pkg just with file info, split file and dynlink loading
   bool Load() ;
-  bool isLoaded() const { return m_floaded ; }
+  bool isLoaded() const { return _loaded ; }
 
-  const DynLinkedFiles& getDynLinked() const { return m_dlfiles; }
+  const ElfFiles& getElfFiles() const { return _elfFiles; }
   
-  PkgType getType() const {return m_type; }
+  PkgType getType() const {return _type; }
   
   ElfFile::Arch getArch() const;
 
@@ -94,12 +94,12 @@ protected:
   bool doLoadDestDir() ;
   bool doLoadInstalled() ;
 
-  Path m_path; // name  of
-  PkgType m_type ;
-  bool m_floaded ; // files loaded...
+  Path _path; // name  of
+  PkgType _type ;
+  bool _loaded ; // files loaded...
 
   
-  DynLinkedFiles m_dlfiles;
+  ElfFiles _elfFiles;
   
   
 };

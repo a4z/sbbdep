@@ -31,7 +31,7 @@ THE SOFTWARE.
 
 namespace sbbdep {
 
-
+class Pkg;
 
 class Cache : public a4sqlt3::Database
 {
@@ -40,26 +40,50 @@ public:
 
   using StringVec = std::vector<std::string> ;
 
-
-  Cache(const std::string& dbname);
-  ~Cache();
-
-  
-
   struct SyncData{
-
     StringVec removed;
     StringVec installed;
     StringVec reinstalled;
     bool wasNewCache;
   };
 
+  // till I have a better place, this is here, TODO to config ???
+  enum class sql_id {
+    insert_pkg,
+    insert_dynlinked,
+    insert_required,
+    insert_rrunpath,
+    insert_ldDir,
+    insert_ldLnkDir,
+    insert_keyval,
+    update_keyval,
+    del_byfullname
+  };
+
+  struct dbmsg {
+    sql_id id ;
+    a4sqlt3::DbValues args;
+  };
+  // since I rely an lastrowid, .... set it to the arg ( > -1 ) and it will
+  // be applied
+
+  using DbMessages = std::vector<dbmsg> ;
+
+  Cache(const std::string& dbname);
+  ~Cache();
+
 
 
   SyncData doSync();
 
 
+  // sets last row id, if given, therefore not const
+  void processMessage(dbmsg&) ;
+
 private:
+
+
+
 
   // 01 check if there is a schema,
   // if not create it and return that the db is new
@@ -88,15 +112,18 @@ private:
   // get stored command, if it does not exist, its created
   a4sqlt3::SqlCommand& getCommand(sql_id id) ;
 
+
+  void
+  indexPkg(const Pkg& pkg);
+
+
   // stored sql commands
   using commandMap = std::map<sql_id,a4sqlt3::SqlCommand> ;
   commandMap _commands;
   const std::string _name;
 
 
-  void updateLdDirs(const StringVec& dirs);  // do not forget to implements this here persistLdSoTime
-
-  void updateLdLinkDirs(const StringVec& dirs); // is there a way to make this table obsolete and find the links in a different way
+  void updateLdDirInfo();  // do not forget to implements this here persistLdSoTime
 
   int64_t latesPkgTimeStampInDb();
 

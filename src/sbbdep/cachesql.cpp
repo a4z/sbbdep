@@ -278,7 +278,7 @@ void addVersionTable(a4sqlt3::Database& db)
 }//-----------------------------------------------------------------------------
 
 
-auto makeCommand(a4sqlt3::Database& db, sql_id id)
+auto makeCommand(a4sqlt3::Database& db, Cache::sql_id id)
   ->a4sqlt3::SqlCommand
 {
 
@@ -286,7 +286,7 @@ auto makeCommand(a4sqlt3::Database& db, sql_id id)
 
   switch (id)
   {
-    case sql_id::insert_pkg:
+    case Cache::sql_id::insert_pkg:
       return db.command(sql::insertPkg(),{ DbValueType::Text,
                                            DbValueType::Text,
                                            DbValueType::Text,
@@ -296,7 +296,7 @@ auto makeCommand(a4sqlt3::Database& db, sql_id id)
                                            DbValueType::Int64 } );
       break;
 
-    case sql_id::insert_dynlinked:
+    case Cache::sql_id::insert_dynlinked:
       return db.command(sql::insertDynLinked(), {DbValueType::Int64,
                                                 DbValueType::Text,
                                                 DbValueType::Text,
@@ -307,27 +307,27 @@ auto makeCommand(a4sqlt3::Database& db, sql_id id)
 
       break;
 
-    case sql_id::insert_required:
+    case Cache::sql_id::insert_required:
       return db.command(sql::insertRequired(), { DbValueType::Int64,
                                                   DbValueType::Text } );
       break;
 
-    case sql_id::insert_rrunpath:
+    case Cache::sql_id::insert_rrunpath:
       return db.command(sql::insertRRunPath(),{ DbValueType::Int64,
                                                   DbValueType::Text,
                                                   DbValueType::Text });
       break;
 
 
-    case sql_id::insert_ldDir:
+    case Cache::sql_id::insert_ldDir:
       return db.command(sql::insertLdDir(), {DbValueType::Text});
       break;
 
-    case sql_id::insert_ldLnkDir:
+    case Cache::sql_id::insert_ldLnkDir:
       return db.command(sql::insertLdLnkDir(), {DbValueType::Text});
       break;
 
-    case sql_id::del_byfullname :
+    case Cache::sql_id::del_byfullname :
       return  db.command(sql::deletePkgByFullname(),{ DbValueType::Text });
       break;
 

@@ -92,7 +92,7 @@ public:
    * \param cb, if of the callback is false, function exits
    */
   void
-  apply(ContentCall cb, IgnorFilter = defaultFilter) const ;
+  forEach(ContentCall cb, IgnorFilter = defaultFilter) const ;
 
 
 private:

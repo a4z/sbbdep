@@ -119,7 +119,7 @@ Dir::getContent(IgnorFilter filter) const
 //------------------------------------------------------------------------------
 
 void
-Dir::apply(ContentCall cb, IgnorFilter filter ) const
+Dir::forEach(ContentCall cb, IgnorFilter filter ) const
 {
   dir_ptr dirstm {opendir (_name.c_str ())};
 

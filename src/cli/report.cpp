@@ -150,7 +150,7 @@ getRequiredInfosLDD(const Pkg& pkg)
   utils::StringSet notFoundIgnore;
   if(pkg.getType() == PkgType::DestDir)
     {
-        for(auto& f : pkg.getDynLinked())
+        for(auto& f : pkg.getElfFiles())
           {
             if(f.soName()!="")
               notFoundIgnore.insert(f.soName());
@@ -175,7 +175,7 @@ getRequiredInfosLDD(const Pkg& pkg)
   // takes the sym, filelink, arch , and a list of files that need this ...
   std::map<SymFileLinkArch, utils::StringSet> ldsym_byfile;
 
-  for(const ElfFile& elf : pkg.getDynLinked())
+  for(const ElfFile& elf : pkg.getElfFiles())
     {
       utils::StringMap ldmap = getLddMap(elf.getName()) ;
 
@@ -267,7 +267,7 @@ getRequiredInfos(const Pkg& pkg)
   utils::StringSet notFoundIgnore;
   if(pkg.getType() == PkgType::DestDir)
     {
-        for(auto& f : pkg.getDynLinked())
+        for(auto& f : pkg.getElfFiles())
           {
             if(f.soName()!="")
               notFoundIgnore.insert(f.soName());
@@ -279,7 +279,7 @@ getRequiredInfos(const Pkg& pkg)
 
   utils::ReportSet rs {{ "pkgname", "filename", "soname" , "requiredby" } };
 
-  for(const ElfFile& elf : pkg.getDynLinked())
+  for(const ElfFile& elf : pkg.getElfFiles())
     {
 
       utils::StringVec needed = elf.getNeeded();
@@ -376,11 +376,11 @@ void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd)
       a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
       WriteAppMsg() << "\n" ;
       WriteAppMsg() << "check " << pkg.getPath() ;
-      WriteAppMsg() << ", " << pkg.getDynLinked().begin()->getArch() << "bit " ;
-      if(pkg.getDynLinked().begin()->getType() == ElfFile::Binary)
+      WriteAppMsg() << ", " << pkg.getElfFiles().begin()->getArch() << "bit " ;
+      if(pkg.getElfFiles().begin()->getType() == ElfFile::Binary)
         WriteAppMsg() << "binary " ;
-      else if(pkg.getDynLinked().begin()->getType() == ElfFile::Library)
-        WriteAppMsg() << "library (" << pkg.getDynLinked().begin()->soName()  << ")" ;
+      else if(pkg.getElfFiles().begin()->getType() == ElfFile::Library)
+        WriteAppMsg() << "library (" << pkg.getElfFiles().begin()->soName()  << ")" ;
 
       WriteAppMsg() << std::endl ;
 
@@ -619,8 +619,8 @@ void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl )
 
   if(pkg.getType() == PkgType::BinLib  )
     {
-      if(pkg.getDynLinked().size()> 0) // should always be exact 1
-        rs.merge ( getWhoNeeds( pkg.getDynLinked()[0]) ) ;
+      if(pkg.getElfFiles().size()> 0) // should always be exact 1
+        rs.merge ( getWhoNeeds( pkg.getElfFiles()[0]) ) ;
     }
   else if( pkg.getType() == PkgType::Installed)
     {
