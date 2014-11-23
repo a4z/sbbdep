@@ -32,8 +32,8 @@ THE SOFTWARE.
 namespace sbbdep {
 
 PkgName::BuildTag::BuildTag(const std::string& buildtag)
-: m_num(0)
-, m_tag()
+: _num(0)
+, _tag()
 {
   
   static const std::string nums = "0123456789";
@@ -43,23 +43,23 @@ PkgName::BuildTag::BuildTag(const std::string& buildtag)
   if ( splittpos == std::string::npos )
     {
       std::istringstream istm(buildtag);
-      istm >> m_num;        
+      istm >> _num;        
     }
   else 
     {
       std::istringstream istm(buildtag.substr(0, splittpos));
-      istm >> m_num;
-      m_tag = buildtag.substr(splittpos);
+      istm >> _num;
+      _tag = buildtag.substr(splittpos);
     }
   
 
 }
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 
 
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 
 void 
@@ -68,25 +68,27 @@ PkgName::makeDetails()
 
   using namespace std;
   pair< string::size_type, string::size_type > 
-          range(m_fullname.rfind('-', string::npos), string::npos);
+          range(_fullname.rfind('-', string::npos), string::npos);
 
-  m_buildstr = m_fullname.substr(range.first + 1, range.second);
+  _buildstr = _fullname.substr(range.first + 1, range.second);
 
-  m_build = BuildTag(m_buildstr); 
+  _build = BuildTag(_buildstr); 
   
   range.second = range.first - 1;
-  range.first = m_fullname.rfind('-', range.second);
-  m_arch = m_fullname.substr(range.first + 1, range.second - range.first);
+  range.first = _fullname.rfind('-', range.second);
+  _arch = _fullname.substr(range.first + 1, range.second - range.first);
   
 
   range.second = range.first - 1;
-  range.first = m_fullname.rfind('-', range.second);
-  m_version = m_fullname.substr(range.first + 1, range.second - range.first);
+  range.first = _fullname.rfind('-', range.second);
+  _version = _fullname.substr(range.first + 1, range.second - range.first);
 
-  m_name = m_fullname.substr(0, range.first);
+  _name = _fullname.substr(0, range.first);
   
   
 }
+//------------------------------------------------------------------------------
+
 
 
 std::ostream& operator<<(std::ostream& os, const PkgName& pkg)

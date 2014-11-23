@@ -239,22 +239,24 @@ Cache::doSync()
 
   SyncData syncdata;
 
+  auto initld = []() { getLDDirs(); } ;
 
   if(isNewDb())
     {
       createDbSchema();
+      std::thread t(initld);
       syncdata = createNewSyncData() ;
-      // todo in background so data is loaded getLDDirs()
-      // muss natuerlich nacher extra speichern in sync mit anderem db zugrif
+      waitfor(t);
+      updateLdDirInfo();
       createIndex(syncdata);
      }
   else
     {
       checkDbSchemaVersion() ;
+      std::thread t(initld);
       syncdata = createUpdateSyncData() ;
-      // todo in background so data is loaded getLDDirs()
-       // muss natuerlich nacher extra speichern in sync mit anderem db zugrif
-
+      waitfor(t);
+      updateLdDirInfo();
       updateIndex(syncdata);
     }
 
@@ -293,14 +295,19 @@ Cache::createNewSyncData()
 Cache::SyncData
 Cache::createUpdateSyncData()
 {
+  // this is a dam long funktion, but it is as it is, dop down
+  // lot of lookup, filter and sorting
 
   // get diff from filesystem and db, remove old stuff from db and insert new
   // get what is not present in fs but in db for remove
   // get what is not present in db but in fs for insert
   // get files with newer date and existing name for handling reinstalled pkgs
+  // then sort the updated into the update slots so that SyncData contains
+  // what is shall contain
 
   LogInfo() << "search for changes" << std::endl;
 
+  using namespace std;
   using StringSet  = std::set<std::string> ;
 
   Cache::SyncData retval;
@@ -311,12 +318,12 @@ Cache::createUpdateSyncData()
   // to init this will work with c++17 but has to tie for now
   StringSet allpkgfiles; // all pks in file system
   StringSet newpkgs; // // all pks in file system with a newer date
-  const time_t maxknownftime = latesPkgTimeStampInDb() ;
 
-  // helper to wait for a thread
-  auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
+  const auto val = selectValue(sql::maxPkgTimeStamp());
+  const time_t maxknownftime = val.isNull() ? 0 : val.getInt64() ;
 
-  // cakback for pkgadm dir, check pkg files add to all and new, if new
+
+  // callback for pkgadm dir, check pkg files add to all and new, if new
   auto fillAllAndNew = [&allpkgfiles, &newpkgs, &maxknownftime]
                               (const std::string& dirname,
                                const std::string& filename) -> bool
@@ -346,7 +353,7 @@ Cache::createUpdateSyncData()
   // get all in the database
   auto rh = [&allpkgindb](a4sqlt3::SqlQueryRow& qrow) -> bool
         {
-          allpkgindb.insert(qrow[0].getString());
+          allpkgindb.insert(qrow[0].getText());
           return true ;
         } ;
 
@@ -356,12 +363,15 @@ Cache::createUpdateSyncData()
 
   // TODO allpkgfiles , newpkgs create const here cause of shared access
 
+  StringVec installed , removed ;
+  // need temporary store to filter updated ...
+
 
   //get the removed ones, these are not in the filesystem but in the db
-  std::thread searchdeleted ( [&allpkgindb, &allpkgfiles , &retval]()->void{
+  std::thread searchdeleted ( [&allpkgindb, &allpkgfiles , &removed]()->void{
     std::set_difference(allpkgindb.begin(), allpkgindb.end(),
         allpkgfiles.begin(), allpkgfiles.end(),
-        std::inserter(retval.removed, retval.removed.begin()));
+        std::inserter(removed, removed.begin()));
   });
 
 
@@ -369,17 +379,87 @@ Cache::createUpdateSyncData()
   // are new and need to be added to installed
   std::set_difference(allpkgfiles.begin(), allpkgfiles.end(),
       allpkgindb.begin(), allpkgindb.end(),
-      std::inserter(retval.installed, retval.installed.begin() ));
+      std::inserter(installed, installed.begin() ));
 
   // ensure sorted, should not be required ... TODO
-  std::sort(std::begin(retval.installed), std::end(retval.installed));
+  std::sort(std::begin(installed), std::end(installed));
 
   // new pkgs that are not in the installed list are re-installed
   std::set_difference(newpkgs.begin(), newpkgs.end(),
-      retval.installed.begin(), retval.installed.end(),
+      installed.begin(), installed.end(),
       std::inserter(retval.reinstalled, retval.reinstalled.begin()));
 
   waitfor(searchdeleted);
+
+  // TODO debug asserts
+  if(not std::is_sorted(installed.begin(), installed.end()))
+    throw ErrUnexpected("installed not sorted") ;
+
+  if(not std::is_sorted(removed.begin(), removed.end()))
+    throw ErrUnexpected("removed not sorted") ;
+
+  if(not std::is_sorted(retval.reinstalled.begin(), retval.reinstalled.end()))
+    throw ErrUnexpected("retval.reinstalled not sorted") ;
+
+// find updated, sort them out
+// updated are in removed and in insert, different version but same name
+
+  // filter removed and installed, get update ,real removed, real installed
+
+  StringVec updataOld , updateNew ;
+
+  auto isIn = [](const StringVec& allnames, const string& name) -> bool
+    {
+        PkgName pkn(name) ;
+
+        auto samename = [&pkn](const string& n)
+        {
+          return PkgName(n).Name() == pkn.Name() ;
+        };
+        auto fiter = find_if(begin(allnames), end(allnames),  samename) ;
+
+        return fiter != end(allnames) ;
+    };
+
+
+  for (auto&& name : removed)
+    {
+      if (isIn(installed, name))
+        {
+          updataOld.emplace_back(name);
+        }
+      else
+        {
+          retval.removed.emplace_back(name);
+        }
+    }
+
+  for (auto&& name : installed)
+    {
+      if (isIn(removed, name))
+        {
+          updateNew.emplace_back(name);
+        }
+      else
+        {
+          retval.installed.emplace_back(name);
+        }
+    }
+
+
+  if(updataOld.size() != updateNew.size()) // TODO assert
+    throw ErrUnexpected("filter update did not work") ;
+
+  for(size_t i = 0; i < updataOld.size(); ++i)
+    {
+      auto p = make_pair(PkgName(updataOld[i]),PkgName(updateNew[i])) ;
+
+      if(p.first.Name() != p.second.Name()) // TODO assert
+        throw ErrUnexpected("name old new does not match") ;
+
+      retval.updated.emplace_back(p);
+    }
+
 
   return retval;
 }
@@ -400,9 +480,7 @@ Cache::createIndex(const SyncData& data)
       throw ErrUnexpected("Invalid argument, SyncData not new") ;
     }
 
-  auto transaction = beginTransaction() ;
 
-  // TODO, ldso conf ....
 
   BackgroundJob<Pkg> dbjob(
       [this](const Pkg& pkg)
@@ -410,10 +488,6 @@ Cache::createIndex(const SyncData& data)
         this->indexPkg(pkg) ;
       });
 
-  auto f = []() -> int {return 1;};
-  auto i = dbjob.runBlocked(f) ;
-
-  LogDebug()<< "here " << i ;
 
   ConcurrentPeek<std::string> picker(data.installed) ;
 
@@ -422,14 +496,16 @@ Cache::createIndex(const SyncData& data)
       std::string todo = picker();
       while(not todo.empty())
         {
+          // TODO new log system, msg based
           const auto filename = PkgAdmDir.getName() + "/" + todo ;
-          auto pkg = Pkg::create(todo, PkgType::Installed);
+          auto pkg = Pkg::create(filename, PkgType::Installed);
           pkg.Load() ;
           dbjob.push(std::move(pkg));
           todo = picker();
         }
     };
 
+  auto transaction = beginTransaction() ;
 
   std::thread t1(indexWorker) ;
   std::thread t2(indexWorker) ;
@@ -437,6 +513,7 @@ Cache::createIndex(const SyncData& data)
   waitfor(t1);
   waitfor(t2);
 
+  dbjob.stop(); // if there is something left, before commit
 
   transaction.commit() ;
 
@@ -449,24 +526,109 @@ Cache::updateIndex(const SyncData& data)
 {
   if(data.wasNewCache)
     {
-      // fail !
+      throw ErrUnexpected("Invalid argument, SyncData is new") ;
     }
+
+  using namespace std;
+
+  // next refactoring create this earlyer ...
+  vector<pair<string, string>> todos;
+
+  for(auto&& v : data.removed)
+    todos.emplace_back(v, string());
+
+  for(auto&& v : data.updated)
+    todos.emplace_back(v.first.FullName(), v.second.FullName());
+
+  for(auto&& v : data.reinstalled)
+    todos.emplace_back(v, v);
+
+  for(auto&& v : data.installed)
+     todos.emplace_back( string(), v);
+
+
+
+  struct DbAction
+  {
+    std::string rem;
+    Pkg inst;
+  };
+
+
+  BackgroundJob<DbAction> dbjob(
+      [this](const DbAction& action)
+      {
+        auto& delcmd =  getCommand(sqlid::del_byfullname) ;
+        if(not action.rem.empty())
+          {
+            delcmd .execute( { {action.rem} } );
+          }
+        if(action.inst.isLoaded())
+          {
+            this->indexPkg(action.inst) ;
+          }
+      });
+
+
+  ConcurrentPeek<pair<string, string>> picker(todos) ;
+
+  auto indexWorker = [&dbjob, &picker]()
+    {
+      auto todo = picker();
+
+      while( not todo.first.empty() && not todo.second.empty() )
+        {
+          if(not todo.second.empty())
+            {
+              const auto filename = PkgAdmDir.getName() + "/" + todo.second ;
+              auto pkg = Pkg::create(filename, PkgType::Installed);
+              pkg.Load() ;
+
+              dbjob.push( DbAction{ todo.first, move(pkg) }) ;
+            }
+          else
+            {
+
+              dbjob.push( DbAction{ todo.first, Pkg() }) ;
+            }
+
+          todo = picker();
+        }
+    };
+
+
+  auto transaction = beginTransaction() ;
+
+  std::thread t1(indexWorker) ;
+  std::thread t2(indexWorker) ;
+
+  waitfor(t1);
+  waitfor(t2);
+
+  dbjob.stop(); // if there is something left, before commit
+
+  transaction.commit() ;
+
+
 }
 //------------------------------------------------------------------------------
 
 
 a4sqlt3::SqlCommand&
-Cache::getCommand(sql_id id)
+Cache::getCommand(sqlid id)
 {
   auto fi = _commands.find(id);
   if(fi != _commands.end())
-    return fi->second;
-
+    {
+      return fi->second;
+    }
 
   auto init = _commands.emplace(id, sql::makeCommand(*this,id)) ;
 
   if(not init.second)
-    throw ErrUnexpected("create command failed") ; // TODO add id to message
+    {
+      throw ErrUnexpected("create command failed") ; // TODO add id to message
+    }
 
   return init.first->second ;
 
@@ -486,7 +648,7 @@ Cache::indexPkg(const Pkg& pkg)
   const auto pkgname = PkgName(pkg.getPath().getBase()) ;
   const auto timestamp = pkg.getPath().getLastModificationTime() ;
 
-  getCommand(sql_id::insert_pkg).execute( {
+  getCommand(sqlid::insert_pkg).execute( {
              { pkgname.FullName() } ,
              { pkgname.Name() } ,
              { pkgname.Version() } ,
@@ -500,7 +662,7 @@ Cache::indexPkg(const Pkg& pkg)
 
   for(const ElfFile& elf : pkg.getElfFiles())
     {
-      getCommand(sql_id::insert_dynlinked).execute( {
+      getCommand(sqlid::insert_dynlinked).execute( {
                { pkgid } ,
                { elf.getName().Str() } ,
                { elf.getName().getDir() } ,
@@ -515,14 +677,14 @@ Cache::indexPkg(const Pkg& pkg)
 
      for(const auto& needed : elf.getNeeded())
        {
-         getCommand(sql_id::insert_required).execute(
+         getCommand(sqlid::insert_required).execute(
              { {dynlinked_id}, {needed} }
          );
        }
 
      for(const auto& rrunpaht : elf.getRRunPaths())
        {
-         getCommand(sql_id::insert_rrunpath).execute(
+         getCommand(sqlid::insert_rrunpath).execute(
              { {dynlinked_id}, {rrunpaht} , {elf.getName().getDir()} }
          );
        }
@@ -534,11 +696,26 @@ Cache::indexPkg(const Pkg& pkg)
 void
 Cache::updateLdDirInfo()
 {
-  auto lddirs = getLDDirs() ;
+  auto ldinfos = getLDDirs() ;
 
   auto transaction = beginTransaction();
 
+  execute("DELETE FROM lddirs;");
+  execute("DELETE FROM ldlnkdirs;");
 
+  getCommand(sqlid::set_keyval).execute({  {"ldsoconf"},
+                                           {ldinfos.getLdSoConfTime()}  });
+
+
+  for (auto&&  d:  ldinfos.getLdDirs())
+    {
+      getCommand(sqlid::insert_ldDir).execute({{d}});
+    }
+
+  for (auto&&  d:  ldinfos.getLdLnkDirs())
+    {
+      getCommand(sqlid::insert_ldLnkDir).execute({{d}});
+    }
 
   transaction.commit();
 

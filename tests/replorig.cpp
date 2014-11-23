@@ -23,10 +23,10 @@ void CheckFunctions()
   
   BOOST_REQUIRE_NO_THROW(result = c.selectValue(c1sql)) ;
   
-  BOOST_REQUIRE_EQUAL( result.getString() , "/usr/lib"  );
+  BOOST_REQUIRE_EQUAL( result.getText() , "/usr/lib"  );
   
   BOOST_REQUIRE_NO_THROW(result = c.selectValue(c2sql)) ;
-  BOOST_REQUIRE_EQUAL( result.getString() , "/usr/local/lib"  );
+  BOOST_REQUIRE_EQUAL( result.getText() , "/usr/local/lib"  );
 
   
 }

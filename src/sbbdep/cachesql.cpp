@@ -245,12 +245,12 @@ SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
 )~";
 }//-----------------------------------------------------------------------------
 
-
+// note used
 constexpr const char* insertKeyValStore()
 {
   return "INSERT INTO keyvalstore (key, value) VALUES ( ?1, ?2);" ;
 }//-----------------------------------------------------------------------------
-
+// note used
 constexpr const char* updateKeyValStore()
 {
   return "UPDATE keyvalstore SET value = ?2 WHERE key = ?1;" ;
@@ -278,7 +278,7 @@ void addVersionTable(a4sqlt3::Database& db)
 }//-----------------------------------------------------------------------------
 
 
-auto makeCommand(a4sqlt3::Database& db, Cache::sql_id id)
+auto makeCommand(a4sqlt3::Database& db, Cache::sqlid id)
   ->a4sqlt3::SqlCommand
 {
 
@@ -286,7 +286,7 @@ auto makeCommand(a4sqlt3::Database& db, Cache::sql_id id)
 
   switch (id)
   {
-    case Cache::sql_id::insert_pkg:
+    case Cache::sqlid::insert_pkg:
       return db.command(sql::insertPkg(),{ DbValueType::Text,
                                            DbValueType::Text,
                                            DbValueType::Text,
@@ -296,7 +296,7 @@ auto makeCommand(a4sqlt3::Database& db, Cache::sql_id id)
                                            DbValueType::Int64 } );
       break;
 
-    case Cache::sql_id::insert_dynlinked:
+    case Cache::sqlid::insert_dynlinked:
       return db.command(sql::insertDynLinked(), {DbValueType::Int64,
                                                 DbValueType::Text,
                                                 DbValueType::Text,
@@ -307,27 +307,31 @@ auto makeCommand(a4sqlt3::Database& db, Cache::sql_id id)
 
       break;
 
-    case Cache::sql_id::insert_required:
+    case Cache::sqlid::insert_required:
       return db.command(sql::insertRequired(), { DbValueType::Int64,
                                                   DbValueType::Text } );
       break;
 
-    case Cache::sql_id::insert_rrunpath:
+    case Cache::sqlid::insert_rrunpath:
       return db.command(sql::insertRRunPath(),{ DbValueType::Int64,
                                                   DbValueType::Text,
                                                   DbValueType::Text });
       break;
 
-
-    case Cache::sql_id::insert_ldDir:
+    case Cache::sqlid::insert_ldDir:
       return db.command(sql::insertLdDir(), {DbValueType::Text});
       break;
 
-    case Cache::sql_id::insert_ldLnkDir:
+    case Cache::sqlid::insert_ldLnkDir:
       return db.command(sql::insertLdLnkDir(), {DbValueType::Text});
       break;
 
-    case Cache::sql_id::del_byfullname :
+    case Cache::sqlid::set_keyval:
+      return db.command(sql::setKeyVal(), {DbValueType::Text,
+                                           DbValueType::Variant});
+      break;
+
+    case Cache::sqlid::del_byfullname :
       return  db.command(sql::deletePkgByFullname(),{ DbValueType::Text });
       break;
 

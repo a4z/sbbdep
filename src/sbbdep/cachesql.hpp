@@ -39,7 +39,7 @@ namespace sbbdep {
 
 namespace sql {
 
-  a4sqlt3::SqlCommand makeCommand(a4sqlt3::Database& db, Cache::sql_id id);
+  a4sqlt3::SqlCommand makeCommand(a4sqlt3::Database& db, Cache::sqlid id);
   
   void createSchema(a4sqlt3::Database& db);
   

@@ -65,6 +65,9 @@ public:
 
   static Pkg create(const Path& p, PkgType type_hint = PkgType::Unknown);
 
+
+  Pkg() = default;
+
   Pkg( const Pkg&  ) = default;
   Pkg& operator=( const Pkg&  )= default;
   Pkg( Pkg&&  ) = default;
@@ -94,9 +97,9 @@ protected:
   bool doLoadDestDir() ;
   bool doLoadInstalled() ;
 
-  Path _path; // name  of
-  PkgType _type ;
-  bool _loaded ; // files loaded...
+  Path _path {};
+  PkgType _type {PkgType::Unknown};
+  bool _loaded  {false};
 
   
   ElfFiles _elfFiles;

@@ -96,10 +96,10 @@ struct Case
     BOOST_REQUIRE_NO_THROW(db.Execute(sql));
 
     a4sqlt3::DbValue wanted = db.selectSingleValue("select lddir from rrunpath where id=1;");
-    BOOST_CHECK( wanted.getString() == "/usr/lib" ) ;
+    BOOST_CHECK( wanted.getText() == "/usr/lib" ) ;
 
     wanted = db.selectSingleValue("select lddir from rrunpath where id=2;");
-    BOOST_CHECK( wanted.getString() == "/usr/lib" ) ;
+    BOOST_CHECK( wanted.getText() == "/usr/lib" ) ;
 
     wanted = db.selectSingleValue("select lddir from rrunpath where id=3;");
     BOOST_CHECK( wanted.isNull() ) ;

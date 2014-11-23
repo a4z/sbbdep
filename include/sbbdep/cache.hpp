@@ -27,6 +27,8 @@ THE SOFTWARE.
 #define SBBDEP_CACHE_HPP_
 
 #include <a4sqlt3/database.hpp>
+
+#include <sbbdep/pkgname.hpp>
 #include <sbbdep/error.hpp>
 
 namespace sbbdep {
@@ -41,27 +43,29 @@ public:
   using StringVec = std::vector<std::string> ;
 
   struct SyncData{
+    using UpdateInfo = std::pair<PkgName, PkgName> ;
     StringVec removed;
     StringVec installed;
     StringVec reinstalled;
+    std::vector<UpdateInfo> updated;
     bool wasNewCache;
   };
 
   // till I have a better place, this is here, TODO to config ???
-  enum class sql_id {
+  enum class sqlid {
     insert_pkg,
     insert_dynlinked,
     insert_required,
     insert_rrunpath,
     insert_ldDir,
     insert_ldLnkDir,
-    insert_keyval,
-    update_keyval,
+
+    set_keyval ,  // insert or replace
     del_byfullname
   };
 
   struct dbmsg {
-    sql_id id ;
+    sqlid id ;
     a4sqlt3::DbValues args;
   };
   // since I rely an lastrowid, .... set it to the arg ( > -1 ) and it will
@@ -110,7 +114,7 @@ private:
   // stored sql command names
 
   // get stored command, if it does not exist, its created
-  a4sqlt3::SqlCommand& getCommand(sql_id id) ;
+  a4sqlt3::SqlCommand& getCommand(sqlid id) ;
 
 
   void
@@ -118,7 +122,7 @@ private:
 
 
   // stored sql commands
-  using commandMap = std::map<sql_id,a4sqlt3::SqlCommand> ;
+  using commandMap = std::map<sqlid,a4sqlt3::SqlCommand> ;
   commandMap _commands;
   const std::string _name;
 

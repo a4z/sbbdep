@@ -38,48 +38,48 @@ public:
 
   class BuildTag
   {
-    int m_num;
-    std::string m_tag;
+    int _num;
+    std::string _tag;
 
   public:
-    BuildTag(): m_num(0), m_tag() {}
+    BuildTag(): _num(0), _tag() {}
     
     BuildTag(const std::string& buildtag) ; 
     
     ~BuildTag() = default;
     
-    const std::string& Tag() const  { return m_tag; }
-    int Num() const { return m_num; }
+    const std::string& Tag() const  { return _tag; }
+    int Num() const { return _num; }
   };
 
   
   
-  PkgName(const std::string& name): m_fullname(name) {makeDetails();}
-  PkgName(const char* name): m_fullname(name) {makeDetails();}
+  PkgName(std::string name): _fullname(std::move(name)) {makeDetails();}
+  PkgName(const char* name): _fullname(name) {makeDetails();}
   ~PkgName() = default;
 
-  const BuildTag& Build() const { return m_build; }
-  const std::string& BuildStr() const { return m_buildstr ; }
-  const std::string& Arch() const { return m_arch; }
-  const std::string& Version() const { return m_version; }
-  const std::string& Name() const { return m_name; }
-  const std::string& FullName() const { return m_fullname; }
+  const BuildTag& Build() const { return _build; }
+  const std::string& BuildStr() const { return _buildstr ; }
+  const std::string& Arch() const { return _arch; }
+  const std::string& Version() const { return _version; }
+  const std::string& Name() const { return _name; }
+  const std::string& FullName() const { return _fullname; }
   
   
   
-  bool operator<(const PkgName& rhs) const { return m_fullname < rhs.m_fullname; }
-  bool operator==(const PkgName& rhs) const { return m_fullname == rhs.m_fullname; }
+  bool operator<(const PkgName& rhs) const { return _fullname < rhs._fullname; }
+  bool operator==(const PkgName& rhs) const { return _fullname == rhs._fullname; }
   
   friend std::ostream& operator<<(std::ostream& os, const PkgName& pkg);
   
 private:
 
-  std::string m_fullname ; 
-  BuildTag m_build; 
-  std::string m_buildstr;
-  std::string m_arch;
-  std::string m_version;
-  std::string m_name;
+  std::string _fullname ; 
+  BuildTag _build; 
+  std::string _buildstr;
+  std::string _arch;
+  std::string _version;
+  std::string _name;
   
   void makeDetails();
   
