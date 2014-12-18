@@ -25,23 +25,113 @@ THE SOFTWARE.
 #ifndef SBBDEP_CLI_REPORT_HPP_
 #define SBBDEP_CLI_REPORT_HPP_
 
+#include<string>
+#include<map>
 
 
 namespace sbbdep{
 
-class Pkg;
+  class Cache;
+  class Pkg;
 
 namespace cli{
 
+  void
+  printSyncReport(Cache& cache,
+                  const Cache::SyncData& syncdata,
+                  bool verbose = false) ; // TODO will this flag come?
+
+  void
+  printRequired(Cache& cache,
+                const Pkg& pkg,
+                bool addversion,
+                bool xdl ,
+                bool ldd) ;
+
+
+  void
+  printWhoNeed(Cache& cache,
+               const Pkg& pkg,
+               bool addversion,
+               bool xdl ) ;
 
 
 
-void printRequired( const Pkg& pkg, bool addversion, bool xdl , bool ldd) ;
+  namespace utils
+  {
+    // soname, requires ...
+    std::map<std::string, std::string>
+    getLddMap(const sbbdep::PathName& f) ;
 
-void printWhoNeed( const Pkg& pkg, bool addversion, bool xdl ) ;
+    //--------------------------------------------------------------------------
+
+    using convert_function = std::function<std::string(const std::string&)> ;
+    auto no_conversion =
+        [](const std::string& val) -> std::string { return val;};
+
+    template<typename T>
+    std::string joinToString(const T& container,
+                             const std::string join = ", ",
+                             convert_function convert = no_conversion )
+    {
+
+      std::string retval;
+
+      if (container.empty ())
+        return retval;
+
+      auto pos = container.begin ();
+      retval+=convert(*pos);
+
+      while (++pos != container.end ())
+        {
+          retval += join  + convert (*pos) ;
+        }
+
+      return retval;
+
+    }
+    //--------------------------------------------------------------------------
+
+    template<typename T>
+    StringSet getKeySet(const T& keyvalmap){
+      StringSet retval;
+      for(auto& val: keyvalmap)
+        retval.insert(val.first);
+      return retval;
+    }
+
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    struct ReportElement{
+
+      using Node =  std::map< std::string, ReportElement >  ;
+
+      Node node ;
+
+      ReportElement() = default;
+
+      ReportElement( std::string s, ReportElement e );
+
+      void add(StringVec path);
+    };
+    //--------------------------------------------------------------------------
+
+    struct ReportTree
+    {
+      ReportElement::Node node ;
+
+      void add(StringVec path) ;
+    };
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+
+  } // ns utils
 
 
-}}
+
+}
+}
 
 
 #endif

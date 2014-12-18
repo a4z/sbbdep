@@ -22,139 +22,14 @@ THE SOFTWARE.
 */
 
 
-#include "report_utils.hpp"
+#include "report.hpp"
 
-#include <sbbdep/log.hpp>
-#include <sbbdep/cache.hpp>
-
-#include <a4sqlt3/sqlcommand.hpp>
 
 
 namespace sbbdep {
 namespace cli{
 namespace utils{
 
-
-//--------------------------------------------------------------------------------------------------
-ReportSet::ReportSet(const std::vector<std::string>& fieldnames)
-{
-  for(std::size_t i = 0; i < fieldnames.size(); ++i)
-      _names.insert( NameMap::value_type(fieldnames[i], i) ) ;
-  
-  // TODO , not that it matters, but would it be possible (and make sense)
-  // to get rid of the map and use some other structure for the name mpaaings?
-}
-
-void
-ReportSet::addFields(a4sqlt3::DbValues fields)
-{
-  if( fields.size() != _names.size() )
-    throw "TODO"; //TODO
-
-  _rows.emplace_back(fields);
-
-}
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-ReportElement::ReportElement( std::string s, ReportElement e ) : node {{s,e}}
-{
-}
-
-void
-ReportElement::add(StringVec path)
-{
-  if(not path.empty())
-    node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
-}
-
-
-
-void
-ReportTree::add(StringVec path)
-{
-  if(not path.empty())
-    node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
-}
-
-
-
-#ifdef DEBUG
-void printTree(ReportTree& tree)
-{
-
-  std::function<void(ReportElement, int)> printChild = [&printChild]( ReportElement elem , int level ){
-
-    for(auto node: elem.node){
-       for(int i = 0; i < level; ++i)
-            LogInfo() << " " ;
-
-      LogDebug() << node.first << "\n";
-      printChild(node.second, level+2);
-    }
-
-  } ;
-
-  for( auto elem : tree.node )
-  {
-      LogDebug() << elem.first << std::endl;
-    printChild(elem.second, 2) ;
-  }
-}
-#endif // DEBUG
-//--------------------------------------------------------------------------------------------------
-
-
-bool isRRunPath(const std::string& dirname)
-{
-  using namespace a4sqlt3;
-  SqlCommand* cmd = Cache::get().DB().getCommand("isRRunpathDirectory");
-  if( cmd == nullptr )
-    {
-      std::string sql = "SELECT count(*)  FROM rrunpath WHERE rrunpath.lddir NOT IN "
-          " (SELECT dirname FROM lddirs UNION SELECT dirname FROM ldlnkdirs) "
-          " AND rrunpath.lddir = ? ;" ;
-
-      cmd = Cache::get().DB().createStoredCommand(
-          "isRRunpathDirectory" ,  sql );
-    }
-
-  cmd->Parameters().Nr(1).set(dirname);
-
-  Dataset ds;
-  Cache::get().DB().Execute(cmd, ds);
-  return ds.getField(0).getInt64() > 0 ;
-
-}
-//--------------------------------------------------------------------------------------------------
-
-bool isLinkPath(const std::string& dirname)
-{
-  using namespace a4sqlt3;
-  SqlCommand* cmd = Cache::get().DB().getCommand("isLinkPathDirectory");
-  if( cmd == nullptr )
-    {
-      std::string sql =" SELECT count(*) FROM "
-         " (SELECT dirname FROM lddirs WHERE dirname = ? "
-            " UNION SELECT dirname FROM ldlnkdirs WHERE dirname = ?) ";
-
-      cmd = Cache::get().DB().createStoredCommand(
-          "isLinkPathDirectory" ,  sql );
-    }
-
-  cmd->Parameters().setValues( {DbValue(dirname), DbValue(dirname)} ) ;
-
-  Dataset ds;
-  Cache::get().DB().Execute(cmd, ds);
-  return ds.getField(0).getInt64() > 0 ;
-
-}
-//--------------------------------------------------------------------------------------------------
 
 
 //--------------------------------------------------------------------------------------------------

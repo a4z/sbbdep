@@ -51,7 +51,7 @@ public:
     bool wasNewCache;
   };
 
-  // till I have a better place, this is here, TODO to config ???
+
   enum class sqlid {
     insert_pkg,
     insert_dynlinked,
@@ -62,76 +62,85 @@ public:
 
     set_keyval ,  // insert or replace
     del_byfullname
+
+    // report stuff
+
   };
 
-  struct dbmsg {
-    sqlid id ;
-    a4sqlt3::DbValues args;
-  };
-  // since I rely an lastrowid, .... set it to the arg ( > -1 ) and it will
-  // be applied
-
-  using DbMessages = std::vector<dbmsg> ;
 
   Cache(const std::string& dbname);
   ~Cache();
 
 
+  SyncData
+  doSync();
 
-  SyncData doSync();
+  bool
+  isNewDb();
 
+  const std::string&
+  getName();
 
-  // sets last row id, if given, therefore not const
-  void processMessage(dbmsg&) ;
+  // will create the command if it does not exist
+  a4sqlt3::SqlCommand&
+  namedCommand(const std::string& name,
+               const char* sql) ;
 
 private:
 
 
-
-
-  // 01 check if there is a schema,
-  // if not create it and return that the db is new
-  bool isNewDb();
-
-  void createDbSchema() ;
-  // 01 b if not a new db, need to check if the schema is actual
-  void checkDbSchemaVersion() ;
-
-  // 02 get the sync data
-  SyncData createNewSyncData(); //must set wasNewCache true
-
-  SyncData createUpdateSyncData();
-
-  // for new cache, create db data
-  void createIndex(const SyncData& data);
-
-  // for existing cache, update db data
-  void updateIndex(const SyncData& data);
-
-// internal helpers for above
-
-
-  // stored sql command names
-
-  // get stored command, if it does not exist, its created
-  a4sqlt3::SqlCommand& getCommand(sqlid id) ;
-
+  void
+  createDbSchema() ;
 
   void
+  checkDbSchemaVersion() ;
+
+  SyncData
+  createNewSyncData();
+
+  SyncData
+  createUpdateSyncData();
+
+  // for new cache, create db data
+  void
+  createIndex(const SyncData& data);
+
+  // for existing cache, update db data
+  void
+  updateIndex(const SyncData& data);
+
+
+
+  // get stored command, if it does not exist, its created
+  a4sqlt3::SqlCommand&
+  getCommand(sqlid id) ;
+
+  // stores package in the db
+  void
   indexPkg(const Pkg& pkg);
+
+  void
+  updateLdDirInfo();  // do not forget to implements this here persistLdSoTime
+
+  int64_t
+  latesPkgTimeStampInDb();
 
 
   // stored sql commands
   using commandMap = std::map<sqlid,a4sqlt3::SqlCommand> ;
   commandMap _commands;
+
+  //give user(report system) a way to store a command
+  using nameCommandMap = std::map<std::string,a4sqlt3::SqlCommand> ;
+  nameCommandMap _nameCommands;
+
+// when I update sqlite I can remove this and use function
   const std::string _name;
 
 
-  void updateLdDirInfo();  // do not forget to implements this here persistLdSoTime
-
-  int64_t latesPkgTimeStampInDb();
 
   
+
 };
 
 

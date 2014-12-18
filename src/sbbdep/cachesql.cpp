@@ -345,57 +345,60 @@ auto makeCommand(a4sqlt3::Database& db, Cache::sqlid id)
 
 namespace {
 
+  void
+  replace_origin_func(sqlite3_context* context,
+                      int              argc,
+                      sqlite3_value**  argv)
+  {
+    if (argc != 2)
+      { // TODO this needs a test
+        conststr errmsg { "incorrect count of arguments, should be 2" };
+        sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
+      }
+
+    std::string filepath = (const char*)sqlite3_value_text(argv[0]);
+    std::string homepath = (const char*)sqlite3_value_text(argv[1]);
+
+    std::string result= replaceORIGIN(filepath, homepath);
+
+    sqlite3_result_text(context, result.c_str(), -1, SQLITE_TRANSIENT);
+
+  }//---------------------------------------------------------------------------
 
 
-void replace_origin_func(sqlite3_context *context,
-                                int argc, sqlite3_value **argv)
-{
-  if (argc != 2)
-    { // TODO this needs a test
-      conststr errmsg { "incorrect count of arguments, should be 2" };
-      sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
-    }
+  void
+  make_realpath_func(sqlite3_context* context,
+                     int              argc,
+                     sqlite3_value**  argv)
+  {
+    if (argc != 1)
+      { // TODO this needs a test
+        conststr errmsg {"incorrect count of arguments, should be 1"} ;
+        sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
+      }
 
-  std::string filepath = (const char*)sqlite3_value_text(argv[0]);
-  std::string homepath = (const char*)sqlite3_value_text(argv[1]);
+    Path p((const char*)sqlite3_value_text(argv[0]));
+    p.makeAbsolute();
+    p.makeRealPath();
 
-  std::string result= replaceORIGIN(filepath, homepath);
+    if ( p.isValid() )
+      sqlite3_result_text(context, p.getURL().c_str(), -1, SQLITE_TRANSIENT);
+    else
+      sqlite3_result_null(context);
+  }//---------------------------------------------------------------------------
 
-  sqlite3_result_text(context, result.c_str(), -1, SQLITE_TRANSIENT);
-
-}//-----------------------------------------------------------------------------
-
-
-void make_realpath_func(sqlite3_context *context,
-                               int argc, sqlite3_value **argv)
-{
-  if (argc != 1)
-    { // TODO this needs a test
-      conststr errmsg {"incorrect count of arguments, should be 1"} ;
-      sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
-    }
-
-  Path p((const char*)sqlite3_value_text(argv[0]));
-  p.makeAbsolute();
-  p.makeRealPath();
-
-  if ( p.isValid() )
-    sqlite3_result_text(context, p.getURL().c_str(), -1, SQLITE_TRANSIENT);
-  else
-    sqlite3_result_null(context);
-}//-----------------------------------------------------------------------------
 } // anno ns
 
 void register_own_functions(sqlite3* db)
 {
-//todo fuer parameter 4 ?? re check docu
-//auto flag = SQLITE_UTF8 | SQLITE_DETERMINISTIC ;
-sqlite3_create_function(db, "replaceOrigin", 2, 0,0,
-                        &replace_origin_func , 0 , 0 );
+  //todo  parameter 4 ?? re check docu
+  //auto flag = SQLITE_UTF8 | SQLITE_DETERMINISTIC ;
+  sqlite3_create_function(db, "replaceOrigin", 2, 0,0,
+                          &replace_origin_func , 0 , 0 );
 
-sqlite3_create_function(db, "mkRealPath", 1, 0,0,
-                        &make_realpath_func , 0 , 0 );
-// mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
+  sqlite3_create_function(db, "mkRealPath", 1, 0,0,
+                          &make_realpath_func , 0 , 0 );
+  // mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
 
 }//-----------------------------------------------------------------------------
 

@@ -53,65 +53,32 @@ AppCli::AppCli()
 {
 
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 AppCli::~AppCli()
 {
 
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-namespace {
-bool
-prepairCache(bool syncflag)
-{ // TODO name this nosync ? or add docu other wise its always hard to read first time comming here
-  bool chache_was_new{false};
-  if( Cache::get().DB().isNew() )
-    {
-      if( syncflag )
-        {
-          LogInfo() << "Cache is new, overrule nosync\n";
-          syncflag = false;
-        }
-      chache_was_new = true;
-    }
-// sollte das nicht ein else sein
+namespace
+{
 
-  try // TODO in new implementation this will be automatically called at open db
-    { //us major minor combination to see if schema has changed in an way that it needs to be re-created
-      Cache::get().DB().checkVersion(
-          sbbdep::MAJOR_VERSION,
-          sbbdep::MINOR_VERSION ,
-          sbbdep::PATCH_VERSION );
-    }
-  catch (const Error& e)
-    {
-      LogError() << e << std::endl;
-      return false;
-    }
+  Cache
+  openCache(const std::string& name)
+  {
+    try
+      {
+        return Cache(name);
+      }
+    catch (...)
+      {
+        LogError() << "can not open cache " << name;
+        throw;
+      }
+   }//--------------------------------------------------------------------------
 
-  if( !syncflag )
-    {
-      try
-        {
-          cli::printSyncReport( Cache::get().doSync(), chache_was_new );
-        }
-      catch (const Error& e)
-        {
-          LogError() << e << std::endl;
-           return false;
-        }
-      catch (...)
-        { // TODO, cou
-          LogError() << "Unknown exception" << std::endl;
-          return false;
-        }
-    }
-  // TODO; here I could reopen the cache read only!!
-
-  return true;
-}
-}
+} // ns ------------------------------------------------------------------------
 
 int
 AppCli::Run(const AppArgs& appargs)
@@ -119,7 +86,9 @@ AppCli::Run(const AppArgs& appargs)
 
   if( appargs.getPrintVersions() )
     {
-      std::cout << "sbbdep version " << sbbdep::MAJOR_VERSION << "." << sbbdep::MINOR_VERSION << "."
+      std::cout << "sbbdep version "
+          << sbbdep::MAJOR_VERSION << "."
+          << sbbdep::MINOR_VERSION << "."
           << sbbdep::PATCH_VERSION << std::endl;
       return 0;
     }
@@ -127,7 +96,8 @@ AppCli::Run(const AppArgs& appargs)
   std::ofstream outfile;
   if( appargs.getOutFile().size() )
     {
-      outfile.open(appargs.getOutFile().c_str(), std::ofstream::out | std::ofstream::trunc);
+      outfile.open(appargs.getOutFile().c_str(),
+                   std::ofstream::out | std::ofstream::trunc);
       LogSetup::create(outfile, appargs.getQuiet()) ;
     }
   else
@@ -136,25 +106,24 @@ AppCli::Run(const AppArgs& appargs)
     }
 
 
-  try
-    { // TODO, change auf create, , fang auch sqlite error ,
-      Cache::open( appargs.getDBName() );
+  Path dbpath(appargs.getDBName()) ;
 
-      if( !prepairCache( appargs.getNoSync() ) )
-        return -2;
-    }
-  catch (const Error& e)
+
+
+  if(not dbpath.isRegularFile() and appargs.getNoSync())
     {
-      std::cerr << e << std::endl;
-      return -1;
-    }
-  catch (...)
-    {
-      std::cerr << "Unknown error" << std::endl;
-      return -1;
+      LogInfo() << appargs.getDBName() << " does not exist and need to "
+          "be created. nosync makes therefore no sense. I exit now." ;
+      return 2 ;
     }
 
-  Path querypath( appargs.getQuery() );
+  Cache cache = openCache(appargs.getDBName()) ;
+  if(cache.isNewDb() and appargs.getNoSync())
+    { // could also have an empty db ...
+      LogInfo() << appargs.getDBName() << " db is empty and needs to "
+          "be created. nosync makes therefore no sense. I exit now." ;
+      return 2 ;
+    }
 
 
   if(appargs.getFeatureX())
@@ -164,8 +133,18 @@ AppCli::Run(const AppArgs& appargs)
     }
 
 
-  if( querypath.isEmpty() )
+  if(not appargs.getNoSync())
+    {
+      auto syncdata = cache.doSync()
+      printSycReport (syncdata) ; // todo write this func !
+    }
+
+
+  if( appargs.getQuery().empty() )
     return 0; // was a sync only call ....
+
+
+  Path querypath( appargs.getQuery() );
 
   querypath.makeAbsolute();
   querypath.makeRealPath();
@@ -178,7 +157,8 @@ AppCli::Run(const AppArgs& appargs)
           if(querypath.isValid())
             {
               LogInfo() << "not a file with binary dependencies: " ;
-              LogInfo() << querypath  << "\n try to find information in package list:\n";
+              LogInfo() << querypath
+                  << "\n try to find information in package list:\n";
               lookup::fileInPackages(querypath);
             }
           else
@@ -223,7 +203,9 @@ AppCli::Run(const AppArgs& appargs)
     { // TODO test what happens if a DESTDIR is given as pkg :-)
       try
         {
-          cli::printWhoNeed( pkg , appargs.getAppendVersions(), appargs.getXDL() ) ;
+          cli::printWhoNeed( pkg ,
+                             appargs.getAppendVersions(),
+                             appargs.getXDL() ) ;
         }
       catch (const Error& e)
         {
@@ -238,7 +220,10 @@ AppCli::Run(const AppArgs& appargs)
     }
   else if( !appargs.getWhoNeeds()  )
     {
-      cli::printRequired( pkg ,  appargs.getAppendVersions(), appargs.getXDL(), appargs.getLdd() ) ;
+      cli::printRequired( pkg ,
+                          appargs.getAppendVersions(),
+                          appargs.getXDL(),
+                          appargs.getLdd() ) ;
     }
   else // TODO , this is more or less obsolete
     {
@@ -248,7 +233,7 @@ AppCli::Run(const AppArgs& appargs)
       return -6;
     }
 
-  Cache::close(); // would auto clean but call it
+
   return 0;
 }
 //--------------------------------------------------------------------------------------------------

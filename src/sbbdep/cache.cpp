@@ -73,9 +73,7 @@ Cache::Cache(const std::string& dbname)
 :Database(dbname)
 ,_name(dbname)
 {
-  
-  // TODO register own functions
-  sql::register_own_functions(_sql3db.get()) ;
+  sql::register_own_functions(_connection->db()) ;
 }
 //------------------------------------------------------------------------------
 
@@ -531,7 +529,7 @@ Cache::updateIndex(const SyncData& data)
 
   using namespace std;
 
-  // next refactoring create this earlyer ...
+  // next re-factoring,  create this earlier ...
   vector<pair<string, string>> todos;
 
   for(auto&& v : data.removed)
@@ -588,7 +586,6 @@ Cache::updateIndex(const SyncData& data)
             }
           else
             {
-
               dbjob.push( DbAction{ todo.first, Pkg() }) ;
             }
 
@@ -732,5 +729,26 @@ Cache::latesPkgTimeStampInDb()
    return val.isNull() ? 0 : val.getInt64() ;
 
 }
+
+
+
+
+a4sqlt3::SqlCommand&
+Cache::namedCommand(const std::string& name,
+                    const char* sql)
+{
+
+  auto f = _nameCommands.find(name) ;
+  if (f == _nameCommands.end())
+    {
+      auto in = _nameCommands.emplace(name, command(sql)) ;
+      // assert in.second  TOOD
+      f=  in.first;
+    }
+
+  return f->second ;
+
+}
+
 
 } // ns
