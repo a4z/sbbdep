@@ -28,7 +28,6 @@
 #include "lookup_fileinpackages.hpp"
 // and that is this one.. TODO continue refactoring
 #include "report.hpp"
-#include "report_sync.hpp"
 
 #include "featurex.hpp"
 
@@ -38,6 +37,7 @@
 
 
 #include <sbbdep/config.hpp> // generated 
+#include <sbbdep/cache.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/log.hpp>
 
@@ -69,7 +69,7 @@ namespace
   {
     try
       {
-        return Cache(name);
+        return Cache (name);
       }
     catch (...)
       {
@@ -128,15 +128,15 @@ AppCli::Run(const AppArgs& appargs)
 
   if(appargs.getFeatureX())
     {
-      sbbdep::cli::runFx(appargs.getFeatureXArgs()) ;
+      cli::runFx(appargs.getFeatureXArgs()) ;
       return 0  ;
     }
 
 
   if(not appargs.getNoSync())
     {
-      auto syncdata = cache.doSync()
-      printSycReport (syncdata) ; // todo write this func !
+      auto syncdata = cache.doSync() ;
+      cli::printSyncReport (cache, syncdata) ; // todo write this func !
     }
 
 
@@ -203,7 +203,7 @@ AppCli::Run(const AppArgs& appargs)
     { // TODO test what happens if a DESTDIR is given as pkg :-)
       try
         {
-          cli::printWhoNeed( pkg ,
+          cli::printWhoNeed( cache, pkg ,
                              appargs.getAppendVersions(),
                              appargs.getXDL() ) ;
         }
@@ -220,7 +220,7 @@ AppCli::Run(const AppArgs& appargs)
     }
   else if( !appargs.getWhoNeeds()  )
     {
-      cli::printRequired( pkg ,
+      cli::printRequired( cache, pkg ,
                           appargs.getAppendVersions(),
                           appargs.getXDL(),
                           appargs.getLdd() ) ;

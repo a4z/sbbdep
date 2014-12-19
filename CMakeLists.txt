@@ -133,13 +133,11 @@ SET ( sbbdepcli_SRC
     src/cli/main.cpp
   
        
+    
     src/cli/report.hpp
     src/cli/report.cpp
-    
-    src/cli/report_sync.hpp
-    src/cli/report_sync.cpp
-    
-    src/cli/report_utils.hpp
+    src/cli/report_require.cpp
+    src/cli/report_whoneed.cpp
     src/cli/report_utils.cpp    
 
     src/cli/lookup_fileinpackages.hpp
@@ -150,8 +148,8 @@ SET ( sbbdepcli_SRC
 )
 
   
-ADD_EXECUTABLE( sbbdepcli src/dummy.cpp )
-#ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
+#ADD_EXECUTABLE( sbbdepcli src/dummy.cpp )
+ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
 #TODO, sqlite & dl only needed  if a4sqlt3 was build with that requirement ...
 #set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl ) 

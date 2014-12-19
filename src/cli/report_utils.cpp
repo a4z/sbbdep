@@ -24,12 +24,61 @@ THE SOFTWARE.
 
 #include "report.hpp"
 
+#include "sbbdep/log.hpp"
+
 
 
 namespace sbbdep {
 namespace cli{
 namespace utils{
 
+ReportElement::ReportElement( std::string s, ReportElement e )
+: node {{std::move(s),std::move(e)}}
+{
+}
+//------------------------------------------------------------------------------
+
+void
+ReportElement::add(const StringVec& path)
+{
+  if(not path.empty())
+    node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
+}
+//------------------------------------------------------------------------------
+
+
+void
+ReportTree::add(const StringVec& path)
+{
+  if(not path.empty())
+    node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
+}
+//------------------------------------------------------------------------------
+
+#ifdef DEBUG
+void printTree(const ReportTree& tree)
+{
+
+  std::function<void(ReportElement, int)> printChild =
+      [&printChild]( ReportElement elem , int level )
+        {
+          for(auto node: elem.node){
+             for(int i = 0; i < level; ++i)
+                  LogInfo() << " " ;
+
+            LogDebug() << node.first << "\n";
+            printChild(node.second, level+2);
+          }
+
+        };
+
+  for( auto elem : tree.node )
+  {
+      LogDebug() << elem.first << std::endl;
+    printChild(elem.second, 2) ;
+  }
+}
+#endif // DEBUG
 
 
 //--------------------------------------------------------------------------------------------------

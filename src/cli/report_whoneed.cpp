@@ -25,6 +25,11 @@ THE SOFTWARE.
 #include "report.hpp"
 
 #include "sbbdep/cache.hpp"
+#include "sbbdep/pkg.hpp"
+#include "sbbdep/elffile.hpp"
+
+#include "sbbdep/log.hpp"
+
 #include "a4sqlt3/dataset.hpp"
 
 
@@ -33,7 +38,7 @@ namespace cli{
 
 
 //------------------------------------------------------------------------------
-constexpr char*
+constexpr const char*
 getWhoNeedFileQuery()
 {
   return
@@ -70,7 +75,7 @@ getWhoNeedFileQuery()
 }
 //------------------------------------------------------------------------------
 
-constexpr char*
+constexpr const char*
 getWhoNeedPkgQuery()
 {
 
@@ -127,7 +132,7 @@ printWhoNeed(Cache& cache, const Pkg& pkg, bool addversion, bool xdl )
     {
       auto& cmd = cache.namedCommand("WhoNeedFileQuery",
                                      getWhoNeedFileQuery()) ;
-      const DbValues args = { {pkg.getElfFiles()[0]} } ;
+      const DbValues args = { {pkg.getElfFiles()[0].getName()} } ;
       ds = cmd.run(args);
     }
   else if( pkg.getType() == PkgType::Installed)

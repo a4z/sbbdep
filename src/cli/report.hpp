@@ -26,19 +26,23 @@ THE SOFTWARE.
 #define SBBDEP_CLI_REPORT_HPP_
 
 #include<string>
+#include<vector>
+#include<set>
 #include<map>
-
+#include<functional>
 
 namespace sbbdep{
 
   class Cache;
+  class SyncData;
   class Pkg;
+  class PathName ;
 
 namespace cli{
 
   void
   printSyncReport(Cache& cache,
-                  const Cache::SyncData& syncdata,
+                  const SyncData& syncdata,
                   bool verbose = false) ; // TODO will this flag come?
 
   void
@@ -59,6 +63,9 @@ namespace cli{
 
   namespace utils
   {
+    using StringVec = std::vector<std::string> ;
+    using StringSet = std::set<std::string> ;
+
     // soname, requires ...
     std::map<std::string, std::string>
     getLddMap(const sbbdep::PathName& f) ;
@@ -113,7 +120,7 @@ namespace cli{
 
       ReportElement( std::string s, ReportElement e );
 
-      void add(StringVec path);
+      void add(const StringVec& path);
     };
     //--------------------------------------------------------------------------
 
@@ -121,10 +128,15 @@ namespace cli{
     {
       ReportElement::Node node ;
 
-      void add(StringVec path) ;
+      void add(const StringVec& path) ;
     };
     //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
+
+#ifdef DEBUG
+    void printTree(const ReportTree& tree) ;
+#endif // DEBUG
+
 
   } // ns utils
 

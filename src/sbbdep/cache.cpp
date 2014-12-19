@@ -231,7 +231,7 @@ Cache::checkDbSchemaVersion()
 //------------------------------------------------------------------------------
 
 
-Cache::SyncData
+SyncData
 Cache::doSync()
 {
 
@@ -267,10 +267,10 @@ Cache::doSync()
 //------------------------------------------------------------------------------
 
 
-Cache::SyncData
+SyncData
 Cache::createNewSyncData()
 {
-  Cache::SyncData retval;
+  SyncData retval;
   retval.wasNewCache = true ;
 
   // add all files to installed,
@@ -290,7 +290,7 @@ Cache::createNewSyncData()
 }
 //------------------------------------------------------------------------------
 
-Cache::SyncData
+SyncData
 Cache::createUpdateSyncData()
 {
   // this is a dam long funktion, but it is as it is, dop down
@@ -308,7 +308,7 @@ Cache::createUpdateSyncData()
   using namespace std;
   using StringSet  = std::set<std::string> ;
 
-  Cache::SyncData retval;
+  SyncData retval;
   retval.wasNewCache = false ;
 
   // todo i use them later in threads, so they have to be const

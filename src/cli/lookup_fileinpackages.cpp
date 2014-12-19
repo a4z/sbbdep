@@ -23,10 +23,11 @@
 
 #include "lookup_fileinpackages.hpp"
 
-#include <sbbdep/pkgadmdir.hpp>
+#include <sbbdep/pkg.hpp>
 #include <sbbdep/pathname.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/log.hpp>
+#include <sbbdep/dircontent.hpp>
 
 #include <fstream>
 #include <vector>
@@ -107,14 +108,17 @@ namespace {
 bool fileInPackages(const sbbdep::Path& filepath)
 {
 
-  PkgAdmDir admdir;
+  auto admdir = PkgAdmDir;
   std::vector<std::string> dirlist ;
 
 
-  admdir.apply([&dirlist](const std::string& d,const std::string&& f) -> bool{
-    dirlist.push_back(d+"/"+f);
-    return true;
-  });
+
+  admdir.forEach(
+      [&dirlist](const std::string& d,const std::string& f) -> bool
+        {
+          dirlist.push_back(d+"/"+f);
+          return true;
+        });
 
 
 #pragma omp parallel

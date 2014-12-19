@@ -39,9 +39,11 @@ THE SOFTWARE.
 #include <a4sqlt3/sqlcommand.hpp>
 #include <a4sqlt3/dataset.hpp>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <set>
+
 
 namespace sbbdep {
 namespace cli{
@@ -194,7 +196,12 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
     }
 
 
-  Dataset ds {{ "pkgname", "filename", "soname" , "requiredby" } };
+  //Dataset ds {{ "pkgname", "filename", "soname" , "requiredby" } };
+  Dataset ds {{ DbValueType::Text,
+                DbValueType::Text,
+                DbValueType::Text ,
+                DbValueType::Text } };
+
   for(const auto& ldsym_files : ldsym_byfile )
     {
 
@@ -207,7 +214,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
       while(path.isLink ())
         path.makeRealPath ();
 
-      Dataset dspkgs = getPkgsOfFile (path, arch);
+      Dataset dspkgs = getPkgsOfFile (cache, path, arch);
 
       //need  "pkgname", "filename", "soname" , "requiredby"
       for(const auto& pkgval : dspkgs)
@@ -221,7 +228,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
               DbValue (f)
             };
 
-            ds.merge (Dataset (vals));
+            ds.merge (vals);
           }
         }
     }
@@ -233,7 +240,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 //------------------------------------------------------------------------------
 
 a4sqlt3::Dataset
-elfdeps( Cache cache
+elfdeps( Cache& cache
         , const PathName& fromfile
         , const StringVec& needed
         , int arch
@@ -316,7 +323,11 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
     };
 
   // return data
-  Dataset ds {{ "pkgname", "filename", "soname" , "requiredby" } };
+  //Dataset ds {{ "pkgname", "filename", "soname" , "requiredby" } };
+  Dataset ds {{ DbValueType::Text,
+                DbValueType::Text,
+                DbValueType::Text ,
+                DbValueType::Text } };
   NotFoundMap not_found;
 
 //  StringSet known_needed ;
@@ -328,7 +339,7 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
           continue;
         }
 
-      Dataset deps = elfdeps (elf.getName (),
+      Dataset deps = elfdeps (cache, elf.getName (),
                                needed,
                                elf.getArch (),
                                elf.getRRunPaths ());
@@ -392,7 +403,7 @@ printRequired(Cache& cache,
   utils::ReportTree reptree;
 
   //pkgname,  filename , soname
-  utils::ReportSet& rs = std::get<0>(requiredinfo) ;
+  auto& rs = std::get<0>(requiredinfo) ;
   NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
 
 
@@ -416,7 +427,9 @@ printRequired(Cache& cache,
 
   if( pkg.getType() == PkgType::BinLib )
     {
-      a4sqlt3::Dataset ds = getPkgsOfFile( pkg.getPath(), pkg.getArch() ) ;
+      a4sqlt3::Dataset ds = getPkgsOfFile(cache
+                                          , pkg.getPath ()
+                                          , pkg.getArch () ) ;
       WriteAppMsg() << "\n" ;
       WriteAppMsg() << "check " << pkg.getPath() ;
       WriteAppMsg() << ", " << pkg.getElfFiles().begin()->getArch() << "bit " ;

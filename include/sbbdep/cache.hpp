@@ -35,6 +35,19 @@ namespace sbbdep {
 
 class Pkg;
 
+
+struct SyncData{
+  using UpdateInfo = std::pair<PkgName, PkgName> ;
+  using StringVec = std::vector<std::string> ;
+  StringVec removed;
+  StringVec installed;
+  StringVec reinstalled;
+  std::vector<UpdateInfo> updated;
+  bool wasNewCache;
+};
+
+
+
 class Cache : public a4sqlt3::Database
 {
 
@@ -42,14 +55,7 @@ public:
 
   using StringVec = std::vector<std::string> ;
 
-  struct SyncData{
-    using UpdateInfo = std::pair<PkgName, PkgName> ;
-    StringVec removed;
-    StringVec installed;
-    StringVec reinstalled;
-    std::vector<UpdateInfo> updated;
-    bool wasNewCache;
-  };
+
 
 
   enum class sqlid {
@@ -71,6 +77,8 @@ public:
   Cache(const std::string& dbname);
   ~Cache();
 
+  Cache(Cache&&)   = default ;
+
 
   SyncData
   doSync();
@@ -79,7 +87,7 @@ public:
   isNewDb();
 
   const std::string&
-  getName();
+  getName(){ return _name ; } //;
 
   // will create the command if it does not exist
   a4sqlt3::SqlCommand&
