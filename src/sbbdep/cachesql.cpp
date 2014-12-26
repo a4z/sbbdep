@@ -26,8 +26,10 @@ THE SOFTWARE.
 #include "cachesql.hpp"
 #include "conststr.hpp"
 
+#include <sbbdep/config.hpp>
 #include <sbbdep/elffile.hpp>
 #include <sbbdep/path.hpp>
+#include <sbbdep/log.hpp>
 #include <sqlite3.h>
 
 #define STRINGIZE(A) #A
@@ -75,7 +77,7 @@ CREATE TABLE rrunpath(
     lddir TEXT  
 );
 CREATE TABLE keyvalstore ( 
-    key  NOT NULL, 
+    key Text UNIQUE NOT NULL, 
     value  NOT NULL
 ); 
 
@@ -93,7 +95,6 @@ CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);
 CREATE TABLE ldlnkdirs (dirname TEXT PRIMARY KEY NOT NULL);      
 CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL); 
 
-INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);        
 
 
 CREATE TABLE version ( major INTEGER NOT NULL,
@@ -139,13 +140,13 @@ create index  idx_required_needed on required(needed);
 create index  idx_rrunpath_dynlinked_id on rrunpath(dynlinked_id);
 create index  idx_rrunpath_lddir on rrunpath(lddir);
 
-create unique index  idx_keyvalstore_key on keyvalstore (key);
+INSERT INTO keyvalstore (key , value) VALUES ('ldsoconf', 0);        
 
 
 )~"
 "INSERT INTO VERSION (major, minor, patchlevel) "
-"VALUES(" AS_STR(SBBDEP_MAJOR_VERSION) "," AS_STR(SBBDEP_MINOR_VERSION) ","
- AS_STR(SBBDEP_PATCH_VERSION) ");"
+"VALUES('" AS_STR(SBBDEP_MAJOR_VERSION) "', '" AS_STR(SBBDEP_MINOR_VERSION) "', '"
+ AS_STR(SBBDEP_PATCH_VERSION) "');"
 
 ;
 
@@ -170,8 +171,8 @@ createVersion()
 CREATE TABLE version ( major INTEGER NOT NULL,
  minor INTEGER NOT NULL, patchlevel INTEGER NOT NULL); )~"
 "INSERT INTO VERSION (major, minor, patchlevel) "
-"VALUES(" AS_STR(SBBDEP_MAJOR_VERSION) "," AS_STR(SBBDEP_MINOR_VERSION) ","
- AS_STR(SBBDEP_PATCH_VERSION) ");"
+"VALUES('" AS_STR(SBBDEP_MAJOR_VERSION) "','" AS_STR(SBBDEP_MINOR_VERSION) "','"
+ AS_STR(SBBDEP_PATCH_VERSION) "');"
  ;
 
 }//-----------------------------------------------------------------------------
@@ -213,13 +214,13 @@ constexpr const char* insertRRunPath()
 
 constexpr const char* insertLdDir()
 {
-  return "INSERT INTO lddirs ( dirname ) VALUES(?)" ;
+  return "INSERT OR IGNORE INTO lddirs ( dirname ) VALUES(?)" ;
 }//-----------------------------------------------------------------------------
 
 
 constexpr const char* insertLdLnkDir()
 {
-  return "INSERT INTO ldlnkdirs ( dirname ) VALUES(?)" ;
+  return "INSERT OR IGNORE INTO ldlnkdirs ( dirname ) VALUES(?)" ;
 }//-----------------------------------------------------------------------------
 
 constexpr const char* insertKeyVal()
@@ -267,7 +268,7 @@ constexpr const char* setKeyVal()
 
 
 void createSchema(a4sqlt3::Database& db)
-{
+{ //LogDebug() << createSchema() ;
   db.execute(createSchema()) ;
 
 }//-----------------------------------------------------------------------------

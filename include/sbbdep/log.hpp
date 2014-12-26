@@ -51,6 +51,7 @@ public:
   
   ~LogChannel()
   {
+    *_stm << '\n' ;
   }
 
 
@@ -102,7 +103,7 @@ public:
   static void create(std::ostream& appstm, bool quiet);
   
   static bool Quiet() ; 
-  static std::ostream& AppSream() ; 
+  static std::ostream& AppStream() ; 
   
 };
 

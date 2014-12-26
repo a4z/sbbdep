@@ -484,16 +484,16 @@ printRequired(Cache& cache,
     {
       for(auto requiredby_sos : reptree.node)
         {
-          WriteAppMsg() << "file " << requiredby_sos.first << " needs:\n";
+          WriteAppMsg() << "file " << requiredby_sos.first << " needs:";
           for(auto so_files : requiredby_sos.second.node)
             {
-              WriteAppMsg() << "  " << so_files.first << " found in:\n";
+              WriteAppMsg() << "  " << so_files.first << " found in:";
               for(auto file_pkgs : so_files.second.node)
                 {
                   WriteAppMsg() << "    " << file_pkgs.first << "( "
                       << utils::joinToString
                           (getKeySet (file_pkgs.second.node), " | ", makename)
-                      << " )\n";
+                      << " )";
                 }
             }
         }
@@ -529,39 +529,37 @@ printRequired(Cache& cache,
       WriteAppMsg() << utils::joinToString(pkglist, addversion ? "\n" : ", " ) ;
 
     }
-    WriteAppMsg() << std::endl;
 
 
 
     if(not notFounds.empty())
       {
-        WriteAppMsg() <<std::endl;
+        WriteAppMsg() << std::endl;
         WriteAppMsg() << "sonames not found via " <<
-            (ldd ? "ldd\n" : "standard paths: \n") ;
+            (ldd ? "ldd\n" : "standard paths: ") ;
 
         for(auto val : notFounds){
             WriteAppMsg() << " for " << val.first
-                << ": "<<utils::joinToString(val.second, ", ") << "\n" ;
+                << ": "<<utils::joinToString(val.second, ", ")  ;
         }
 
-        WriteAppMsg() << "this does not necessarily mean there is a problem\n";
+        WriteAppMsg() << "this does not necessarily mean there is a problem ";
         if(not ldd)
           {
             WriteAppMsg() <<
                 "the application can either have its own environment "
-                " or the soname is resolved via a link name \n" ;
+                " or the soname is resolved via a link name" ;
             WriteAppMsg() <<
-                "you can re-check the affected files with --ldd \n" ;
+                "you can re-check the affected files with --ldd" ;
           }
         else
           {
-            WriteAppMsg() << "but it's very likely that there is one\n";
+            WriteAppMsg() << "but it's very likely that there is one";
           }
 
-        WriteAppMsg() << std::endl;
       }
 
-    WriteAppMsg() << std::endl;
+
 
 
 }

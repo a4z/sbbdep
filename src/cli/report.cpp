@@ -41,9 +41,9 @@ printSyncReport(Cache& cache,
 
   if(syncdata.wasNewCache)
     {
-      LogInfo() << "successfully created  " << cache.getName() <<"\n"
+      LogInfo() << "successfully created cache " << cache.getName() <<"\n"
           << "successfully indexed " << syncdata.installed.size()
-          << "packages" ;
+          << " packages" ;
 
       return ;
     }

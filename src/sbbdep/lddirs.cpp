@@ -65,7 +65,7 @@ fillFromLdSoCache(const std::vector<std::string>& ignore)
               { // TODO first line might look like
                 // 2683 libs found in cache `/etc/ld.so.cache
                 // it's not good to have a debug message for this
-                LogDebug()<< "Info: not to parse: " << buff << "\n";
+                LogDebug()<< "Info: not to parse: " << buff ;
                 return false;
               }
             return true;

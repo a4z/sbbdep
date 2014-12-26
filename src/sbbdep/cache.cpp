@@ -106,7 +106,8 @@ Cache::createDbSchema()
   sql::createSchema(*this);
 
   // ensure we have this, for future ensureDefaults ... ?
-  execute("INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);");
+  //execute("INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);");
+  // this is now in create sheam, TODO clean up
 
   transaction.commit();
 }
@@ -239,24 +240,35 @@ Cache::doSync()
 
   auto initld = []() { getLDDirs(); } ;
 
-  if(isNewDb())
+
+  try
     {
-      createDbSchema();
-      std::thread t(initld);
-      syncdata = createNewSyncData() ;
-      waitfor(t);
-      updateLdDirInfo();
-      createIndex(syncdata);
-     }
-  else
-    {
-      checkDbSchemaVersion() ;
-      std::thread t(initld);
-      syncdata = createUpdateSyncData() ;
-      waitfor(t);
-      updateLdDirInfo();
-      updateIndex(syncdata);
+      if(isNewDb ())
+        {
+          createDbSchema ();
+          std::thread t (initld);
+          syncdata = createNewSyncData ();
+          waitfor (t);
+          updateLdDirInfo ();
+          createIndex (syncdata);
+        }
+      else
+        {
+          checkDbSchemaVersion ();
+          std::thread t (initld);
+          syncdata = createUpdateSyncData ();
+          waitfor (t);
+          updateLdDirInfo ();
+          updateIndex (syncdata);
+        }
+
     }
+  catch (const a4sqlt3::Error& e)
+    {
+      LogError() << e ;
+      throw;
+    }
+
 
 
   return syncdata ;
@@ -293,7 +305,7 @@ Cache::createNewSyncData()
 SyncData
 Cache::createUpdateSyncData()
 {
-  // this is a dam long funktion, but it is as it is, dop down
+  // this is a very long function, but it is as it is, top down
   // lot of lookup, filter and sorting
 
   // get diff from filesystem and db, remove old stuff from db and insert new
@@ -303,7 +315,7 @@ Cache::createUpdateSyncData()
   // then sort the updated into the update slots so that SyncData contains
   // what is shall contain
 
-  LogInfo() << "search for changes" << std::endl;
+  LogInfo() << "check cache and search for changes" ;
 
   using namespace std;
   using StringSet  = std::set<std::string> ;
@@ -482,7 +494,7 @@ Cache::createIndex(const SyncData& data)
 
   BackgroundJob<Pkg> dbjob(
       [this](const Pkg& pkg)
-      {
+      {  LogDebug() << "index " << pkg.getPath().getBase() ;
         this->indexPkg(pkg) ;
       });
 
@@ -497,6 +509,7 @@ Cache::createIndex(const SyncData& data)
           // TODO new log system, msg based
           const auto filename = PkgAdmDir.getName() + "/" + todo ;
           auto pkg = Pkg::create(filename, PkgType::Installed);
+          LogDebug() << "load " << pkg.getPath().getBase() ;
           pkg.Load() ;
           dbjob.push(std::move(pkg));
           todo = picker();
@@ -558,11 +571,11 @@ Cache::updateIndex(const SyncData& data)
       {
         auto& delcmd =  getCommand(sqlid::del_byfullname) ;
         if(not action.rem.empty())
-          {
+          { LogDebug() << "clear " << action.rem ;
             delcmd .execute( { {action.rem} } );
           }
         if(action.inst.isLoaded())
-          {
+          { LogDebug() << "index " << action.inst.getPath().getBase() ;
             this->indexPkg(action.inst) ;
           }
       });
@@ -580,6 +593,7 @@ Cache::updateIndex(const SyncData& data)
             {
               const auto filename = PkgAdmDir.getName() + "/" + todo.second ;
               auto pkg = Pkg::create(filename, PkgType::Installed);
+              LogDebug() << "load " << pkg.getPath().getBase() ;
               pkg.Load() ;
 
               dbjob.push( DbAction{ todo.first, move(pkg) }) ;
@@ -641,50 +655,58 @@ Cache::indexPkg(const Pkg& pkg)
 
   // todo might change and use worker, runBlocked to
   // but i must think about this
-
-  const auto pkgname = PkgName(pkg.getPath().getBase()) ;
-  const auto timestamp = pkg.getPath().getLastModificationTime() ;
-
-  getCommand(sqlid::insert_pkg).execute( {
-             { pkgname.FullName() } ,
-             { pkgname.Name() } ,
-             { pkgname.Version() } ,
-             { pkgname.Arch() } ,
-             { pkgname.Build().Num() } ,
-             { pkgname.Build().Tag() } ,
-             { timestamp }
-   });
-
-  const auto pkgid = getLastInsertRowid() ;
-
-  for(const ElfFile& elf : pkg.getElfFiles())
+  try
     {
-      getCommand(sqlid::insert_dynlinked).execute( {
-               { pkgid } ,
-               { elf.getName().Str() } ,
-               { elf.getName().getDir() } ,
-               { elf.getName().getBase() } ,
-               (elf.soName().size()> 0 ?
-                       DbValue(elf.soName()) :
-                       DbValue(a4sqlt3::DbValueType::Null) ) ,
-               { elf.getArch() }
-      });
+      const auto pkgname = PkgName(pkg.getPath().getBase()) ;
+      const auto timestamp = pkg.getPath().getLastModificationTime() ;
 
-     const auto dynlinked_id = getLastInsertRowid() ;
+      getCommand(sqlid::insert_pkg).execute( {
+                 { pkgname.FullName() } ,
+                 { pkgname.Name() } ,
+                 { pkgname.Version() } ,
+                 { pkgname.Arch() } ,
+                 { pkgname.Build().Num() } ,
+                 { pkgname.Build().Tag() } ,
+                 { timestamp }
+       });
 
-     for(const auto& needed : elf.getNeeded())
-       {
-         getCommand(sqlid::insert_required).execute(
-             { {dynlinked_id}, {needed} }
-         );
-       }
+      const auto pkgid = getLastInsertRowid() ;
 
-     for(const auto& rrunpaht : elf.getRRunPaths())
-       {
-         getCommand(sqlid::insert_rrunpath).execute(
-             { {dynlinked_id}, {rrunpaht} , {elf.getName().getDir()} }
-         );
-       }
+      for(const ElfFile& elf : pkg.getElfFiles())
+        {
+          getCommand(sqlid::insert_dynlinked).execute( {
+                   { pkgid } ,
+                   { elf.getName().Str() } ,
+                   { elf.getName().getDir() } ,
+                   { elf.getName().getBase() } ,
+                   (elf.soName().size()> 0 ?
+                           DbValue(elf.soName()) :
+                           DbValue(a4sqlt3::DbValueType::Null) ) , // TODO das is falsch, typ dar niemals nicht null sein
+                   { elf.getArch() }
+          });
+
+         const auto dynlinked_id = getLastInsertRowid() ;
+
+         for(const auto& needed : elf.getNeeded())
+           {
+             getCommand(sqlid::insert_required).execute(
+                 { {dynlinked_id}, {needed} }
+             );
+           }
+
+         for(const auto& rrunpaht : elf.getRRunPaths())
+           {
+             getCommand(sqlid::insert_rrunpath).execute(
+                 { {dynlinked_id}, {rrunpaht} , {elf.getName().getDir()} }
+             );
+           }
+        }
+
+    }
+  catch (const a4sqlt3::Error& e)
+    {
+      LogDebug () << e;
+      throw;
     }
 
 }

@@ -74,7 +74,7 @@ void printTree(const ReportTree& tree)
 
   for( auto elem : tree.node )
   {
-      LogDebug() << elem.first << std::endl;
+      LogDebug() << elem.first ;
     printChild(elem.second, 2) ;
   }
 }

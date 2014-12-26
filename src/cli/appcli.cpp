@@ -136,7 +136,7 @@ AppCli::Run(const AppArgs& appargs)
   if(not appargs.getNoSync())
     {
       auto syncdata = cache.doSync() ;
-      cli::printSyncReport (cache, syncdata) ; // todo write this func !
+      cli::printSyncReport (cache, syncdata) ;
     }
 
 
@@ -158,14 +158,14 @@ AppCli::Run(const AppArgs& appargs)
             {
               LogInfo() << "not a file with binary dependencies: " ;
               LogInfo() << querypath
-                  << "\n try to find information in package list:\n";
+                  << "\n try to find information in package list:";
               lookup::fileInPackages(querypath);
             }
           else
-            {
+            { // TODO this search needs to become better
               LogInfo() << "not a file path: '" << appargs.getQuery() ;
               LogInfo() << "', use name as filename and ";
-              LogInfo() << " try to find filename in package list:\n" ;
+              LogInfo() << " try to find filename in package list:" ;
               lookup::fileInPackages(Path(appargs.getQuery()));
             }
 
@@ -173,12 +173,12 @@ AppCli::Run(const AppArgs& appargs)
         }
       catch (const Error& e)
         {
-          LogError() << e << std::endl;
+          LogError() << e ;
           return -3;
         }
       catch (...)
         {
-          LogError() << "Unknown error" << std::endl;
+          LogError() << "Unknown error" ;
           return -3;
         }
     }
@@ -189,12 +189,12 @@ AppCli::Run(const AppArgs& appargs)
     }
   catch (const Error& e)
     {
-      LogError() << e << std::endl;
+      LogError() << e ;
       return -4;
     }
   catch (...)
     {
-      LogError() << "Unknown error" << std::endl;
+      LogError() << "Unknown error" ;
       return -4;
     }
 
@@ -209,12 +209,12 @@ AppCli::Run(const AppArgs& appargs)
         }
       catch (const Error& e)
         {
-          LogError() << e << std::endl;
+          LogError() << e ;
           return -5;
         }
       catch (...)
         {
-          LogError() << "Unknown error" << std::endl;
+          LogError() << "Unknown error";
           return -5;
         }
     }
@@ -227,9 +227,9 @@ AppCli::Run(const AppArgs& appargs)
     }
   else // TODO , this is more or less obsolete
     {
-      LogError() << "Can not run given combination of arguments \n";
-      LogError() << "(could possible, but I do not want)\n";
-      LogError() << "Please run just one QUERY.\n" << std::endl;
+      LogError() << "Can not run given combination of arguments";
+      LogError() << "(could possible, but I do not want)";
+      LogError() << "Please run just one QUERY." << std::endl;
       return -6;
     }
 

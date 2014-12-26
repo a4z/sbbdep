@@ -104,6 +104,7 @@ BackgroundJob<T>::BackgroundJob(Task task)
 
           using std::swap;
           swap(messages, queue.messages);
+          _queue.newData=false;
           lock.unlock();
           this->consume(messages);
           messages.clear();
@@ -132,6 +133,7 @@ BackgroundJob<T>::stop()
   if(_queue.running)
     {
       _queue.running = false ;
+      _queue.newData=true;
       _queue.condt.notify_all();
       if(_workerThread.joinable())
         {
@@ -199,8 +201,9 @@ BackgroundJob<T>::push(T&& val)
     {
       LockGuard lock(_queue.mtx);
       _queue.messages.emplace_back(val);
-      _queue.condt.notify_one();
+      _queue.newData=true;
       lock.unlock();
+      _queue.condt.notify_one();
       retval = true;
     }
 
@@ -221,8 +224,8 @@ BackgroundJob<T>::push(const T& val)
       LockGuard lock(_queue.mtx);
       _queue.messages.push_back(val);
       _queue.newData=true;
-      _queue.condt.notify_one();
       lock.unlock();
+      _queue.condt.notify_one();
       retval = true;
     }
 
