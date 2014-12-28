@@ -54,12 +54,12 @@ printSyncReport(Cache& cache,
       LogInfo() << "removed: " << p ;
     }
 
-  for(auto&& p : syncdata.removed)
+  for(auto&& p : syncdata.installed)
     {
       LogInfo() << "installed: " << p;
     }
 
-  for(auto&& p : syncdata.removed)
+  for(auto&& p : syncdata.reinstalled)
     {
       LogInfo() << "reinstalled: " << p;
     }

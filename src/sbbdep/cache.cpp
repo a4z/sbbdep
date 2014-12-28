@@ -256,16 +256,18 @@ Cache::doSync()
         {
           checkDbSchemaVersion ();
           std::thread t (initld);
+          LogInfo () << "sync cache " << getName() ;
           syncdata = createUpdateSyncData ();
           waitfor (t);
           updateLdDirInfo ();
           updateIndex (syncdata);
+          LogInfo () << "sync done\n"  ;
         }
 
     }
   catch (const a4sqlt3::Error& e)
     {
-      LogError() << e ;
+      LogError () << e ;
       throw;
     }
 
@@ -290,11 +292,11 @@ Cache::createNewSyncData()
                                 const std::string& filename ) -> bool
     {
       (void)(dirname);
-      retval.installed.emplace_back(filename);
+      retval.installed.emplace_back (filename);
       return true ;
     };
 
-  PkgAdmDir.forEach(newfiles_cb) ;
+  PkgAdmDir.forEach (newfiles_cb) ;
 
   return retval ;
 
@@ -315,7 +317,7 @@ Cache::createUpdateSyncData()
   // then sort the updated into the update slots so that SyncData contains
   // what is shall contain
 
-  LogInfo() << "check cache and search for changes" ;
+
 
   using namespace std;
   using StringSet  = std::set<std::string> ;
@@ -329,8 +331,8 @@ Cache::createUpdateSyncData()
   StringSet allpkgfiles; // all pks in file system
   StringSet newpkgs; // // all pks in file system with a newer date
 
-  const auto val = selectValue(sql::maxPkgTimeStamp());
-  const time_t maxknownftime = val.isNull() ? 0 : val.getInt64() ;
+  const auto val = selectValue (sql::maxPkgTimeStamp ());
+  const time_t maxknownftime = val.isNull () ? 0 : val.getInt64 () ;
 
 
   // callback for pkgadm dir, check pkg files add to all and new, if new
@@ -339,13 +341,13 @@ Cache::createUpdateSyncData()
                                const std::string& filename) -> bool
         {
           Path path(dirname + "/" + filename);
-          if ( path.isRegularFile() ) // this could/should? be an assert, TODO
+          if (path.isRegularFile ()) // this could/should? be an assert, TODO
             { // insert filename in all existing file_pkgs,
-              allpkgfiles.insert(filename);
+              allpkgfiles.insert (filename);
               // and if newer as the latest known file time
-              if ( path.getLastModificationTime() > maxknownftime )
+              if (path.getLastModificationTime () > maxknownftime)
                 { // insert into new pkgs
-                  newpkgs.insert(filename);
+                  newpkgs.insert (filename);
                 }
             }
           return true ;
@@ -363,13 +365,13 @@ Cache::createUpdateSyncData()
   // get all in the database
   auto rh = [&allpkgindb](a4sqlt3::SqlQueryRow& qrow) -> bool
         {
-          allpkgindb.insert(qrow[0].getText());
+          allpkgindb.insert (qrow [0].getText ());
           return true ;
         } ;
 
-  execute("SELECT fullname FROM pkgs;", rh);
+  execute ("SELECT fullname FROM pkgs;", rh);
 
-  waitfor(checkFS);
+  waitfor (checkFS);
 
   // TODO allpkgfiles , newpkgs create const here cause of shared access
 
@@ -566,44 +568,47 @@ Cache::updateIndex(const SyncData& data)
   };
 
 
+  //LogDebug() << "here with " << todos.size() ;
+
   BackgroundJob<DbAction> dbjob(
       [this](const DbAction& action)
       {
-        auto& delcmd =  getCommand(sqlid::del_byfullname) ;
         if(not action.rem.empty())
           { LogDebug() << "clear " << action.rem ;
+            auto& delcmd =  getCommand(sqlid::del_byfullname) ;
             delcmd .execute( { {action.rem} } );
           }
+
         if(action.inst.isLoaded())
           { LogDebug() << "index " << action.inst.getPath().getBase() ;
             this->indexPkg(action.inst) ;
           }
       });
 
-
+  // delete , install
   ConcurrentPeek<pair<string, string>> picker(todos) ;
 
   auto indexWorker = [&dbjob, &picker]()
     {
-      auto todo = picker();
+      auto todo = picker ();
 
-      while( not todo.first.empty() && not todo.second.empty() )
+      // first must always exist
+      while (not (todo.first.empty () && todo.second.empty ()))
         {
-          if(not todo.second.empty())
+          if (not todo.second.empty ())
             {
-              const auto filename = PkgAdmDir.getName() + "/" + todo.second ;
-              auto pkg = Pkg::create(filename, PkgType::Installed);
-              LogDebug() << "load " << pkg.getPath().getBase() ;
-              pkg.Load() ;
-
-              dbjob.push( DbAction{ todo.first, move(pkg) }) ;
+              const auto filename = PkgAdmDir.getName () + "/" + todo.second;
+              auto pkg = Pkg::create (filename, PkgType::Installed);
+              LogDebug () << "load " << pkg.getPath ().getBase ();
+              pkg.Load ();
+              dbjob.push (DbAction {todo.first, move (pkg)});
             }
           else
             {
-              dbjob.push( DbAction{ todo.first, Pkg() }) ;
+              dbjob.push (DbAction {todo.first, Pkg ()});
             }
 
-          todo = picker();
+          todo = picker ();
         }
     };
 
@@ -751,7 +756,7 @@ Cache::latesPkgTimeStampInDb()
    return val.isNull() ? 0 : val.getInt64() ;
 
 }
-
+//------------------------------------------------------------------------------
 
 
 

@@ -140,26 +140,29 @@ Pkg::Pkg(Path pname, PkgType type)
 bool
 Pkg::Load()
 {
-  bool retval = false;
+  if(isLoaded())
+    {
+      throw ErrGeneric("Pkg already loaded") ;
+    }
+
   switch (_type)
     {
     case PkgType::Installed:
-      retval =doLoadInstalled();
+      _loaded =doLoadInstalled();
       break;
 
     case PkgType::DestDir:
-      retval = doLoadDestDir();
+      _loaded = doLoadDestDir();
       break;
 
     case PkgType::BinLib:
-      retval = doLoadOneBinLib();
+      _loaded = doLoadOneBinLib();
       break;
 
     default:
-      retval = false;
       break;
     };
-  return retval;
+  return _loaded;
 }
 //--------------------------------------------------------------------------------------------------
 

@@ -9,6 +9,7 @@
 #include <atomic>
 #include <queue>
 
+#include <sbbdep/log.hpp>
 
 namespace sbbdep
 {
@@ -106,6 +107,7 @@ BackgroundJob<T>::BackgroundJob(Task task)
           swap(messages, queue.messages);
           _queue.newData=false;
           lock.unlock();
+
           this->consume(messages);
           messages.clear();
         }
@@ -140,14 +142,14 @@ BackgroundJob<T>::stop()
           _workerThread.join();
         }
 
-    }
 
-
-  if(cleanup())
-    {
-      LockGuard lock(_queue.mtx);
-      consume(_queue.messages);
-      lock.unlock();
+      if(cleanup())
+        {
+          LockGuard lock(_queue.mtx);
+          consume(_queue.messages);
+          _queue.messages.clear();
+          lock.unlock();
+        }
     }
 
 }

@@ -128,23 +128,22 @@ printWhoNeed(Cache& cache, const Pkg& pkg, bool addversion, bool xdl )
   Dataset ds ; //{ "pkg", "filename" , "soname" , "fromfile"  }
 
 
-  if(pkg.getType() == PkgType::BinLib  )
+  if (pkg.getType () == PkgType::BinLib)
     {
-      auto& cmd = cache.namedCommand("WhoNeedFileQuery",
-                                     getWhoNeedFileQuery()) ;
-      const DbValues args = { {pkg.getElfFiles()[0].getName()} } ;
-      ds = cmd.run(args);
+      auto& cmd = cache.namedCommand ("WhoNeedFileQuery",
+                                      getWhoNeedFileQuery ());
+      const DbValues args = { { pkg.getElfFiles ()[0].getName () } };
+      ds = cmd.run (args);
     }
-  else if( pkg.getType() == PkgType::Installed)
+  else if(pkg.getType () == PkgType::Installed)
     {
-      auto& cmd = cache.namedCommand("WhoNeedPkgQuery",
-                                     getWhoNeedPkgQuery()) ;
-      const DbValues args = { {pkg.getPath().getBase()} } ;
-      ds = cmd.run(args);
+      auto& cmd = cache.namedCommand ("WhoNeedPkgQuery", getWhoNeedPkgQuery ());
+      const DbValues args = { { pkg.getPath ().getBase () } };
+      ds = cmd.run (args);
     }
   else
     {  // TODO some message ??
-      return ;
+      return;
     }
 
 
@@ -154,30 +153,32 @@ printWhoNeed(Cache& cache, const Pkg& pkg, bool addversion, bool xdl )
        for(auto& row : ds )
          {
            reptree.add( {
-             row.at(3).getText() + " (" + row.at(2).getText() +")",
-             row.at(0).getText() ,
-             row.at(1).getText() } ) ;
-
+             row.at (3).getText () + " (" + row.at (2).getText () +")",
+             row.at (0).getText () ,
+             row.at (1).getText () } ) ;
          }
 
-       std::function<void(utils::ReportElement, int)> printChild =
-           [&printChild]( utils::ReportElement elem , int level ){
-         for(auto node: elem.node){
-            for(int i = 0; i < level; ++i)
-              WriteAppMsg() << " " ;
-
-            WriteAppMsg() << node.first << "\n";
-           printChild(node.second, level+2);
-         }
+       std::function<void(const utils::ReportElement&, size_t)> printChild =
+           [&printChild](const utils::ReportElement& elem , size_t level ){
+         for(const auto& node: elem.node)
+           {
+             { // scope log channel for new line
+               WriteAppMsg ()
+                 << std::string(level, ' ')
+                 << node.first ;
+             }
+             printChild(node.second, level+2);
+           }
        };
 
-       for( auto elem : reptree.node )
-       {
-         WriteAppMsg() << elem.first << " is used from:"<<std::endl;
-         printChild(elem.second, 2) ;
-       }
-       WriteAppMsg() << std::endl;
-       //printTree(reptree) ; // TODO, better format
+      for(auto elem : reptree.node)
+        {
+          { // scope log channel for new line
+            WriteAppMsg () << elem.first << " is used from:";
+          }
+          printChild (elem.second, 2);
+        }
+
      }
    else
      {

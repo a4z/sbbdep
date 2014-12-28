@@ -116,7 +116,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 
   auto isSoInDestDir = [&soInDestDir](const std::string& soname)
     {
-      return soInDestDir.find (soname) == soInDestDir.end () ;
+      return soInDestDir.find (soname) != soInDestDir.end () ;
     };
 
   // for each elf file in dl I need to get the ld map
@@ -319,7 +319,7 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
 
   auto isSoInDestDir = [&soInDestDir](const std::string& soname)
     {
-      return soInDestDir.find (soname) == soInDestDir.end () ;
+      return soInDestDir.find (soname) != soInDestDir.end () ;
     };
 
   // return data
@@ -398,14 +398,13 @@ printRequired(Cache& cache,
        ldd ? getRequiredInfosLDD(cache, pkg) :   getRequiredInfos(cache, pkg) ;
 
 
-
-
   utils::ReportTree reptree;
 
   //pkgname,  filename , soname
   auto& rs = std::get<0>(requiredinfo) ;
   NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
 
+  LogDebug() << "nfsi " << notFounds.size();
 
   for(auto& row : rs)
     {
@@ -430,34 +429,35 @@ printRequired(Cache& cache,
       a4sqlt3::Dataset ds = getPkgsOfFile(cache
                                           , pkg.getPath ()
                                           , pkg.getArch () ) ;
-      WriteAppMsg() << "\n" ;
-      WriteAppMsg() << "check " << pkg.getPath() ;
-      WriteAppMsg() << ", " << pkg.getElfFiles().begin()->getArch() << "bit " ;
-      if(pkg.getElfFiles().begin()->getType() == ElfFile::Binary)
+      auto msgChannel = WriteAppMsg () ;
+
+      msgChannel << "check " << pkg.getPath()
+                 << ", " << pkg.getElfFiles ().begin ()->getArch () << "bit " ;
+      if (pkg.getElfFiles ().begin ()->getType () == ElfFile::Binary)
         {
-          WriteAppMsg() << "binary " ;
+          msgChannel << "binary " ;
         }
-      else if(pkg.getElfFiles().begin()->getType() == ElfFile::Library)
+      else if (pkg.getElfFiles ().begin ()->getType () == ElfFile::Library)
         {
-          WriteAppMsg() << "library ("
-              << pkg.getElfFiles().begin()->soName()
+          msgChannel << "library ("
+              << pkg.getElfFiles ().begin ()->soName ()
               << ")" ;
         }
 
-      WriteAppMsg() << std::endl ;
+      msgChannel << std::endl ;
 
       if(ds.size()==0)
         {
-          WriteAppMsg() << " .. not in a known package" << std::endl;
+          msgChannel << " .. not in a known package" << std::endl;
         }
       else
         {
           for(auto flds : ds)
-            WriteAppMsg() << " .. from package "
+            msgChannel << " .. from package "
                           <<  flds.at(0).getText() <<std::endl;
 
         }
-      WriteAppMsg() << std::endl ;
+
     }
 
   auto makename = [addversion, xdl](const std::string val)
