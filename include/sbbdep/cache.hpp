@@ -44,6 +44,19 @@ struct SyncData{
   StringVec reinstalled;
   std::vector<UpdateInfo> updated;
   bool wasNewCache;
+
+  bool empty() const
+  {
+    if(updated.empty() and installed.empty() and
+        removed.empty() and reinstalled.empty())
+      {
+        return true;
+      }
+
+    return false ;
+  }
+
+
 };
 
 

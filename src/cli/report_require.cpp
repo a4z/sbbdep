@@ -404,8 +404,6 @@ printRequired(Cache& cache,
   auto& rs = std::get<0>(requiredinfo) ;
   NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
 
-  LogDebug() << "nfsi " << notFounds.size();
-
   for(auto& row : rs)
     {
       if(xdl)
@@ -466,17 +464,24 @@ printRequired(Cache& cache,
       if(xdl)
         {
           if(addversion)
-            return val;
+            {
+              return val;
+            }
 
-          return PkgName(val).Name();
+          return PkgName (val).Name ();
         }
 
-      PkgName pknam(val);
-      std::string retval = pknam.Name();
-      if (addversion) retval+= " >= " + pknam.Version();
+      PkgName pknam (val);
+      std::string retval = pknam.Name ();
+      if (addversion)
+        {
+          retval+= " = " + pknam.FullName ()
+              .substr(pknam.Name ().size () + 1 , std::string::npos  ) ;
+        }
       return retval;
       // TODO , think about give up this format and use the normal long version for all
       // or change it to = , see http://software.jaos.org/git/slapt-get/plain/FAQ.html#slgFAQ19
+      // also, seems that the name has the arch build usw in the name
 
     };
 

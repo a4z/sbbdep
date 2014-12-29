@@ -48,28 +48,36 @@ printSyncReport(Cache& cache,
       return ;
     }
 
-
-  for(auto&& p : syncdata.removed)
+  if(syncdata.empty ())
     {
-      LogInfo() << "removed: " << p ;
-    }
+      LogInfo () << "cache up to date";
 
-  for(auto&& p : syncdata.installed)
+    }
+  else
     {
-      LogInfo() << "installed: " << p;
-    }
+      LogInfo () << "Synchronization summary:";
+      for(auto&& p : syncdata.removed)
+        {
+          LogInfo () << "removed: " << p;
+        }
 
-  for(auto&& p : syncdata.reinstalled)
-    {
-      LogInfo() << "reinstalled: " << p;
-    }
+      for(auto&& p : syncdata.installed)
+        {
+          LogInfo () << "installed: " << p;
+        }
 
-  for(auto&& pp : syncdata.updated)
-    {
-      LogInfo() << "updated: " << pp.second.FullName()
-                << " (form " << pp.second.Version() << ")";
-    }
+      for(auto&& p : syncdata.reinstalled)
+        {
+          LogInfo () << "reinstalled: " << p;
+        }
 
+      for(auto&& pp : syncdata.updated)
+        {
+          LogInfo () << "updated: " << pp.second.FullName ()
+              << " (from " << pp.first.Version () << ")";
+        }
+    }
+  LogInfo() << "" ; // append new line
 }
 
 

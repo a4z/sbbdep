@@ -574,13 +574,13 @@ Cache::updateIndex(const SyncData& data)
       [this](const DbAction& action)
       {
         if(not action.rem.empty())
-          { LogDebug() << "clear " << action.rem ;
+          { LogInfo() << "clear " << action.rem ;
             auto& delcmd =  getCommand(sqlid::del_byfullname) ;
             delcmd .execute( { {action.rem} } );
           }
 
         if(action.inst.isLoaded())
-          { LogDebug() << "index " << action.inst.getPath().getBase() ;
+          { LogInfo() << "index " << action.inst.getPath().getBase() ;
             this->indexPkg(action.inst) ;
           }
       });
@@ -599,7 +599,7 @@ Cache::updateIndex(const SyncData& data)
             {
               const auto filename = PkgAdmDir.getName () + "/" + todo.second;
               auto pkg = Pkg::create (filename, PkgType::Installed);
-              LogDebug () << "load " << pkg.getPath ().getBase ();
+              LogInfo() << "load " << pkg.getPath ().getBase ();
               pkg.Load ();
               dbjob.push (DbAction {todo.first, move (pkg)});
             }
@@ -686,7 +686,7 @@ Cache::indexPkg(const Pkg& pkg)
                    { elf.getName().getBase() } ,
                    (elf.soName().size()> 0 ?
                            DbValue(elf.soName()) :
-                           DbValue(a4sqlt3::DbValueType::Null) ) , // TODO das is falsch, typ dar niemals nicht null sein
+                           DbValue(a4sqlt3::DbValueType::Null) ) ,
                    { elf.getArch() }
           });
 
@@ -710,7 +710,7 @@ Cache::indexPkg(const Pkg& pkg)
     }
   catch (const a4sqlt3::Error& e)
     {
-      LogDebug () << e;
+      LogError () << e;
       throw;
     }
 
