@@ -450,12 +450,12 @@ printRequired(Cache& cache,
         }
       else
         {
-          for(auto flds : ds)
-            msgChannel << " .. from package "
-                          <<  flds.at(0).getText() <<std::endl;
-
+          for(const auto& flds : ds)
+            {
+              msgChannel << " .. from package "
+                            <<  flds.at(0).getText() <<std::endl;
+            }
         }
-
     }
 
   auto makename = [addversion, xdl](const std::string val)
@@ -477,11 +477,10 @@ printRequired(Cache& cache,
         {
           retval+= " = " + pknam.FullName ()
               .substr(pknam.Name ().size () + 1 , std::string::npos  ) ;
+         // see
+         // http://software.jaos.org/git/slapt-get/plain/FAQ.html#slgFAQ19
         }
       return retval;
-      // TODO , think about give up this format and use the normal long version for all
-      // or change it to = , see http://software.jaos.org/git/slapt-get/plain/FAQ.html#slgFAQ19
-      // also, seems that the name has the arch build usw in the name
 
     };
 

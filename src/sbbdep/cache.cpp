@@ -256,12 +256,13 @@ Cache::doSync()
         {
           checkDbSchemaVersion ();
           std::thread t (initld);
-          LogInfo () << "sync cache " << getName() ;
+          LogInfo () << "sync cache " << getName () ;
+          // TODO this ^^ should not be here
+          // but where the cache create message is
           syncdata = createUpdateSyncData ();
           waitfor (t);
           updateLdDirInfo ();
           updateIndex (syncdata);
-          LogInfo () << "sync done\n"  ;
         }
 
     }
