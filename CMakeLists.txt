@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 2.8)
 
 project(sbbdep C CXX) 
 
-include( a4cmk/myMacros.cmake )
+include( a4sqlt3/a4cmk/myMacros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 2)
-set(sbbdep_PATCH_VERSION 3)
+set(sbbdep_PATCH_VERSION 4)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
@@ -42,15 +42,14 @@ FORCE )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
     set (_DEFAULT_FLAGS "DEBUG")
-else()
+else (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set (_DEFAULT_FLAGS "RELEASE")
-endif()
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 PREFIX_COMPILER_DEFINES(_DEFAULT_FLAGS)
 add_definitions(${_DEFAULT_FLAGS})
 
 unset(_DEFAULT_FLAGS)
-
 
 
 if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
@@ -60,15 +59,23 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
-include( a4cmk/myBoostSetup.cmake )
-include( a4cmk/mya4sqlt3Setup.cmake )
+include( a4sqlt3/a4cmk/myBoostSetup.cmake )
+
+set (a4sqlt3_library a4sqlt3) 
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  #in Release only add testing if explicite asked to do so
+  if (NOT DEFINED ALL_A4_TESTING_DISABLED)
+    set (ALL_A4_TESTING_DISABLED TRUE)
+  endif (NOT DEFINED ALL_A4_TESTING_DISABLED)
+endif (CMAKE_BUILD_TYPE STREQUAL "Release")  
 
 
-include_directories(
+add_subdirectory(a4sqlt3)
+include_directories( BEFORE
 include
+a4sqlt3/include/
 )
-
-
 
 
 ##########################################################################################
@@ -131,8 +138,6 @@ SET ( sbbdepcli_SRC
     src/cli/appcli.hpp
 
     src/cli/main.cpp
-  
-       
     
     src/cli/report.hpp
     src/cli/report.cpp
@@ -177,8 +182,9 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
-#add_subdirectory(tests)
-include( a4cmk/myTestSetup.cmake )
+  
+include( a4sqlt3/a4cmk/myTestSetup.cmake )  
+
 
 
 #optional enable personal test/trial dir

@@ -1,5 +1,5 @@
 
-BUILDDIR=buildRelDebug
+BUILDDIR=buildRelease
 
 A4SQLT3DIR=$(dirname $(pwd))/a4sqlt3
 
@@ -10,6 +10,6 @@ else
 fi
 
 
-cd $BUILDDIR && cmake ../ -DCMAKE_BUILD_TYPE=RelDebug \
--DUSE_BOOSTTESTING_DYNLINK=ON
+cd $BUILDDIR && \
+ cmake ../ -DCMAKE_BUILD_TYPE=Release #-DALL_A4_TESTING_DISABLED=OFF
 
