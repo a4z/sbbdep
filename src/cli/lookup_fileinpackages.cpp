@@ -125,7 +125,7 @@ bool fileInPackages(const sbbdep::Path& filepath)
 {
    #pragma omp sections
    {
-     for(const auto& f: dirlist)
+     for(auto f: dirlist)
        {
        #pragma omp task
          {
