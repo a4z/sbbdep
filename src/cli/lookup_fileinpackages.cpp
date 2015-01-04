@@ -41,7 +41,7 @@ namespace lookup {
 namespace {
 
   // check pkgfile line for line if search exist
-  void process(std::string&& pkgfile, const Path& search)
+  void process(const std::string& pkgfile, const Path& search)
   {
 
     std::ifstream ins( pkgfile.c_str() );
@@ -125,11 +125,11 @@ bool fileInPackages(const sbbdep::Path& filepath)
 {
    #pragma omp sections
    {
-     for(std::string f: dirlist)
+     for(const auto& f: dirlist)
        {
        #pragma omp task
          {
-           process(std::move(f), filepath);
+           process(f, filepath);
          }
        }
    }
