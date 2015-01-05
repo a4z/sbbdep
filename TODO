@@ -1,8 +1,5 @@
 just a general list for me here, 
 
-start using issue tracker
-next version will be 0.2.0 
-transfere longer tasks into bbit 
 
 Documentation: 
 manpage
@@ -30,3 +27,8 @@ think about a --surpress filter that takes away elements form an a|b choice if e
 
 pkgadmdir, integrate functions into dircontent, than the cls becomes a typdef
 
+
+
+
+add package name to message
+Note: can not read file: /usr/lib64/X11/app-defaults/GXditview-color

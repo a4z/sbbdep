@@ -105,10 +105,6 @@ Cache::createDbSchema()
   auto transaction = beginTransaction();
   sql::createSchema(*this);
 
-  // ensure we have this, for future ensureDefaults ... ?
-  //execute("INSERT INTO keyvalstore (key, value) VALUES ('ldsoconf', 0);");
-  // this is now in create sheam, TODO clean up
-
   transaction.commit();
 }
 //------------------------------------------------------------------------------
@@ -245,6 +241,7 @@ Cache::doSync()
     {
       if(isNewDb ())
         {
+          LogInfo () << "create cache " << getName () ;
           createDbSchema ();
           std::thread t (initld);
           syncdata = createNewSyncData ();
@@ -254,17 +251,16 @@ Cache::doSync()
         }
       else
         {
+          LogInfo () << "sync cache " << getName () ;
           checkDbSchemaVersion ();
           std::thread t (initld);
-          LogInfo () << "sync cache " << getName () ;
-          // TODO this ^^ should not be here
-          // but where the cache create message is
           syncdata = createUpdateSyncData ();
           waitfor (t);
           updateLdDirInfo ();
           updateIndex (syncdata);
+          LogInfo () << "run db analyzer\n";
+          execute ("ANALYZE ;");
         }
-
     }
   catch (const a4sqlt3::Error& e)
     {

@@ -44,8 +44,7 @@ namespace
 
 std::vector<std::string>
 fillFromLdSoCache(const std::vector<std::string>& ignore)
-{ // ignore must be sorted, todo add check indebug
-
+{
   std::vector<std::string> retval;
 
   const std::string cmd = "/sbin/ldconfig -p";
@@ -53,7 +52,6 @@ fillFromLdSoCache(const std::vector<std::string>& ignore)
   if( popin )
     {
       char buff[512];
-      //TODO  first line always has some other infos..
 
       while (std::fgets(buff, sizeof( buff ), popin) != NULL)
         {
@@ -70,45 +68,30 @@ fillFromLdSoCache(const std::vector<std::string>& ignore)
               }
             return true;
           };
-/*
-          const char* soname_begin = std::find_if( buff_start,  buff_end,
-              [](const char c)->bool{ return c != '\t' ; }
-              );
-          if (not posFound(soname_begin))
-              continue;
-
-
-          const char* soname_end = std::find_if( soname_begin,  buff_end,
-              [](const char c)->bool{ return c == ' '; }
-          );
-          if (not posFound(soname_end))
-              continue;
-*/
 
           const std::string arrow = "=> ";
-          //const char* file_begin = std::search( soname_end, buff_end,
-          const char* file_begin = std::search( buff_start, buff_end,
-              std::begin(arrow), std::end(arrow)) + arrow.size();
-          if (not posFound(file_begin))
-              continue;
-
-          const std::string lineend = "\n";
-          const char* file_end = std::search( file_begin, buff_end,
-              std::begin(lineend), std::end(lineend)) ;
-          if (not posFound(file_end))
-              continue;
-
-         // std::cout << "here: '" << std::string(soname_begin, soname_end) << "'" ;
-         // std::cout << " to '" << std::string(file_begin, file_end) << "'" ;
-
-          Path path(std::string(file_begin, file_end));
-          path.makeRealPath(); // should alswayr return ture,
-          // TODO care about this...
-          //if (path.isRegularFile() && isElfLib( path ) ) // this should not be required anymore
 
           using std::begin;
           using std::end;
           using std::binary_search;
+
+          const char* file_begin = std::search( buff_start, buff_end,
+                                      begin(arrow), end(arrow)) + arrow.size();
+          if (not posFound(file_begin))
+            {
+              continue;
+            }
+
+          const std::string lineend = "\n";
+          const char* file_end = std::search( file_begin, buff_end,
+                                              begin(lineend), end(lineend)) ;
+          if (not posFound(file_end))
+            {
+              continue;
+            }
+
+          Path path(std::string(file_begin, file_end));
+          path.makeRealPath(); // should alswayr return ture,
 
           if(not binary_search(begin(ignore), end(ignore), path.getDir()))
             {
@@ -198,8 +181,8 @@ getLDDirs()
 }
 
 
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 }
 
 

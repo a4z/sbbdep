@@ -41,9 +41,9 @@ printSyncReport(Cache& cache,
 
   if(syncdata.wasNewCache)
     {
-      LogInfo() << "successfully created cache " << cache.getName() <<"\n"
+      LogInfo()
           << "successfully indexed " << syncdata.installed.size()
-          << " packages" ;
+          << " packages for new cache " << cache.getName() ;
 
       return ;
     }
@@ -74,7 +74,9 @@ printSyncReport(Cache& cache,
       for(auto&& pp : syncdata.updated)
         {
           LogInfo () << "updated: " << pp.second.FullName ()
-              << " (from " << pp.first.Version () << ")";
+              << " (was " // extract version arch buildstr
+              << pp.first.FullName ().substr ( pp.first.Name ().size () + 1)
+              << ")";
         }
     }
   LogInfo() << "" ; // append new line
