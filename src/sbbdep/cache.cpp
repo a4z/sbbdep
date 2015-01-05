@@ -258,8 +258,6 @@ Cache::doSync()
           waitfor (t);
           updateLdDirInfo ();
           updateIndex (syncdata);
-          LogInfo () << "run db analyzer\n";
-          execute ("ANALYZE ;");
         }
     }
   catch (const a4sqlt3::Error& e)
@@ -541,6 +539,12 @@ Cache::updateIndex(const SyncData& data)
 
   using namespace std;
 
+  if (data.removed.empty() && data.updated.empty () &&
+      data.reinstalled.empty() && data.installed.empty () )
+    { // nothing to do
+      return ;
+    }
+
   // next re-factoring,  create this earlier ...
   vector<pair<string, string>> todos;
 
@@ -622,7 +626,8 @@ Cache::updateIndex(const SyncData& data)
 
   transaction.commit() ;
 
-
+  LogInfo () << "run db analyzer\n";
+  execute ("ANALYZE ;");
 }
 //------------------------------------------------------------------------------
 
