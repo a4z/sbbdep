@@ -81,7 +81,7 @@ getPkgsOfFile (Cache& cache,const PathName& fname, int arch)
 
   auto& cmd = cache.namedCommand(cmdname, sql) ;
 
-  return cmd.run( { fname.Str (), arch }) ;
+  return cmd.select( { fname.Str (), arch }) ;
 
 }
 //------------------------------------------------------------------------------

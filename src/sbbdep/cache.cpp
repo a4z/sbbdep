@@ -209,7 +209,7 @@ Cache::checkDbSchemaVersion()
     const std::string sql=
       "SELECT COUNT(*) FROM keyvalstore WHERE key='ldsoconf';";
 
-    if(selectValue(sql).getInt64() == 0)
+    if(selectValue (sql).getInt64 () == 0)
       {
         execute("INSERT INTO keyvalstore (key, value) "
                 "VALUES ('ldsoconf', 0);");
@@ -388,8 +388,9 @@ Cache::createUpdateSyncData()
       allpkgindb.begin(), allpkgindb.end(),
       std::inserter(installed, installed.begin() ));
 
-  // ensure sorted, should not be required ... TODO
-  std::sort(std::begin(installed), std::end(installed));
+  // ensure sorted, even if it should not be required ...
+  //std::sort(std::begin(installed), std::end(installed));
+  SBBASSERT (std::is_sorted (installed.begin (), installed.end ())) ;
 
   // new pkgs that are not in the installed list are re-installed
   std::set_difference(newpkgs.begin(), newpkgs.end(),
@@ -398,15 +399,14 @@ Cache::createUpdateSyncData()
 
   waitfor(searchdeleted);
 
-  // TODO debug asserts
-  if(not std::is_sorted(installed.begin(), installed.end()))
-    throw ErrUnexpected("installed not sorted") ;
+  // done above
+  //SBBASSERT (std::is_sorted (installed.begin (), installed.end ())) ;
 
-  if(not std::is_sorted(removed.begin(), removed.end()))
-    throw ErrUnexpected("removed not sorted") ;
+  SBBASSERT (std::is_sorted (removed.begin (), removed.end ())) ;
 
-  if(not std::is_sorted(retval.reinstalled.begin(), retval.reinstalled.end()))
-    throw ErrUnexpected("retval.reinstalled not sorted") ;
+  SBBASSERT (std::is_sorted (retval.reinstalled.begin (),
+                             retval.reinstalled.end ())) ;
+
 
 // find updated, sort them out
 // updated are in removed and in insert, different version but same name
@@ -453,16 +453,14 @@ Cache::createUpdateSyncData()
         }
     }
 
-
-  if(updataOld.size() != updateNew.size()) // TODO assert
-    throw ErrUnexpected("filter update did not work") ;
+  SBBASSERT( updataOld.size() == updateNew.size() ) ;
+  //"filter update did not work"
 
   for(size_t i = 0; i < updataOld.size(); ++i)
     {
       auto p = make_pair(PkgName(updataOld[i]),PkgName(updateNew[i])) ;
 
-      if(p.first.Name() != p.second.Name()) // TODO assert
-        throw ErrUnexpected("name old new does not match") ;
+      SBBASSERT (p.first.Name () == p.second.Name ()) ;
 
       retval.updated.emplace_back(p);
     }
@@ -645,7 +643,8 @@ Cache::getCommand(sqlid id)
 
   if(not init.second)
     {
-      throw ErrUnexpected("create command failed") ; // TODO add id to message
+      auto strid = std::to_string((int)id) ;
+      throw ErrUnexpected("create command " + strid + "failed") ;
     }
 
   return init.first->second ;

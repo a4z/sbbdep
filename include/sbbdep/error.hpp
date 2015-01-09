@@ -35,6 +35,7 @@ namespace sbbdep{
   enum class ErrCode
   {
      GENERIC    = 1 ,
+     ASSERT ,
      TODO       = 98 ,
      UNEXPECTED = 99 
   };
@@ -80,6 +81,7 @@ namespace sbbdep{
   };
   
   using ErrGeneric      =  ErrType<ErrCode::GENERIC>;
+  using ErrAssert       =  ErrType<ErrCode::ASSERT>;
   using ErrToDo         =  ErrType<ErrCode::TODO>;
   using ErrUnexpected   =  ErrType<ErrCode::UNEXPECTED>;
 
@@ -88,6 +90,11 @@ namespace sbbdep{
 
 
 } // ns 
+
+#define SBBASSERT( exp ) if ( !( exp ) ) \
+  throw  sbbdep::ErrAssert( std::string(" assertion in ")\
+            + sbbdep::PathName ( __FILE__ ).getBase() + ":" \
+            +  __PRETTY_FUNCTION__ + ": " + #exp )
 
 
 #endif /* ...ERROR_HPP_ */

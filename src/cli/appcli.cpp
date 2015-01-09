@@ -185,7 +185,7 @@ AppCli::Run(const AppArgs& appargs)
 
   try
     {
-      pkg.Load(); // TODO , check the return value
+      SBBASSERT (pkg.Load ()) ;
     }
   catch (const Error& e)
     {

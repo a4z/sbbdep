@@ -133,13 +133,13 @@ printWhoNeed(Cache& cache, const Pkg& pkg, bool addversion, bool xdl )
       auto& cmd = cache.namedCommand ("WhoNeedFileQuery",
                                       getWhoNeedFileQuery ());
       const DbValues args = { { pkg.getElfFiles ()[0].getName () } };
-      ds = cmd.run (args);
+      ds = cmd.select (args);
     }
   else if(pkg.getType () == PkgType::Installed)
     {
       auto& cmd = cache.namedCommand ("WhoNeedPkgQuery", getWhoNeedPkgQuery ());
       const DbValues args = { { pkg.getPath ().getBase () } };
-      ds = cmd.run (args);
+      ds = cmd.select (args);
     }
   else
     {  // TODO some message ??

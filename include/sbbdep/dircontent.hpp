@@ -102,7 +102,7 @@ private:
    
 };
 
-static const Dir PkgAdmDir {"/var/adm/packages"} ; // todo
+static const Dir PkgAdmDir {"/var/adm/packages"} ; // TODO
 
 }
 
