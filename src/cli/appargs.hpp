@@ -43,6 +43,7 @@ class AppArgs
   int _explain_dynlinked;
   int _quiet;
   int _ldd;
+  int _lookup;
   int _featureX;
   std::string _featureXArgs;
 
@@ -64,6 +65,7 @@ public:
   bool getXDL() const { return _explain_dynlinked ; }
   bool getQuiet() const { return _quiet ; }
   bool getLdd() const { return _ldd ; }
+  bool getLookup() const { return _lookup ; }
   bool getFeatureX() const { return _featureX ; }
   const std::string& getFeatureXArgs() const { return _featureXArgs ; }
   

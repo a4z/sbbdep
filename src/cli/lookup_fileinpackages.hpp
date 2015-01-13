@@ -26,14 +26,18 @@ THE SOFTWARE.
 #define SBBDEP_LOOKUP_FILEINPACKAGES_HPP_
 
 #include <sbbdep/log.hpp>
+#include <string>
+
+
+
+
+
 
 namespace sbbdep {
 
-class Pkg;
 class Path;
-class PkgOneBinLib;
 
-namespace lookup{
+namespace cli{
 
 
 
@@ -41,6 +45,7 @@ namespace lookup{
 bool fileInPackages(const sbbdep::Path& filepath);
 
 //bool fileInPackages(const sbbdep::Path& filepath, Log::ChannelType& out);
+void lookupInPackages(const std::string& serach) ;
 
 
 

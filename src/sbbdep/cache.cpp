@@ -657,14 +657,16 @@ Cache::getCommand(sqlid id)
 void
 Cache::indexPkg(const Pkg& pkg)
 {
-  // TODO assert(pkg.isLoaded()) ;
+
+  SBBASSERT (pkg.isLoaded ()) ;
+
 
   // todo might change and use worker, runBlocked to
   // but i must think about this
   try
     {
-      const auto pkgname = PkgName(pkg.getPath().getBase()) ;
-      const auto timestamp = pkg.getPath().getLastModificationTime() ;
+      const auto pkgname = PkgName (pkg.getPath ().getBase ());
+      const auto timestamp = pkg.getPath ().getLastModificationTime ();
 
       getCommand(sqlid::insert_pkg).execute( {
                  { pkgname.FullName() } ,

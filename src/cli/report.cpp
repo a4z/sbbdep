@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <sbbdep/log.hpp>
 #include <sbbdep/cache.hpp>
 
+#include <iomanip>
 
 namespace sbbdep {
 namespace cli{
@@ -71,9 +72,22 @@ printSyncReport(Cache& cache,
           LogInfo () << "reinstalled: " << p;
         }
 
+      size_t longest = 0 ;
       for(auto&& pp : syncdata.updated)
         {
-          LogInfo () << "updated: " << pp.second.FullName ()
+          const auto len = pp.second.FullName ().size();
+          if(len > longest)
+            longest = len ;
+        }
+
+
+
+      for(auto&& pp : syncdata.updated)
+        {
+          LogInfo () << "updated: "
+              << std::setw(longest + 3) << std::left
+              << pp.second.FullName ()
+              << std::setw(0)
               << " (was " // extract version arch buildstr
               << pp.first.FullName ().substr ( pp.first.Name ().size () + 1)
               << ")";

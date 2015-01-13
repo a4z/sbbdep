@@ -291,6 +291,13 @@ struct ConcurrentPeek
       _eolElem : std::move(*_pos++) ;
   }
 
+  T pop()
+  {
+    std::unique_lock<std::mutex> lock(_mtx);
+    return _pos == _data.end() ?
+      _eolElem : std::move(*_pos++) ;
+  }
+
 private:
   std::vector<T>  _data;
   typename std::vector<T>::iterator _pos;

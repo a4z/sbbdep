@@ -73,7 +73,7 @@ namespace
       }
     catch (...)
       {
-        LogError() << "can not open cache " << name;
+        LogError () << "can not open cache " << name;
         throw;
       }
    }//--------------------------------------------------------------------------
@@ -84,7 +84,7 @@ int
 AppCli::Run(const AppArgs& appargs)
 {
 
-  if( appargs.getPrintVersions() )
+  if (appargs.getPrintVersions ())
     {
       std::cout << "sbbdep version "
           << sbbdep::MAJOR_VERSION << "."
@@ -94,91 +94,99 @@ AppCli::Run(const AppArgs& appargs)
     }
 
   std::ofstream outfile;
-  if( appargs.getOutFile().size() )
+  if (appargs.getOutFile ().size ())
     {
       outfile.open(appargs.getOutFile().c_str(),
                    std::ofstream::out | std::ofstream::trunc);
-      LogSetup::create(outfile, appargs.getQuiet()) ;
+      LogSetup::create (outfile, appargs.getQuiet ()) ;
     }
   else
     {
-      LogSetup::create(std::cout, appargs.getQuiet()) ;
+      LogSetup::create (std::cout, appargs.getQuiet ()) ;
     }
 
-
-  Path dbpath(appargs.getDBName()) ;
-
-
-
-  if(not dbpath.isRegularFile() and appargs.getNoSync())
+  if(appargs.getLookup())
     {
-      LogInfo() << appargs.getDBName() << " does not exist and need to "
+      if (appargs.getQuery ().empty ())
+        {
+          LogInfo () << "error: lookup query missing, no argument provided" ;
+          return  1;
+        }
+       cli::lookupInPackages(appargs.getQuery ()) ;
+       return 0;
+    }
+
+  Path dbpath (appargs.getDBName ()) ;
+
+  if (not dbpath.isRegularFile () and appargs.getNoSync ())
+    {
+      LogInfo () << appargs.getDBName () << " does not exist and need to "
           "be created. nosync makes therefore no sense. I exit now." ;
       return 2 ;
     }
 
-  Cache cache = openCache(appargs.getDBName()) ;
-  if(cache.isNewDb() and appargs.getNoSync())
+  Cache cache = openCache (appargs.getDBName ()) ;
+  if (cache.isNewDb () and appargs.getNoSync ())
     { // could also have an empty db ...
-      LogInfo() << appargs.getDBName() << " db is empty and needs to "
+      LogInfo () << appargs.getDBName () << " db is empty and needs to "
           "be created. nosync makes therefore no sense. I exit now." ;
       return 2 ;
     }
 
 
-  if(appargs.getFeatureX())
+  if (appargs.getFeatureX ())
     {
-      cli::runFx(appargs.getFeatureXArgs()) ;
+      cli::runFx (appargs.getFeatureXArgs ()) ;
       return 0  ;
     }
 
 
-  if(not appargs.getNoSync())
+  if (not appargs.getNoSync ())
     {
-      auto syncdata = cache.doSync() ;
+      auto syncdata = cache.doSync () ;
       cli::printSyncReport (cache, syncdata) ;
     }
 
 
-  if( appargs.getQuery().empty() )
-    return 0; // was a sync only call ....
+  if (appargs.getQuery ().empty ())
+    { // was a sync only call ....
+      return 0;
+    }
 
+  Path querypath (appargs.getQuery ());
 
-  Path querypath( appargs.getQuery() );
+  querypath.makeAbsolute ();
+  querypath.makeRealPath ();
 
-  querypath.makeAbsolute();
-  querypath.makeRealPath();
-
-  Pkg pkg = Pkg::create(querypath);
-  if(pkg.getType() == PkgType::Unknown)
+  Pkg pkg = Pkg::create (querypath);
+  if(pkg.getType () == PkgType::Unknown)
     {
       try
         {
           if(querypath.isValid())
             {
-              LogInfo() << "not a file with binary dependencies: " ;
-              LogInfo() << querypath
+              LogInfo () << "not a file with binary dependencies: "
+                  << querypath
                   << "\n try to find information in package list:";
-              lookup::fileInPackages(querypath);
+              cli::fileInPackages (querypath);
             }
           else
-            { // TODO this search needs to become better
-              LogInfo() << "not a file path: '" << appargs.getQuery() ;
-              LogInfo() << "', use name as filename and ";
-              LogInfo() << " try to find filename in package list:" ;
-              lookup::fileInPackages(Path(appargs.getQuery()));
+            {
+              LogInfo () << "not a file path: '" << appargs.getQuery () ;
+              LogInfo () << " try to find some info in package list:" ;
+              cli::fileInPackages (Path (appargs.getQuery ()));
             }
 
           return 0;
         }
       catch (const Error& e)
         {
-          LogError() << e ;
+          LogError () << e ;
           return -3;
         }
       catch (...)
         {
-          LogError() << "Unknown error" ;
+          LogError () << "Unknown error" ;
           return -3;
         }
     }
@@ -189,53 +197,53 @@ AppCli::Run(const AppArgs& appargs)
     }
   catch (const Error& e)
     {
-      LogError() << e ;
+      LogError () << e ;
       return -4;
     }
   catch (...)
     {
-      LogError() << "Unknown error" ;
+      LogError () << "Unknown error" ;
       return -4;
     }
 
 
-  if( appargs.getWhoNeeds() )
+  if (appargs.getWhoNeeds ())
     { // TODO test what happens if a DESTDIR is given as pkg :-)
       try
         {
-          cli::printWhoNeed( cache, pkg ,
-                             appargs.getAppendVersions(),
-                             appargs.getXDL() ) ;
+          cli::printWhoNeed (cache, pkg ,
+                             appargs.getAppendVersions (),
+                             appargs.getXDL ()) ;
         }
       catch (const Error& e)
         {
-          LogError() << e ;
+          LogError () << e ;
           return -5;
         }
       catch (...)
         {
-          LogError() << "Unknown error";
+          LogError () << "Unknown error";
           return -5;
         }
     }
-  else if( !appargs.getWhoNeeds()  )
+  else if (not appargs.getWhoNeeds ())
     {
-      cli::printRequired( cache, pkg ,
-                          appargs.getAppendVersions(),
-                          appargs.getXDL(),
-                          appargs.getLdd() ) ;
+      cli::printRequired (cache, pkg ,
+                          appargs.getAppendVersions (),
+                          appargs.getXDL (),
+                          appargs.getLdd ()) ;
     }
-  else // TODO , this is more or less obsolete
+  else
     {
-      LogError() << "Can not run given combination of arguments";
-      LogError() << "(could possible, but I do not want)";
-      LogError() << "Please run just one QUERY." << std::endl;
+      LogError () << "Can not run given combination of arguments";
+      LogError () << "(could possible, but I do not want)";
+      LogError () << "Please run just one QUERY." << std::endl;
       return -6;
     }
 
 
   return 0;
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 }

@@ -27,6 +27,8 @@ THE SOFTWARE.
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
+#include <vector>
+#include <string>
 
 #include <getopt.h>
 
@@ -44,6 +46,7 @@ AppArgs::AppArgs()
   , _explain_dynlinked(0)
   , _quiet(0)
   , _ldd(0)
+  , _lookup(0)
   , _featureX(0)
   , _featureXArgs{""}
 {
@@ -67,7 +70,8 @@ AppArgs::PrintHelp()
     Writer&
     option( const std::string& option )
     {
-      std::cout << std::setw(2) << std::left << "" << std::setw(27) << std::left << option;
+      std::cout << std::setw(2) << std::left
+                << "" << std::setw(27) << std::left << option;
       return *this;
     }
     Writer&
@@ -118,7 +122,8 @@ AppArgs::PrintHelp()
    .newline()
    .newline();
   
-  write.option("-f,  --file=[FILENAME]") .description("write output to file FILENAME")
+  write.option("-f,  --file=[FILENAME]")
+      .description("write output to file FILENAME")
    .descriptionline("if this option is omitted ")
    .descriptionline("output will go to stdout")
    .newline()
@@ -126,7 +131,8 @@ AppArgs::PrintHelp()
 
   write.option("-s,  --short") .description("suppress version information")
     .descriptionline("print only package name without version ")
-    .descriptionline("produce a comma separated list of required package names if ")
+    .descriptionline("produce a comma separated list of "
+        "required package names if ")
     .descriptionline("QUERY is a package or DESTDIR")
     .newline()
     .newline();
@@ -134,37 +140,51 @@ AppArgs::PrintHelp()
   
   write.option("--nosync") .description("skips synchronise the cache")
    .descriptionline("only useful if cache is up to date")
-   .descriptionline("after install/update/remove packages, this option should not be used")
-   .descriptionline("if cache is up to date, QUERY will be a bit faster with this option")
+   .descriptionline("after install/update/remove packages, "
+       "this option should not be used")
+   .descriptionline("if cache is up to date, "
+       "QUERY will be a bit faster with this option")
    .newline()
    .newline();
 
-  write.option("--quiet") .description("Suppress status information during sync")
+  write.option("--quiet")
+   .description("Suppress status information during sync")
    .descriptionline("messages during synchronisation will not be shown")
    .newline()
    .newline();
 
   
-  write.option("--whoneeds") .description("prints packages that depend on arg")
+  write.option("--whoneeds")
+   .description("prints packages that depend on arg")
    .descriptionline("instead of printing the requirements of the given QUERY")
    .descriptionline("packages that depend on QUERY are reported")
    .newline()
    .newline();
   
-  write.option("--xdl") .description("explain dynamic linked file")
+  write.option("--xdl")
+   .description("explain dynamic linked file")
    .descriptionline("reports detailed information about needed and whoneeds")
    .descriptionline("if QUERY is a package than each file will be reported")
    .newline()
    .newline();
 
-  write.option("--ldd") .description("use ldd")
-   .descriptionline("per default, sbbdep uses the ELF information from binaries and libraries")
-   .descriptionline("with this option, sbbdep executes the ldd command against each dynamic ")
-   .descriptionline("linked file and uses the ldd output for dependency resolution")
+  write.option("--ldd")
+     .description("use ldd")
+     .descriptionline("per default, "
+       "sbbdep uses the ELF information from binaries and libraries")
+   .descriptionline("with this option, "
+       "sbbdep executes the ldd command against each dynamic ")
+   .descriptionline("linked file and uses the ldd output for "
+       "dependency resolution")
    .descriptionline("this option is useless for a --whoneeds query")
    .newline()
    .newline();
 
+  write.option("-l,  --lookup")
+   .description("search for query string in installed packages")
+   .descriptionline("will search for QUERY in the installed packages files"
+       " and skip all other operations")
+   ;
 
   write.option("-v,  --version") .description("display sbbdep version")
    .newline()
@@ -185,7 +205,7 @@ AppArgs::Parse( int argc, char** argv )
 
   if (argc == 1) return true; //sync only
 
-  const char* const short_options = "hf:c:sv";
+  const char* const short_options = "hlf:c:sv";
   
 
   const struct option long_options[] =
@@ -200,6 +220,7 @@ AppArgs::Parse( int argc, char** argv )
       { "whoneeds", no_argument, &_whoneeds, 1 },
       { "xdl", no_argument, &_explain_dynlinked, 1 },
       { "ldd", no_argument, &_ldd, 1 },
+      { "lookup", no_argument, &_lookup, 1 },
       { "fx", optional_argument, 0, 1 }, // undocumented option for the next test...
       { 0, 0, 0, 0 } // Required end   
     };
@@ -240,7 +261,11 @@ AppArgs::Parse( int argc, char** argv )
           optionVal = -1; //exit from here
           _help = true;
           break;
-          
+
+        case 'l':
+          _lookup = true;
+           break;
+
         case 's':
           _append_versions = false;
           break;
@@ -266,14 +291,29 @@ AppArgs::Parse( int argc, char** argv )
   // if help was submitted, ignore following cause only helptext is to show
   if( !_help && !_sbbdep_version )
     {
+      std::vector<std::string> ignores;
       for (int argidx = optind; argidx < argc; ++argidx)
         {
           if(_query.empty())
-            _query = argv[argidx];
+            {
+              _query = argv[argidx];
+            }
           else
-            break;
-          // TODO, log ignored arguments ....or change _query to a list
+            {
+              ignores.push_back (argv [argidx]) ;
+            }
         }
+      if (not ignores.empty ())
+        {
+          std::cerr << "too much args, ignore" ;
+          for(auto& ignore : ignores)
+            {
+              std::cerr << " " << ignore ;
+            }
+          std::cerr << "\n handle only query: "<< _query << "\n\n" ;
+        }
+
+
     }
   
   return retVal;
