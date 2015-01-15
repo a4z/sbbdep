@@ -347,14 +347,14 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
       auto notfound_end = std::remove_if(std::begin(needed), std::end(needed),
           [&deps](const std::string& val) ->bool
             {
-              for (auto& row : deps)
-                { // TODO I should add some way to find things in Dataset
-                  if (row.at (2).getText () == val)
-                    {
-                      return true;
-                    }
-                }
-              return false;
+              auto iter =
+                  std::find_if (deps.begin (), deps.end () ,
+                           [&val] (const DbValueRow& row)
+                             {
+                                return row.at (2).getText () == val ;
+                             }) ;
+
+              return iter != deps.end();
             });
 
       StringSet notFounds;

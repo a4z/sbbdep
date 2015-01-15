@@ -42,8 +42,7 @@ namespace cli{
 
   void
   printSyncReport(Cache& cache,
-                  const SyncData& syncdata,
-                  bool verbose = false) ; // TODO will this flag come?
+                  const SyncData& syncdata);
 
   void
   printRequired(Cache& cache,

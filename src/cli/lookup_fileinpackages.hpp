@@ -41,7 +41,7 @@ namespace cli{
 
 
 
-// TODO this needs to become obsolete , pass channel as arg
+
 bool fileInPackages(const sbbdep::Path& filepath);
 
 //bool fileInPackages(const sbbdep::Path& filepath, Log::ChannelType& out);

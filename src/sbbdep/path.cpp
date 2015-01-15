@@ -217,7 +217,7 @@ Path::getLastStatusChangeTime() const
 
 
 bool 
-Path::makeAbsolute()
+Path::makeAbsolute() // TODO remove this functiom, if this url exists, it can be made to a rela path
 {
   if( isAbsolute() ) return false; 
   

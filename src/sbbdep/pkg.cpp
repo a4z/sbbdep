@@ -317,12 +317,12 @@ Pkg::doLoadInstalled()
 ElfFile::Arch
 Pkg::getArch() const
 {
-// TODO , this could be done with more spezial case handling...
+  if (_elfFiles.empty ())
+    {
+      return ElfFile::ArchNA;
+    }
 
-  if( _elfFiles.empty() )
-    return ElfFile::ArchNA;
-
-  return _elfFiles.begin()->getArch() ;
+  return _elfFiles.begin ()->getArch ();
 }
 
 //------------------------------------------------------------------------------

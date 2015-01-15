@@ -25,8 +25,6 @@ THE SOFTWARE.
 #include <sbbdep/pathname.hpp>
 
 
-
-
 //#ifdef DEBUG
 //#include <iostream>
 //#endif
@@ -62,19 +60,19 @@ path         dirname    basename
 std::string 
 PathName::getBase() const 
 {
-  
+
   if( m_url.size() == 0 ) return "";
   
-  std::string retval = m_url; 
+  std::string retval = m_url;
 
-   // handles "/" and "." 
+   // handles "/" and "."
   if ( retval.size() == 1  ) return retval ;
 
   std::string::size_type lastSlash = retval.rfind('/' ) ;
-  
+
   // handles "usr" and ".."
   if ( lastSlash ==  std::string::npos ) return retval ;
-  
+
   //make  /usr/lib/ to /usr/lib
   if ( lastSlash ==  retval.size()-1 )
     {
@@ -82,12 +80,12 @@ PathName::getBase() const
       //set last again
       lastSlash = retval.rfind('/' ) ;
     }
-  
+
   // remove chunk name
   retval.erase(0, lastSlash+1) ;
-  
-  return retval ; 
-  
+
+  return retval ;
+
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -151,8 +149,8 @@ PathName::isRelative() const
 bool 
 PathName::isAbsolute() const
 {
-  if(isPath())
-    return  m_url.find("./") == std::string::npos;
+  if (m_url.size () > 0 )
+    return m_url [0] == '/';
   else
     return false;
 }

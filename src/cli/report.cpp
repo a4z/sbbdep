@@ -36,8 +36,7 @@ namespace cli{
 
 void
 printSyncReport(Cache& cache,
-                const SyncData& syncdata,
-                bool /*verbose*/)
+                const SyncData& syncdata)
 {
 
   if(syncdata.wasNewCache)

@@ -142,7 +142,8 @@ printWhoNeed(Cache& cache, const Pkg& pkg, bool addversion, bool xdl )
       ds = cmd.select (args);
     }
   else
-    {  // TODO some message ??
+    {
+      LogInfo() << "whoneeds option for this type of query not supported";
       return;
     }
 
