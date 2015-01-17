@@ -66,11 +66,6 @@ Pkg::create(const Path& path, PkgType type_hint)
   Path pkgpath = path ;
   PkgType pkgtype= PkgType::Unknown ;
 
-// TODO , this succcs, make soemthing usefull with pkgpath type Path
-  if( !pkgpath.isAbsolute() )
-    {
-      pkgpath.makeAbsolute();
-    }
   pkgpath.makeRealPath();
 
 
@@ -84,7 +79,7 @@ Pkg::create(const Path& path, PkgType type_hint)
         {
           Path admpath(PkgAdmDir.getName());
           admpath.makeRealPath();
-          if( pkgpath.getDir() == admpath.getURL() )
+          if( pkgpath.dir() == admpath.str() )
             {
               pkgtype = PkgType::Installed;
             }
@@ -108,7 +103,7 @@ Pkg::create(const Path& path, PkgType type_hint)
         {
           Path admpath(PkgAdmDir.getName());
           admpath.makeRealPath();
-          if( pkgpath.getDir() == admpath.getURL() )
+          if( pkgpath.dir() == admpath.str() )
             {
               pkgtype = PkgType::Installed ;
             }
@@ -194,7 +189,7 @@ Pkg::doLoadDestDir()
 
         if (path.isFolder())
           {
-            checkdir(path.getURL());
+            checkdir(path.str());
           }
         else if (path.isRegularFile())
           {
@@ -208,10 +203,10 @@ Pkg::doLoadDestDir()
 
   auto dirhandler = [this, checkdir](const std::string& dirname)
     {
-    Path path(this->_path.getURL() + "/" + dirname);
+    Path path(this->_path.str() + "/" + dirname);
     path.makeRealPath(); // remove // .. dir//usr/ ..
     if (path.isFolder())
-      checkdir(path.getURL());
+      checkdir(path.str());
     };
 
   for(auto& d : Pkg::usualBinDirs())
@@ -230,17 +225,17 @@ Pkg::doLoadInstalled()
   //check if given path name is a bin/lib directory
   auto isToCheck = [this] (const PathName& pn) -> bool {
     for(auto& s : Pkg::usualBinDirs()){
-        if ( not pn.getURL().compare( 0, s.size() , s ) )
+        if ( not pn.str().compare( 0, s.size() , s ) )
           return true;
     }
     for(auto& s : Pkg::usualLibDirs()){
-        if ( not pn.getURL().compare( 0, s.size() , s ) )
+        if ( not pn.str().compare( 0, s.size() , s ) )
           return true;
     }
 
     // check if is in /opt, it may have some layout and we must reply yes
     std::string opt("/opt/");
-    if ( not pn.getURL().compare( 0, opt.size() , opt ) )
+    if ( not pn.str().compare( 0, opt.size() , opt ) )
       return true;
 
     return false;
@@ -251,11 +246,11 @@ Pkg::doLoadInstalled()
     Path p = pn;
     if(!p.isValid())
       {
-        PathName pnTmp( pn.getDir() ) ;
+        PathName pnTmp( pn.dir() ) ;
         // dot new files are to ignore, these are not binaries
-        if (p.getURL().find( ".new" , pn.getURL().size()-4 ) != std::string::npos) return ;
-        else if ( pnTmp.getBase() =="incoming" ) p = pnTmp.getDir() + "/" + pn.getBase() ;
-        else if ( p.getBase() =="incoming" ) return ;
+        if (p.str().find( ".new" , pn.str().size()-4 ) != std::string::npos) return ;
+        else if ( pnTmp.base() =="incoming" ) p = pnTmp.dir() + "/" + pn.base() ;
+        else if ( p.base() =="incoming" ) return ;
         // place a warning here if file still not exists...
         if ( !p.isValid() ) LogInfo() << "Note: can not read file: " << p << "\n" ;
       }
@@ -271,7 +266,7 @@ Pkg::doLoadInstalled()
 
 
   //open the file,
-  std::ifstream ins( _path.getURL().c_str() );
+  std::ifstream ins( _path.str().c_str() );
   if ( !ins.good())
     return false;
 
@@ -301,12 +296,12 @@ Pkg::doLoadInstalled()
       catch( const Error& e )
         {
           LogError() << e
-              << " (readpkg " << _path.getURL() << " line:"<< line << ")\n";
+              << " (readpkg " << _path.str() << " line:"<< line << ")\n";
         }
       catch( ... )
         {
           LogError() << "Unknown exception (readpkg "
-              << _path.getURL() << " line:"<< line << ")\n";
+              << _path.str() << " line:"<< line << ")\n";
         }
     }
 

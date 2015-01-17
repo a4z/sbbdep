@@ -23,16 +23,17 @@
 
 #include "lookup_fileinpackages.hpp"
 
-#include <sbbdep/pkg.hpp>
-#include <sbbdep/pathname.hpp>
-#include <sbbdep/path.hpp>
-#include <sbbdep/log.hpp>
 #include <sbbdep/dircontent.hpp>
+#include <sbbdep/log.hpp>
+#include <sbbdep/path.hpp>
+#include <sbbdep/pathname.hpp>
+#include <sbbdep/pkg.hpp>
+#include <sbbdep/utils/concurrentpeek.hpp>
 
 #include <fstream>
+#include <thread>
 #include <vector>
 
-#include "../sbbdep/backgroundjob.hpp" // TODO
 
 namespace sbbdep {
 namespace cli {
@@ -58,7 +59,7 @@ process (const std::string& pkgfile, const Path& search)
       [&search](const std::string& line) -> bool
         {
 
-          std::string filename = "/"+ search.getBase();
+          std::string filename = "/"+ search.base();
           if (line.find( filename,
                         line.size ()-filename.size ()) != std::string::npos)
             {
@@ -80,13 +81,13 @@ process (const std::string& pkgfile, const Path& search)
   // helper to check if found name is exact match
   auto path_is_same_or_incoming = [&search](const Path match)-> bool
     {
-      if (search.getDir () == match.getDir ())
+      if (search.dir () == match.dir ())
         {
           return true;
         }
 
-      PathName p (match.getDir ());
-      if( p.getBase ()=="incoming" && p.getDir () == search.getDir ())
+      PathName p (match.dir ());
+      if( p.base ()=="incoming" && p.dir () == search.dir ())
         {
           return true;
         }
@@ -120,7 +121,7 @@ process (const std::string& pkgfile, const Path& search)
           else
             {
               WriteAppMsg () << " filename found in " << pkgfile << ": "
-                  << search.getBase () << "\n" << " -> line was :" << line ;
+                  << search.base () << "\n" << " -> line was :" << line ;
             }
 
 
@@ -211,7 +212,7 @@ lookupInPackages(const std::string& what)
                   if(line.find (what) != std::string::npos)
                     {
                       results += "\n " +
-                          PathName (pkgfile).getBase () + ": "  + line ;
+                          PathName (pkgfile).base () + ": "  + line ;
                     }
                 }
               if (not results.empty ())

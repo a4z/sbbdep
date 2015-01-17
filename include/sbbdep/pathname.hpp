@@ -49,45 +49,30 @@ public:
   PathName& operator=(PathName&&) = default ;
 
   virtual ~PathName() noexcept = default;
-
-
   
-  const std::string& getURL() const { return m_url; }
-  const std::string& Str() const { return m_url; } // 
+  const std::string& str() const { return _url; }
   
-  std::string getBase() const ;
-  std::string getDir() const ;
+  std::string base() const ;
+  std::string dir() const ;
 
-  bool isEmpty() const { return m_url.empty() ;}
-  
-  // kann ja auch nur ein datei name sein..
-  bool isPath() const; // TODO , seems to be unused, rmove
-  
-  // beginnt mit ./ or ../
-  bool isRelative() const; // TODO, should be not isAbsolute
-                            // or remove and let user us
+  bool empty() const { return _url.empty() ;}
 
-  // beginnt mit /
-  bool isAbsolute() const ;
-
-  
-
-  operator const char*() const { return m_url.c_str() ; }
-  operator const std::string&() const { return m_url ; }
+  operator const char*() const { return _url.c_str() ; }
+  operator const std::string&() const { return _url ; }
   
   bool operator==( const PathName& other ) const 
-  { return m_url == other.m_url ; }
+  { return _url == other._url ; }
 
   bool operator==( const std::string& other ) const 
-  { return m_url == other ; }
+  { return _url == other ; }
   
 
 protected:
   // for encapsulation in Path,..
-  virtual void setURL(const std::string& url){m_url=url;}
+  virtual void setURL(const std::string& url){_url=url;}
   
 private:
-  std::string m_url; 
+  std::string _url; 
   
 };
 

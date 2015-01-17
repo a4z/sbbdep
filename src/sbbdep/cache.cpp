@@ -24,21 +24,18 @@ THE SOFTWARE.
 
 #include <sbbdep/cache.hpp>
 
-
 #include <sbbdep/config.hpp>
-
 #include <sbbdep/dircontent.hpp>
+#include <sbbdep/error.hpp>
+#include <sbbdep/lddirs.hpp>
+#include <sbbdep/log.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgname.hpp>
-#include <sbbdep/error.hpp>
-#include <sbbdep/log.hpp>
-#include <sbbdep/error.hpp>
-#include <sbbdep/lddirs.hpp>
-
+#include <sbbdep/utils/backgroundjob.hpp>
+#include <sbbdep/utils/concurrentpeek.hpp>
 
 #include "cachesql.hpp"
-#include "backgroundjob.hpp"
 
 
 #include <a4sqlt3/error.hpp>
@@ -489,7 +486,7 @@ Cache::createIndex(const SyncData& data)
 
   BackgroundJob<Pkg> dbjob(
       [this](const Pkg& pkg)
-      {  LogDebug() << "index " << pkg.getPath().getBase() ;
+      {  LogDebug() << "index " << pkg.getPath().base() ;
         this->indexPkg(pkg) ;
       });
 
@@ -504,7 +501,7 @@ Cache::createIndex(const SyncData& data)
           // TODO new log system, msg based
           const auto filename = PkgAdmDir.getName() + "/" + todo ;
           auto pkg = Pkg::create(filename, PkgType::Installed);
-          LogDebug() << "load " << pkg.getPath().getBase() ;
+          LogDebug() << "load " << pkg.getPath().base() ;
           pkg.Load() ;
           dbjob.push(std::move(pkg));
           todo = picker();
@@ -579,7 +576,7 @@ Cache::updateIndex(const SyncData& data)
           }
 
         if(action.inst.isLoaded())
-          { LogInfo() << "index " << action.inst.getPath().getBase() ;
+          { LogInfo() << "index " << action.inst.getPath().base() ;
             this->indexPkg(action.inst) ;
           }
       });
@@ -598,7 +595,7 @@ Cache::updateIndex(const SyncData& data)
             {
               const auto filename = PkgAdmDir.getName () + "/" + todo.second;
               auto pkg = Pkg::create (filename, PkgType::Installed);
-              LogInfo() << "load " << pkg.getPath ().getBase ();
+              LogInfo() << "load " << pkg.getPath ().base ();
               pkg.Load ();
               dbjob.push (DbAction {todo.first, move (pkg)});
             }
@@ -665,7 +662,7 @@ Cache::indexPkg(const Pkg& pkg)
   // but i must think about this
   try
     {
-      const auto pkgname = PkgName (pkg.getPath ().getBase ());
+      const auto pkgname = PkgName (pkg.getPath ().base ());
       const auto timestamp = pkg.getPath ().getLastModificationTime ();
 
       getCommand(sqlid::insert_pkg).execute( {
@@ -684,9 +681,9 @@ Cache::indexPkg(const Pkg& pkg)
         {
           getCommand(sqlid::insert_dynlinked).execute( {
                    { pkgid } ,
-                   { elf.getName().Str() } ,
-                   { elf.getName().getDir() } ,
-                   { elf.getName().getBase() } ,
+                   { elf.getName().str() } ,
+                   { elf.getName().dir() } ,
+                   { elf.getName().base() } ,
                    (elf.soName().size()> 0 ?
                            DbValue(elf.soName()) :
                            DbValue(a4sqlt3::DbValueType::Null) ) ,
@@ -705,7 +702,7 @@ Cache::indexPkg(const Pkg& pkg)
          for(const auto& rrunpaht : elf.getRRunPaths())
            {
              getCommand(sqlid::insert_rrunpath).execute(
-                 { {dynlinked_id}, {rrunpaht} , {elf.getName().getDir()} }
+                 { {dynlinked_id}, {rrunpaht} , {elf.getName().dir()} }
              );
            }
         }

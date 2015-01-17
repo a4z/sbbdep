@@ -60,7 +60,7 @@ public:
   
   std::string soName() const {
     if(getType()== ElfFile::Library && _soName.empty())
-      return getName().getBase();
+      return getName().base();
 
     return _soName ;
   }

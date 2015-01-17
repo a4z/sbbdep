@@ -93,7 +93,7 @@ namespace sbbdep{
 
 #define SBBASSERT( exp ) if ( !( exp ) ) \
   throw  sbbdep::ErrAssert( std::string(" assertion in ")\
-            + sbbdep::PathName ( __FILE__ ).getBase() + ":" \
+            + sbbdep::PathName ( __FILE__ ).base() + ":" \
             +  __PRETTY_FUNCTION__ + ": " + #exp )
 
 

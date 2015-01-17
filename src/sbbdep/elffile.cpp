@@ -233,9 +233,9 @@ replaceORIGIN(const std::string& originstr,
   // which we need to make absolute
 
   return replace_first_copy(
-           replace_first_copy(originstr,"$ORIGIN/..",destfile.getDir()),
+           replace_first_copy(originstr,"$ORIGIN/..",destfile.dir()),
            "$ORIGIN",
-           destfile.getURL()) ;
+           destfile.str()) ;
 }
 
 

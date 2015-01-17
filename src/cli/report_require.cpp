@@ -81,7 +81,7 @@ getPkgsOfFile (Cache& cache,const PathName& fname, int arch)
 
   auto& cmd = cache.namedCommand(cmdname, sql) ;
 
-  return cmd.select( { fname.Str (), arch }) ;
+  return cmd.select( { fname.str (), arch }) ;
 
 }
 //------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 
       if(not notFound.empty())
         {
-          const auto filename = elf.getName ().Str () ;
+          const auto filename = elf.getName ().str () ;
           notFoundMap.insert (NotFoundMap::value_type (filename, notFound));
 
           for(const auto& so : notFound)
@@ -185,11 +185,11 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 
           if( storepos == ldsym_byfile.end ())
             {
-              ldsym_byfile [sym_flnk_arch] = { elf.getName ().Str () } ;
+              ldsym_byfile [sym_flnk_arch] = { elf.getName ().str () } ;
             }
           else
             {
-              storepos->second.insert ( elf.getName ().Str () ) ;
+              storepos->second.insert ( elf.getName ().str () ) ;
             }
         }
 
@@ -223,7 +223,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
           {
             DbValues vals = {
               pkgval.at (0) ,
-              DbValue (path.getURL()),
+              DbValue (path.str()),
               DbValue (sym) ,
               DbValue (f)
             };
@@ -253,14 +253,14 @@ elfdeps( Cache& cache
 
   auto quoterpath = [&fromfile, &quote](const std::string val) -> std::string
     {
-      std::string pathname = replaceORIGIN (val, fromfile.getDir ());
+      std::string pathname = replaceORIGIN (val, fromfile.dir ());
       if (pathname.empty ())
         {
           return "'no/where'";
         }
       Path p (pathname);
       p.makeRealPath () ;
-      return  quote(p.getURL ()) ;
+      return  quote(p.str ()) ;
   };
 
   const std::string insonames = utils::joinToString(needed, ",", quote);
@@ -272,7 +272,7 @@ elfdeps( Cache& cache
 
   const std::string sql=
     "SELECT pkgs.fullname as pkgname,  dynlinked.filename , dynlinked.soname, "
-    "'" + fromfile.Str () + "' as  requiredby"
+    "'" + fromfile.str () + "' as  requiredby"
     " FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id"
     " WHERE dynlinked.soname IN ( "
     + insonames +
@@ -372,7 +372,7 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
 
       if(not notFounds.empty ())
         {
-          not_found [elf.getName ().Str ()] = notFounds;
+          not_found [elf.getName ().str ()] = notFounds;
         }
 
       ds.merge(deps); // put this record to the report
@@ -507,7 +507,7 @@ printRequired(Cache& cache,
       utils::StringSet pkglist;
       std::string ignore_name ;
       if(pkg.getType() == PkgType::Installed)
-        ignore_name = pkg.getPath().getBase();
+        ignore_name = pkg.getPath().base();
 
 
       for(auto so_files: reptree.node) // filename so, just what the pkgs...

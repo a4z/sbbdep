@@ -155,7 +155,6 @@ AppCli::Run(const AppArgs& appargs)
 
   Path querypath (appargs.getQuery ());
 
-  querypath.makeAbsolute ();
   querypath.makeRealPath ();
 
   Pkg pkg = Pkg::create (querypath);

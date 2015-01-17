@@ -9,7 +9,6 @@
 #include <atomic>
 #include <queue>
 
-#include <sbbdep/log.hpp>
 
 namespace sbbdep
 {
@@ -17,13 +16,12 @@ namespace sbbdep
 /**
  * single consumer, multiple producer.
  *
- * with some special like i need at where its used
+ * with some special like I need it at where its used
  *
  */
 template<typename T>
 class BackgroundJob
 {
-
 
 public:
 
@@ -71,7 +69,7 @@ private:
     std::vector<T> messages;
     std::mutex mtx;
     std::condition_variable condt;
-    std::atomic_bool running; // should e {false} but problem ongcc 4.8.2
+    std::atomic_bool running; // should e {false} but problem on gcc 4.8.2
     bool newData;
 
   }; j _queue;
@@ -166,7 +164,7 @@ BackgroundJob<T>::consume(const Messages& messages)
     }
 
 }
-    //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 template<typename T>
 bool
@@ -269,44 +267,6 @@ auto BackgroundJob<T>::runBlocked(FT f) -> decltype(f())
   return f() ;
   // and if it would return void ...
 }
-
-
-/**
- * utility for picking out elements of a vector concurrently
- *
- *
- */
-template<typename T>
-struct ConcurrentPeek
-{
-  ConcurrentPeek(std::vector<T> data, const T& eolElem = T())
-    : _data(std::move(data)), _pos(_data.begin()) , _eolElem(eolElem)
-  {
-  }
-
-  T operator()()
-  {
-    std::unique_lock<std::mutex> lock(_mtx);
-    return _pos == _data.end() ?
-      _eolElem : std::move(*_pos++) ;
-  }
-
-  T pop()
-  {
-    std::unique_lock<std::mutex> lock(_mtx);
-    return _pos == _data.end() ?
-      _eolElem : std::move(*_pos++) ;
-  }
-
-private:
-  std::vector<T>  _data;
-  typename std::vector<T>::iterator _pos;
-  T _eolElem;
-  std::mutex _mtx;
-
-
-};
-
 
 
 

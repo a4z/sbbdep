@@ -93,9 +93,9 @@ fillFromLdSoCache(const std::vector<std::string>& ignore)
           Path path(std::string(file_begin, file_end));
           path.makeRealPath(); // should alswayr return ture,
 
-          if(not binary_search(begin(ignore), end(ignore), path.getDir()))
+          if(not binary_search(begin(ignore), end(ignore), path.dir()))
             {
-              retval.emplace_back(path.getDir());
+              retval.emplace_back(path.dir());
             }
 
         }
@@ -155,7 +155,7 @@ LDDirs::LDDirs()
               p.makeRealPath() ;
               if( p.isFolder() )
                 {
-                  _lddirs.emplace_back(p.getURL()) ;
+                  _lddirs.emplace_back(p.str()) ;
                 }
             }
         }

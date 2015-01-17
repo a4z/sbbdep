@@ -37,7 +37,7 @@ getLddMap(const sbbdep::PathName& f)
 {
   StringMap retval;
 
-  const std::string cmd = "ldd " + f.Str();
+  const std::string cmd = "ldd " + f.str();
   FILE* popin = popen(cmd.c_str(), "r");
   std::stringstream output;
   if( popin )

@@ -50,7 +50,7 @@ FindBinPath( const std::string& binname )
   // if noting found so far, return an invalid Path;
   return sbbdep::Path(""); 
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void
 TestFindInPath()
 {
@@ -64,33 +64,30 @@ TestFindInPath()
   
   
 }
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 
 void TestDefaults()
 {
   Path p1;
-  BOOST_REQUIRE( p1.isEmpty() ) ;
+  BOOST_REQUIRE( p1.empty() ) ;
   BOOST_REQUIRE( !p1.isValid() ) ;
   
   // take some file that should exist...
   p1 = "/etc/fstab" ;
-  BOOST_REQUIRE( !p1.isEmpty() ) ;
+  BOOST_REQUIRE( !p1.empty() ) ;
   BOOST_REQUIRE( p1.isValid() ) ;  
   BOOST_REQUIRE( p1.isRegularFile() ) ;
   
   PathName pn = p1; 
   
-  BOOST_REQUIRE( pn.isPath() ) ;
-  BOOST_REQUIRE( pn.isAbsolute() ) ;
-  BOOST_REQUIRE( !pn.isRelative() ) ;
   
   BOOST_REQUIRE( pn == p1 ) ;
   BOOST_REQUIRE( p1 == pn ) ;
   
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 void TestDirBase()
 {
@@ -105,54 +102,45 @@ void TestDirBase()
   
   Path p;
   p= "/usr/lib";
-  BOOST_REQUIRE (p.getDir() ==  "/usr" ) ;
-  BOOST_REQUIRE (p.getBase() ==  "lib" ) ;
+  BOOST_REQUIRE (p.dir() ==  "/usr" ) ;
+  BOOST_REQUIRE (p.base() ==  "lib" ) ;
   
   p= "/usr/";
-  BOOST_REQUIRE (p.getDir() ==  "/" ) ;
-  BOOST_REQUIRE (p.getBase() ==  "usr" ) ;  
+  BOOST_REQUIRE (p.dir() ==  "/" ) ;
+  BOOST_REQUIRE (p.base() ==  "usr" ) ;  
   
   p= "usr";
-  BOOST_REQUIRE (p.getDir() ==  "." ) ;
-  BOOST_REQUIRE (p.getBase() ==  "usr" ) ;  
+  BOOST_REQUIRE (p.dir() ==  "." ) ;
+  BOOST_REQUIRE (p.base() ==  "usr" ) ;  
   
   p= ".";
-  BOOST_REQUIRE (p.getDir() ==  "." ) ;
-  BOOST_REQUIRE (p.getBase() ==  "." ) ;  
+  BOOST_REQUIRE (p.dir() ==  "." ) ;
+  BOOST_REQUIRE (p.base() ==  "." ) ;  
 
   p= "..";
-  BOOST_REQUIRE (p.getDir() ==  "." ) ;
-  BOOST_REQUIRE (p.getBase() ==  ".." ) ;  
+  BOOST_REQUIRE (p.dir() ==  "." ) ;
+  BOOST_REQUIRE (p.base() ==  ".." ) ;  
   
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 void TestDiv()
 {
   
   PathName pn {"nix"} ;
-  
-  BOOST_REQUIRE ( not pn.isAbsolute()  ) ;
-  BOOST_REQUIRE ( pn.isRelative()  ) ;
-  BOOST_REQUIRE ( not pn.isPath()  ) ;
-  
+
   PathName pathtonowhere ( "/etc/../path/to/nowhere" ) ;
   {
     Path p(pathtonowhere);
-    BOOST_REQUIRE_NO_THROW( p.makeAbsolute() );
     BOOST_REQUIRE_NO_THROW( p.makeRealPath() );
   }
   {
     Path p(pathtonowhere);
-    BOOST_REQUIRE( p.makeAbsolute() == false );
     BOOST_REQUIRE( p.makeRealPath() == false );
    }
     // TODO check these , obviously broken, but I leave this as failing test to have a reminder
   {
     Path p(pathtonowhere);
-    BOOST_REQUIRE ( ! p.isAbsolute()  ) ;
-    BOOST_REQUIRE ( p.isRelative()  ) ;
-    BOOST_REQUIRE ( p.isPath()  ) ;
     BOOST_REQUIRE ( !p.isValid() ) ;
   }
   {
@@ -161,17 +149,12 @@ void TestDiv()
   }
   {
     Path p(pathtonowhere);
-    BOOST_CHECK(p.makeAbsolute()==false);
-  }
-  {
-    Path p(pathtonowhere);
     BOOST_CHECK(p.makeRealPath()==false);
-    BOOST_CHECK(p.makeAbsolute()==false);
   }
 
 }
 
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 
 a4TestAdd(

@@ -145,7 +145,8 @@ INSERT INTO keyvalstore (key , value) VALUES ('ldsoconf', 0);
 
 )~"
 "INSERT INTO VERSION (major, minor, patchlevel) "
-"VALUES('" AS_STR(SBBDEP_MAJOR_VERSION) "', '" AS_STR(SBBDEP_MINOR_VERSION) "', '"
+"VALUES('" AS_STR(SBBDEP_MAJOR_VERSION) "', '"
+ AS_STR(SBBDEP_MINOR_VERSION) "', '"
  AS_STR(SBBDEP_PATCH_VERSION) "');"
 
 ;
@@ -379,11 +380,10 @@ namespace {
       }
 
     Path p((const char*)sqlite3_value_text(argv[0]));
-    p.makeAbsolute();
     p.makeRealPath();
 
     if ( p.isValid() )
-      sqlite3_result_text(context, p.getURL().c_str(), -1, SQLITE_TRANSIENT);
+      sqlite3_result_text(context, p.str().c_str(), -1, SQLITE_TRANSIENT);
     else
       sqlite3_result_null(context);
   }//---------------------------------------------------------------------------

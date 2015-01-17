@@ -26,9 +26,6 @@ THE SOFTWARE.
 #ifndef SBBDEP_PATH_HPP_
 #define SBBDEP_PATH_HPP_
 
-
-
-
 #include <string>
 #include <sys/stat.h>
 
@@ -73,10 +70,10 @@ public:
   Path& operator=(const PathName& rhs);
   
   bool operator==( const Path& other ) const 
-  { return getURL() == other.getURL() ; }
+  { return str() == other.str() ; }
 
   bool operator<( const Path& other ) const 
-  { return getURL() < other.getURL() ; }  
+  { return str() < other.str() ; }  
   
   /// d'tor
   virtual ~Path();
@@ -106,21 +103,11 @@ public:
   /// is user executable
   bool isUserX() const;
   
-  //const time_t& getLastAccessTime() ;
   const timespec& getLastAccessTime() const ;
   const time_t& getLastModificationTime() const ;
   const time_t& getLastStatusChangeTime() const ;
   
-  /// only if isAbsolut to not imply pwd by accident,  expand symlinks and  /./ /../ in path
   bool makeRealPath()  ;
-  // TODO this should always work and return pathname,
-  
-
-  /// relpaces ./ or ../ at begin with the current working dir
-  bool makeAbsolute();
-  // TODO this needs to become something else
-  // this needs either to call make realpath, or be renamed...
-
 
   friend std::ostream& operator<<(std::ostream& os, const Path& p);  
   
@@ -135,53 +122,7 @@ private:
   
 };
 
-/*
 
-struct stat {
-    dev_t     st_dev;     // ID of device containing file 
-    ino_t     st_ino;     // inode number 
-    mode_t    st_mode;    // protection 
-    nlink_t   st_nlink;   // number of hard links 
-    uid_t     st_uid;     // user ID of owner
-    gid_t     st_gid;     // group ID of owner 
-    dev_t     st_rdev;    // device ID (if special file) 
-    off_t     st_size;    // total size, in bytes 
-    blksize_t st_blksize; // blocksize for filesystem I/O 
-    blkcnt_t  st_blocks;  // number of blocks allocated 
-    time_t    st_atime;   // time of last access 
-    time_t    st_mtime;   // time of last modification 
-    time_t    st_ctime;   // time of last status change 
-};
-
-
- -- Macro: int S_ISDIR (mode_t M)
-     This macro returns non-zero if the file is a directory.
-
- -- Macro: int S_ISCHR (mode_t M)
-     This macro returns non-zero if the file is a character special
-     file (a device like a terminal).
-
- -- Macro: int S_ISBLK (mode_t M)
-     This macro returns non-zero if the file is a block special file (a
-     device like a disk).
-
- -- Macro: int S_ISREG (mode_t M)
-     This macro returns non-zero if the file is a regular file.
-
- -- Macro: int S_ISFIFO (mode_t M)
-     This macro returns non-zero if the file is a FIFO special file, or
-     a pipe.  *Note Pipes and FIFOs::.
-
- -- Macro: int S_ISLNK (mode_t M)
-     This macro returns non-zero if the file is a symbolic link.  *Note
-     Symbolic Links::.
-
- -- Macro: int S_ISSOCK (mode_t M)
-     This macro returns non-zero if the file is a socket.  *Note
-     Sockets::.
-
-
- */
 
 
 }//ns

@@ -138,7 +138,7 @@ printWhoNeed(Cache& cache, const Pkg& pkg, bool addversion, bool xdl )
   else if(pkg.getType () == PkgType::Installed)
     {
       auto& cmd = cache.namedCommand ("WhoNeedPkgQuery", getWhoNeedPkgQuery ());
-      const DbValues args = { { pkg.getPath ().getBase () } };
+      const DbValues args = { { pkg.getPath ().base () } };
       ds = cmd.select (args);
     }
   else
