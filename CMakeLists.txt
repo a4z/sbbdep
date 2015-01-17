@@ -95,6 +95,10 @@ include/sbbdep/pathname.hpp
 include/sbbdep/pkg.hpp
 include/sbbdep/pkgname.hpp
 
+include/sbbdep/utils/backgroundjob.hpp
+include/sbbdep/utils/concurrentpeek.hpp
+
+
 ${sbbdep_CONFIG_HEADER}
 )
 #-----------------------------------------------------------------------------------------
