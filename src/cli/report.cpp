@@ -55,21 +55,27 @@ printSyncReport(Cache& cache,
     }
   else
     {
-      LogInfo () << "Synchronization summary:";
+      LogInfo () << "Synchronization summary:\n";
       for(auto&& p : syncdata.removed)
         {
           LogInfo () << "removed: " << p;
         }
+      if(not syncdata.removed.empty())
+        LogInfo () << "" ; // just a new line
 
       for(auto&& p : syncdata.installed)
         {
           LogInfo () << "installed: " << p;
         }
+      if(not syncdata.installed.empty())
+         LogInfo () << "" ; // just a new line
 
       for(auto&& p : syncdata.reinstalled)
         {
           LogInfo () << "reinstalled: " << p;
         }
+      if(not syncdata.reinstalled.empty())
+         LogInfo () << "" ; // just a new line
 
       size_t longest = 0 ;
       for(auto&& pp : syncdata.updated)

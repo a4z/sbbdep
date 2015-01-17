@@ -26,27 +26,23 @@
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/log.hpp>
+#include <sbbdep/lddirs.hpp>
 
 #include <fstream>
 
 namespace sbbdep {
 
-// check also #include <sbbdep/lddirs.hpp>
-// they contain a bit more
-// TODO , check if they are still required, the are also in the database
 
-// this is just used to load destdir, so it can be local there TODO
-const Pkg::StringSet&
-Pkg::usualBinDirs()
+
+const Pkg::StringVec&
+usualBinDirs()
 {
-  static const StringSet data
-    { "/sbin", "/usr/sbin", "/bin", "/usr/bin", "/usr/libexec" };
-  return data;
+  return getLDDirs().getLdDirs() ;
 }
-const Pkg::StringSet&
-Pkg::usualLibDirs()
+const Pkg::StringVec&
+usualLibDirs()
 {
-  static const StringSet data
+  static const Pkg::StringVec data
     { "/lib", "/usr/lib", "/lib64", "/usr/lib64" };
   return data;
 }
@@ -209,10 +205,10 @@ Pkg::doLoadDestDir()
       checkdir(path.str());
     };
 
-  for(auto& d : Pkg::usualBinDirs())
+  for(auto& d : usualBinDirs())
     dirhandler(d);
 
-  for(auto& d : Pkg::usualLibDirs())
+  for(auto& d : usualLibDirs())
     dirhandler(d);
 
   return true;
@@ -224,11 +220,11 @@ Pkg::doLoadInstalled()
 {
   //check if given path name is a bin/lib directory
   auto isToCheck = [this] (const PathName& pn) -> bool {
-    for(auto& s : Pkg::usualBinDirs()){
+    for(auto& s : usualBinDirs()){
         if ( not pn.str().compare( 0, s.size() , s ) )
           return true;
     }
-    for(auto& s : Pkg::usualLibDirs()){
+    for(auto& s : usualLibDirs()){
         if ( not pn.str().compare( 0, s.size() , s ) )
           return true;
     }

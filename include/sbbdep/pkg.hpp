@@ -26,16 +26,14 @@ THE SOFTWARE.
 #define SBBDEP_PKG_HPP_
 
 
-#include <sbbdep/path.hpp>
 #include <sbbdep/elffile.hpp>
+#include <sbbdep/path.hpp>
 
-#include <vector>
-#include <set>
 #include <string>
+#include <vector>
+
 
 namespace sbbdep {
-
-
 
 enum class PkgType{
   Unknown = 0 ,
@@ -46,22 +44,14 @@ enum class PkgType{
 };
 
 
-
 class Pkg
 {
 
   
 public:  
 
-  using StringSet = std::set<std::string> ;
+  using StringVec = std::vector<std::string> ;
   using ElfFiles = std::vector<ElfFile> ;
-
-  // TODO, merge this into something like SpecialDirs together with lddir
-  static const StringSet& usualBinDirs(); // need review, see comment in cpp
-  static const StringSet& usualLibDirs(); // need review, see comment in cpp
-
-  // must take the
-  //static Pkg create(const Path& p);
 
   static Pkg create(const Path& p, PkgType type_hint = PkgType::Unknown);
 
