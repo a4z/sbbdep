@@ -392,12 +392,22 @@ namespace {
 
 void register_own_functions(sqlite3* db)
 {
-  //todo  parameter 4 ?? re check docu
-  //auto flag = SQLITE_UTF8 | SQLITE_DETERMINISTIC ;
-  sqlite3_create_function(db, "replaceOrigin", 2, 0,0,
+  //TODO  parameter 4 , this is only in newer version
+  // also, the sqlite header from the project must be included before the
+  // system header
+  //
+  sqlite3_create_function(db,
+                          "replaceOrigin",
+                          2,
+                          SQLITE_UTF8 /*| SQLITE_DETERMINISTIC*/,
+                          0,
                           &replace_origin_func , 0 , 0 );
 
-  sqlite3_create_function(db, "mkRealPath", 1, 0,0,
+  sqlite3_create_function(db,
+                          "mkRealPath",
+                          1,
+                          SQLITE_UTF8 /*| SQLITE_DETERMINISTIC*/,
+                          0,
                           &make_realpath_func , 0 , 0 );
   // mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
 

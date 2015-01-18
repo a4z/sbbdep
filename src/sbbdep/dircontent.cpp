@@ -121,27 +121,27 @@ Dir::getContent(IgnorFilter filter) const
 void
 Dir::forEach(ContentCall cb, IgnorFilter filter ) const
 {
-  dir_ptr dirstm {opendir (_name.c_str ())};
+  dir_ptr dirstm { opendir (_name.c_str ()) };
 
-  if(dirstm == nullptr)
+  if (dirstm == nullptr)
     throw ErrGeneric ("open directory " + _name);
 
   dirent entry;
   auto result = &entry;
 
-  for(;;)
+  for (;;)
     {
-      if(readdir_r (dirstm.get(), &entry, &result) > 0)
+      if (readdir_r (dirstm.get (), &entry, &result) > 0)
         {
-          throw ErrGeneric ("readdir_r: bad return value");
-          // TODO check errno
+          auto eno = std::to_string (errno);
+          throw ErrGeneric ("readdir_r: bad return value, errno " + eno);
           break;
         }
-      if(result != nullptr)
+      if (result != nullptr)
         {
-          if(not filter (entry.d_name))
+          if (not filter (entry.d_name))
             {
-              if(not cb (_name, entry.d_name))
+              if (not cb (_name, entry.d_name))
                 {
                   break;
                 }

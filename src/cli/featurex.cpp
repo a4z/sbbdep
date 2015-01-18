@@ -29,49 +29,11 @@
 #include <string>
 #include <regex>
 
-/* TODO move this to a4sqlt3
-std::ostream&
-operator<<(std::ostream& stm, const a4sqlt3::DbValue& v)
-{
-
-  using namespace a4sqlt3 ;
-  switch( v.getStorageType() )
-    {
-
-    case DbValueType::Null:
-      stm << "<NULL>" ;
-      break ;
-
-    case DbValueType::Int64:
-      stm << v.getInt64() ;
-      break ;
-
-    case DbValueType::Real:
-      stm << v.getDouble() ;
-      break ;
-
-    case DbValueType::Text:
-      stm << v.getString() ;
-      break ;
-
-    case DbValueType::Blob:
-      stm << "<BLOB>" ;
-      break ;
-    default:
-      stm << "unknown storage type !!" ;
-      break ;
-    }
-
-  return stm ;
-}
-*/
 
 namespace sbbdep
 {
 namespace cli
 {
-
-
 
 
 void

@@ -59,7 +59,7 @@ fillFromLdSoCache ()
           auto posFound = [&buff](const char* pos) -> bool
             {
               if(pos == buff + sizeof( buff ))
-                { // TODO first line might look like
+                { // first line might look like
                   // 2683 libs found in cache `/etc/ld.so.cache
                   // it's not good to have a debug message for this
                   //LogDebug()<< "Info: not to parse: " << buff ;
@@ -161,13 +161,16 @@ LDDirs::LDDirs ()
 
   std::sort (_lddirs.begin (), _lddirs.end ());
   auto ldcache = ldcachedata.get ();
-// TODO if debug assert sorted,
+#ifdef DEBUG
+  SBBASSERT (std::is_sorted (_lddirs.begin (), _lddirs.end ()));
+#endif
 
   std::set_difference (_lddirs.begin (), _lddirs.end (),
                        ldcache.begin (), ldcache.end (),
                        std::inserter (_ldlnkdirs, _ldlnkdirs.begin ()));
 
 }
+//------------------------------------------------------------------------------
 
 const LDDirs&
 getLDDirs ()

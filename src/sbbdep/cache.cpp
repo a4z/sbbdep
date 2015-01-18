@@ -143,14 +143,14 @@ Cache::checkDbSchemaVersion()
     {
       Dataset ds( {DbValueType::Int64, DbValueType::Int64} );
       execute("SELECT major, minor FROM version", ds);
-      // TODO assert ds.size() == 1
+      SBBASSERT (ds.size () == 1);
       return calcMajorMinorVersion(ds[0][0].getInt64(), ds[0][1].getInt64());
     };
   auto getDbVersion = [calcVersion, this]() -> int
     {
       Dataset ds({DbValueType::Int64, DbValueType::Int64, DbValueType::Int64});
       execute("SELECT major, minor , patchlevel FROM version", ds);
-      // TODO assert ds.size() == 1
+      SBBASSERT (ds.size () == 1);
       return calcVersion(ds[0][0].getInt64(),
                          ds[0][1].getInt64(),
                          ds[0][2].getInt64());
@@ -472,16 +472,10 @@ Cache::createUpdateSyncData()
 void
 Cache::createIndex(const SyncData& data)
 {
-// TODO das muss was anderes werden
-  if(data.removed.size() != 0 || data.reinstalled.size() != 0 )
-    {
-      throw ErrUnexpected("Invalid argument in createIndex") ;
-    }
-  if(not data.wasNewCache)
-    {
-      throw ErrUnexpected("Invalid argument, SyncData not new") ;
-    }
-
+#ifdef DEBUG
+  SBBASSERT (data.removed.empty() && data.reinstalled.empty());
+  SBBASSERT (data.wasNewCache );
+#endif
 
 
   BackgroundJob<Pkg> dbjob(
@@ -498,7 +492,6 @@ Cache::createIndex(const SyncData& data)
       std::string todo = picker();
       while(not todo.empty())
         {
-          // TODO new log system, msg based
           const auto filename = PkgAdmDir.getName() + "/" + todo ;
           auto pkg = Pkg::create(filename, PkgType::Installed);
           LogDebug() << "load " << pkg.getPath().base() ;
@@ -746,18 +739,6 @@ Cache::updateLdDirInfo()
 
 }
 //------------------------------------------------------------------------------
-
-int64_t // TODO is this  worth a own memmber function ...
-Cache::latesPkgTimeStampInDb()
-{
-
-  a4sqlt3::DbValue val = selectValue(sql::maxPkgTimeStamp());
-
-   return val.isNull() ? 0 : val.getInt64() ;
-
-}
-//------------------------------------------------------------------------------
-
 
 
 a4sqlt3::SqlCommand&

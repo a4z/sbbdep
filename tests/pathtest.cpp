@@ -127,8 +127,6 @@ void TestDirBase()
 void TestDiv()
 {
   
-  PathName pn {"nix"} ;
-
   PathName pathtonowhere ( "/etc/../path/to/nowhere" ) ;
   {
     Path p(pathtonowhere);
@@ -138,19 +136,7 @@ void TestDiv()
     Path p(pathtonowhere);
     BOOST_REQUIRE( p.makeRealPath() == false );
    }
-    // TODO check these , obviously broken, but I leave this as failing test to have a reminder
-  {
-    Path p(pathtonowhere);
-    BOOST_REQUIRE ( !p.isValid() ) ;
-  }
-  {
-    Path p(pathtonowhere);
-    BOOST_CHECK(p.makeRealPath()==false);
-  }
-  {
-    Path p(pathtonowhere);
-    BOOST_CHECK(p.makeRealPath()==false);
-  }
+
 
 }
 

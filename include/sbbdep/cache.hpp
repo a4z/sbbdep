@@ -143,9 +143,6 @@ private:
   void
   updateLdDirInfo();  // do not forget to implements this here persistLdSoTime
 
-  int64_t
-  latesPkgTimeStampInDb();
-
 
   // stored sql commands
   using commandMap = std::map<sqlid,a4sqlt3::SqlCommand> ;
