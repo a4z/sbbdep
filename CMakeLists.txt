@@ -148,9 +148,7 @@ SET ( sbbdepcli_SRC
     src/cli/report_require.cpp
     src/cli/report_whoneed.cpp
     src/cli/report_utils.cpp    
-
-    src/cli/lookup_fileinpackages.hpp
-    src/cli/lookup_fileinpackages.cpp
+    src/cli/report_lookup.cpp
     
     src/cli/featurex.hpp
     src/cli/featurex.cpp

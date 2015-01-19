@@ -24,9 +24,7 @@
 #include "appcli.hpp"
 #include "appargs.hpp"
 
-// should become one
-#include "lookup_fileinpackages.hpp"
-// and that is this one.. TODO continue refactoring
+
 #include "report.hpp"
 
 #include "featurex.hpp"

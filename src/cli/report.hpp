@@ -25,18 +25,19 @@ THE SOFTWARE.
 #ifndef SBBDEP_CLI_REPORT_HPP_
 #define SBBDEP_CLI_REPORT_HPP_
 
+#include<functional>
+#include<map>
+#include<set>
 #include<string>
 #include<vector>
-#include<set>
-#include<map>
-#include<functional>
 
 namespace sbbdep{
 
   class Cache;
-  class SyncData;
-  class Pkg;
+  class Path ;
   class PathName ;
+  class Pkg;
+  class SyncData;
 
 namespace cli{
 
@@ -57,6 +58,14 @@ namespace cli{
                const Pkg& pkg,
                bool addversion,
                bool xdl ) ;
+
+
+
+  bool
+  fileInPackages (const sbbdep::Path& filepath);
+
+  void
+  lookupInPackages (const std::string& serach);
 
 
 

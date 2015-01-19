@@ -21,7 +21,7 @@
  -----------------------------------------------------------------------------
  */
 
-#include "lookup_fileinpackages.hpp"
+#include "report.hpp"
 
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/log.hpp>

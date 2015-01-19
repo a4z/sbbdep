@@ -650,9 +650,6 @@ Cache::indexPkg(const Pkg& pkg)
 
   SBBASSERT (pkg.isLoaded ()) ;
 
-
-  // todo might change and use worker, runBlocked to
-  // but i must think about this
   try
     {
       const auto pkgname = PkgName (pkg.getPath ().base ());
