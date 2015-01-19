@@ -413,6 +413,7 @@ static struct dynamic_tag_t {
     { DT_MAXPOSTAGS     , "MAXPOSTAGS"      },
 };
 
+static const ELFIO::Elf_Xword MAX_DATA_ENTRIES = 64;
 
 //------------------------------------------------------------------------------
 class dump
@@ -425,8 +426,6 @@ class dump
                                  std::hex << std::left
 
   public:
-    static const ELFIO::Elf_Xword MAX_DATA_ENTRIES = 64;
-
 //------------------------------------------------------------------------------
     static void
     header( std::ostream& out, const elfio& reader )
@@ -605,14 +604,14 @@ class dump
                             << "        Name"
                             << std::endl;
                     }
-                    for ( int i = 0; i < sym_no; ++i ) {
+                    for ( Elf_Xword i = 0; i < sym_no; ++i ) {
                         std::string   name;
-                        Elf64_Addr    value;
-                        Elf_Xword     size;
-                        unsigned char bind;
-                        unsigned char type;
-                        Elf_Half      section;
-                        unsigned char other;
+                        Elf64_Addr    value   = 0;
+                        Elf_Xword     size    = 0;
+                        unsigned char bind    = 0;
+                        unsigned char type    = 0;
+                        Elf_Half      section = 0;
+                        unsigned char other   = 0;
                         symbols.get_symbol( i, name, value, size, bind, type, section, other );
                         symbol_table( out, i, name, value, size, bind, type, section, reader.get_class() );
                     }
@@ -728,9 +727,9 @@ class dump
                 if ( dyn_no > 0 ) {
                     out << "Dynamic section (" << sec->get_name() << ")" << std::endl;
                     out << "[  Nr ] Tag              Name/Value" << std::endl;
-                    for ( int i = 0; i < dyn_no; ++i ) {
-                        Elf_Xword   tag;
-                        Elf_Xword   value;
+                    for ( Elf_Xword i = 0; i < dyn_no; ++i ) {
+                        Elf_Xword   tag   = 0;
+                        Elf_Xword   value = 0;
                         std::string str;
                         dynamic.get_entry( i, tag, value, str );
                         dynamic_tag( out, i, tag, value, str, reader.get_class() );
@@ -752,7 +751,7 @@ class dump
                  Elf_Xword     tag,
                  Elf_Xword     value,
                  std::string   str,
-                 unsigned int  elf_class )
+                 unsigned int  /*elf_class*/ )
     {
             out << "[" 
                 << DUMP_DEC_FORMAT(  5 ) << no
