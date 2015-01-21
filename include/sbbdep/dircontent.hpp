@@ -84,7 +84,7 @@ public:
   getContent(IgnorFilter = defaultFilter ) const ;
 
   /**
-   * \brief get a list of all entries in a directory.
+   * \brief apply a function to all entries.
    *
    * \throw ErrGeneric if the directory can not be opened
    * \throw whatever ContentCall might throw

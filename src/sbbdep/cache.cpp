@@ -202,7 +202,7 @@ Cache::checkDbSchemaVersion()
    }
 
 
-  { // should this be in ensureDefault ..  TODO
+  {
     const std::string sql=
       "SELECT COUNT(*) FROM keyvalstore WHERE key='ldsoconf';";
 
@@ -317,9 +317,7 @@ Cache::createUpdateSyncData()
   SyncData retval;
   retval.wasNewCache = false ;
 
-  // todo i use them later in threads, so they have to be const
-  // check if the next thing could return something, 2 values
-  // to init this will work with c++17 but has to tie for now
+
   StringSet allpkgfiles; // all pks in file system
   StringSet newpkgs; // // all pks in file system with a newer date
 
@@ -333,7 +331,7 @@ Cache::createUpdateSyncData()
                                const std::string& filename) -> bool
         {
           Path path(dirname + "/" + filename);
-          if (path.isRegularFile ()) // this could/should? be an assert, TODO
+          if (path.isRegularFile ())
             { // insert filename in all existing file_pkgs,
               allpkgfiles.insert (filename);
               // and if newer as the latest known file time
@@ -342,6 +340,10 @@ Cache::createUpdateSyncData()
                   newpkgs.insert (filename);
                 }
             }
+          else
+            {
+              LogError() << "(fillAllAndNew) can't read file " << path.str() ;
+            }
           return true ;
         };
 
@@ -349,7 +351,6 @@ Cache::createUpdateSyncData()
 
   std::thread checkFS(&Dir::forEach, &PkgAdmDir,
                       fillAllAndNew, Dir::defaultFilter);
- // TODO default arg does not work, shall I change the interface?
 
 
 // while this runs, get all from the db
@@ -365,7 +366,7 @@ Cache::createUpdateSyncData()
 
   waitfor (checkFS);
 
-  // TODO allpkgfiles , newpkgs create const here cause of shared access
+  // NOTE from here, allpkgindb allpkgfiles newpkgs have to be read only
 
   StringVec installed , removed ;
   // need temporary store to filter updated ...
