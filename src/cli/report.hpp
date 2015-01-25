@@ -37,7 +37,7 @@ namespace sbbdep{
   class Path ;
   class PathName ;
   class Pkg;
-  class SyncData;
+  struct SyncData;
 
 namespace cli{
 
@@ -81,13 +81,14 @@ namespace cli{
     //--------------------------------------------------------------------------
 
     using convert_function = std::function<std::string(const std::string&)> ;
-    auto no_conversion =
-        [](const std::string& val) -> std::string { return val;};
+
 
     template<typename T>
     std::string joinToString(const T& container,
                              const std::string join = ", ",
-                             convert_function convert = no_conversion )
+                             convert_function convert = // do nothing default
+                                 [](const std::string& val) -> std::string
+                                 { return val;} )
     {
 
       std::string retval;

@@ -93,9 +93,9 @@ printSyncReport(Cache& cache,
               << std::setw(longest + 3) << std::left
               << pp.second.FullName ()
               << std::setw(0)
-              << " (was " // extract version arch buildstr
+              << "from " // extract version arch buildstr
               << pp.first.FullName ().substr ( pp.first.Name ().size () + 1)
-              << ")";
+              ;
         }
     }
   LogInfo() << "" ; // append new line

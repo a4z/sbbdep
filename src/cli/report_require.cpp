@@ -458,7 +458,7 @@ printRequired(Cache& cache,
         }
     }
 
-  auto makename = [addversion, xdl](const std::string val)
+  auto makename = [addversion, xdl](const std::string val) -> const std::string
     {
       // in xdl mode, not using the slapt-get style of 'name >= version'
       if(xdl)

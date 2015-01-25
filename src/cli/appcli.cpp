@@ -81,6 +81,7 @@ namespace
 int
 AppCli::Run(const AppArgs& appargs)
 {
+  // TODO if no cache access in search. -l no bin file, no cache update...
 
   if (appargs.getPrintVersions ())
     {
@@ -168,7 +169,7 @@ AppCli::Run(const AppArgs& appargs)
               cli::fileInPackages (querypath);
             }
           else
-            {
+            { // TODO  , possible this should be the -l option ?
               LogInfo () << "not a file path: '" << appargs.getQuery () ;
               LogInfo () << " try to find some info in package list:" ;
               cli::fileInPackages (Path (appargs.getQuery ()));

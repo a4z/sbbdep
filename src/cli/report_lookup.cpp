@@ -30,6 +30,7 @@
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/utils/concurrentpeek.hpp>
 
+#include <future>
 #include <fstream>
 #include <thread>
 #include <vector>
@@ -41,7 +42,7 @@ namespace cli {
 namespace {
 
 // check pkgfile line for line if search exist
-void
+bool
 process (const std::string& pkgfile, const Path& search)
 {
 
@@ -49,7 +50,7 @@ process (const std::string& pkgfile, const Path& search)
   if (!ins.good ())
     {
       LogError () << "Waring: can not read " << pkgfile ;
-      return;
+      return false;
     }
 
 
@@ -126,10 +127,10 @@ process (const std::string& pkgfile, const Path& search)
 
 
           // if there was a match, no need to proceed
-          return;
+          return true;
         }
     }
-
+  return false;
 }
 //------------------------------------------------------------------------------
 
@@ -157,21 +158,32 @@ bool
 fileInPackages (const sbbdep::Path& filepath)
 {
 
-  auto pkglist = VarAdmPkgNames();
-
-#pragma omp parallel
+  ConcurrentPeek<std::string> pkglist (VarAdmPkgNames ()) ;
+  auto search = [&pkglist, &filepath] () -> bool
     {
-#pragma omp sections
+      bool hadMatch = false ;
+      std::string pkgfile = pkglist.pop ();
+      while(not pkgfile.empty  ())
         {
-          for (auto f : pkglist)
+          if (process (pkgfile, filepath))
             {
-#pragma omp task
-                {
-                  process (std::move (f), filepath);
-                }
+              hadMatch = true;
             }
+          pkgfile = pkglist.pop ();
         }
+      return hadMatch ;
+    };
+
+
+  auto match1 = std::async (std::launch::async, search) ;
+  auto match2 = search () ;
+
+  if( not match2 and not match1.get())
+    {
+      LogInfo() << "nothing found\n" ;
     }
+
+  LogInfo() << "" ; // just make a new line
 
   return true;
 }
@@ -231,6 +243,8 @@ lookupInPackages(const std::string& what)
     {
       t1.join();
     };
+
+  LogInfo() << "" ; // just make a new line
 
 }
 
