@@ -95,7 +95,7 @@ AppCli::Run(const AppArgs& appargs)
   std::ofstream outfile;
   if (appargs.getOutFile ().size ())
     {
-      outfile.open(appargs.getOutFile().c_str(),
+      outfile.open(appargs.getOutFile ().c_str (),
                    std::ofstream::out | std::ofstream::trunc);
       LogSetup::create (outfile, appargs.getQuiet ()) ;
     }
@@ -104,7 +104,7 @@ AppCli::Run(const AppArgs& appargs)
       LogSetup::create (std::cout, appargs.getQuiet ()) ;
     }
 
-  if(appargs.getLookup())
+  if (appargs.getLookup ())
     {
       if (appargs.getQuery ().empty ())
         {
@@ -124,6 +124,8 @@ AppCli::Run(const AppArgs& appargs)
       return 2 ;
     }
 
+
+
   Cache cache = openCache (appargs.getDBName ()) ;
   if (cache.isNewDb () and appargs.getNoSync ())
     { // could also have an empty db ...
@@ -140,28 +142,20 @@ AppCli::Run(const AppArgs& appargs)
     }
 
 
-  if (not appargs.getNoSync ())
-    {
-      auto syncdata = cache.doSync () ;
-      cli::printSyncReport (cache, syncdata) ;
-    }
-
-
-  if (appargs.getQuery ().empty ())
-    { // was a sync only call ....
-      return 0;
-    }
 
   Path querypath (appargs.getQuery ());
+  if (not appargs.getQuery ().empty())
+    {
+      querypath.makeRealPath ();
+    }
+  Pkg pkg = appargs.getQuery ().empty() ?
+      Pkg() : Pkg::create (querypath) ;
 
-  querypath.makeRealPath ();
-
-  Pkg pkg = Pkg::create (querypath);
-  if(pkg.getType () == PkgType::Unknown)
+  if(not appargs.getQuery ().empty() and pkg.getType () == PkgType::Unknown)
     {
       try
         {
-          if(querypath.isValid())
+          if(querypath.isValid ())
             {
               LogInfo () << "not a file with binary dependencies: "
                   << querypath
@@ -188,6 +182,22 @@ AppCli::Run(const AppArgs& appargs)
           return -3;
         }
     }
+
+
+
+  if (not appargs.getNoSync ())
+    {
+      auto syncdata = cache.doSync () ;
+      cli::printSyncReport (cache, syncdata) ;
+    }
+
+
+  if (appargs.getQuery ().empty ())
+    { // was a sync only call ....
+      return 0;
+    }
+
+
 
   try
     {
