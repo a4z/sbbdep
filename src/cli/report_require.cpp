@@ -284,11 +284,13 @@ elfdeps( Cache& cache
     " );" ;
 
   using namespace a4sqlt3;
-  Dataset ds(DbValueTypeList(4, DbValueType::Text));
-  cache.execute (sql, ds) ;
-  return ds;
+  DbValueTypes tps { {DbValueType::Text,
+                      DbValueType::Text,
+                      DbValueType::Text,
+                      DbValueType::Text} } ;
 
-  // TODO I need a  cache.select (sql, DbValueTypeList)
+
+  return  cache.select (sql, tps) ;
 
 }
 //------------------------------------------------------------------------------
