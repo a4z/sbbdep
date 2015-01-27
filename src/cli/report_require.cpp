@@ -356,7 +356,7 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
             {
               auto iter =
                   std::find_if (deps.begin (), deps.end () ,
-                           [&val] (const DbValueRow& row)
+                           [&val] (const DbValues& row)
                              {
                                 return row.at (2).getText () == val ;
                              }) ;
