@@ -59,27 +59,27 @@ Pkg
 Pkg::create(const Path& path, PkgType type_hint)
 {
 
-  Path pkgpath = path ;
-  PkgType pkgtype= PkgType::Unknown ;
+  Path pkgpath = path;
+  PkgType pkgtype = PkgType::Unknown;
 
-  pkgpath.makeRealPath();
+  pkgpath.makeRealPath ();
 
 
-  if(type_hint==PkgType::Unknown)
+  if (type_hint == PkgType::Unknown)
     {
-      if( pkgpath.isFolder() )
+      if (pkgpath.isFolder ())
         {
-          pkgtype = PkgType::DestDir ;
+          pkgtype = PkgType::DestDir;
         }
-      else if( pkgpath.isRegularFile() )
+      else if (pkgpath.isRegularFile ())
         {
-          Path admpath(PkgAdmDir.getName());
-          admpath.makeRealPath();
-          if( pkgpath.dir() == admpath.str() )
+          Path admpath (pkgAdmDir ().getName ());
+          admpath.makeRealPath ();
+          if (pkgpath.dir () == admpath.str ())
             {
               pkgtype = PkgType::Installed;
             }
-          else if( isElfBinOrElfLib(pkgpath) )
+          else if (isElfBinOrElfLib (pkgpath))
             {
               pkgtype = PkgType::BinLib;
             }
@@ -87,34 +87,34 @@ Pkg::create(const Path& path, PkgType type_hint)
     }
   else
     {
-      if(type_hint == PkgType::DestDir)
+      if (type_hint == PkgType::DestDir)
         {
-          if( pkgpath.isFolder() )
+          if (pkgpath.isFolder ())
             {
-              pkgtype = PkgType::DestDir ;
+              pkgtype = PkgType::DestDir;
             }
 
         }
       else if (type_hint == PkgType::Installed)
         {
-          Path admpath(PkgAdmDir.getName());
-          admpath.makeRealPath();
-          if( pkgpath.dir() == admpath.str() )
+          Path admpath (pkgAdmDir ().getName ());
+          admpath.makeRealPath ();
+          if (pkgpath.dir () == admpath.str ())
             {
-              pkgtype = PkgType::Installed ;
+              pkgtype = PkgType::Installed;
             }
-         }
+        }
       else if (type_hint == PkgType::BinLib)
         {
-          if( isElfBinOrElfLib(pkgpath) )
+          if (isElfBinOrElfLib (pkgpath))
             {
-              pkgtype = PkgType::Installed ;
+              pkgtype = PkgType::Installed;
             }
         }
     }
 
   // if we have nothing usefull we create an unknow package...
-  return Pkg(std::move(pkgpath), pkgtype);
+  return Pkg (std::move (pkgpath), pkgtype);
 
 }
 //------------------------------------------------------------------------------
@@ -173,11 +173,12 @@ Pkg::doLoadOneBinLib()
 bool
 Pkg::doLoadDestDir()
 {
-  // recursive go through given dir, check for dynlinked in it, if found , added to m_dlinfos
+  // recursive go through given dir,
+  // check for dynlinked in it, if found , added to m_dlinfos
   std::function<void(const std::string&)> checkdir;
   checkdir = [this, &checkdir ]( const std::string& dname ) -> void
   {
-    auto entries = Dir{dname}.getContent();
+    auto entries = Dir {dname}.getContent();
 
     for(auto&& entrie: entries)
       {
@@ -191,7 +192,7 @@ Pkg::doLoadDestDir()
           {
             ElfFile elfile(path);
             if( elfile.isBinaryOrLibrary() )
-              _elfFiles.push_back(elfile);
+            _elfFiles.push_back(elfile);
           }
       }
 

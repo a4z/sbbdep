@@ -293,29 +293,29 @@ auto makeCommand(a4sqlt3::Database& db, Cache::sqlid id)
                                            DbValueType::Text,
                                            DbValueType::Text,
                                            DbValueType::Text,
-                                           DbValueType::Int64,
+                                           DbValueType::Int,
                                            DbValueType::Text,
-                                           DbValueType::Int64 } );
+                                           DbValueType::Int } );
       break;
 
     case Cache::sqlid::insert_dynlinked:
-      return db.command(sql::insertDynLinked(), {DbValueType::Int64,
+      return db.command(sql::insertDynLinked(), {DbValueType::Int,
                                                 DbValueType::Text,
                                                 DbValueType::Text,
                                                 DbValueType::Text,
                                                 DbValueType::Text,
-                                                DbValueType::Int64 });
+                                                DbValueType::Int });
 
 
       break;
 
     case Cache::sqlid::insert_required:
-      return db.command(sql::insertRequired(), { DbValueType::Int64,
+      return db.command(sql::insertRequired(), { DbValueType::Int,
                                                   DbValueType::Text } );
       break;
 
     case Cache::sqlid::insert_rrunpath:
-      return db.command(sql::insertRRunPath(),{ DbValueType::Int64,
+      return db.command(sql::insertRRunPath(),{ DbValueType::Int,
                                                   DbValueType::Text,
                                                   DbValueType::Text });
       break;

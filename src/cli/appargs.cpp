@@ -49,6 +49,7 @@ AppArgs::AppArgs()
   , _lookup(0)
   , _featureX(0)
   , _featureXArgs{""}
+  , _varAdmDir{"/var/adm/packages"}
 {
   
 }
@@ -83,7 +84,7 @@ AppArgs::PrintHelp()
     Writer&
     descriptionline( const std::string& txt )
     {
-      std::cout << std::setw(32) << "" << std::setw(0) << txt << std::endl;
+      std::cout << std::setw(30) << "" << std::setw(0) << txt << std::endl;
       return *this;
     }
     Writer&
@@ -115,7 +116,7 @@ AppArgs::PrintHelp()
   
   write.text(" available options:") .newline();
 
-  write.option("-c,  --cache") .description("cache file to use")
+  write.option("-c,  --cache=[FILENAME]") .description("cache file to use")
    .descriptionline("if this option is omitted ")
    .descriptionline("$HOME/sbbdep.cache is used")
    .descriptionline("cache must be read/writable")
@@ -184,7 +185,18 @@ AppArgs::PrintHelp()
    .description("search for query string in installed packages")
    .descriptionline("will search for QUERY in the installed packages files"
        " and skip all other operations")
+   .newline()
    ;
+
+
+  write.option("--admdir=[DIRNAME]")
+   .description("use this DIRNAME as package database")
+   .descriptionline("will search in DIRNAME for installed packages.")
+   .descriptionline("Default is /var/adm/packages")
+   .descriptionline("Usually you do not want to use this option")
+   .newline()
+  ;
+
 
   write.option("-v,  --version") .description("display sbbdep version")
    .newline()
@@ -222,6 +234,7 @@ AppArgs::Parse( int argc, char** argv )
       { "ldd", no_argument, &_ldd, 1 },
       { "lookup", no_argument, &_lookup, 1 },
       { "fx", optional_argument, 0, 1 }, // undocumented option for the next test...
+      { "admdir", required_argument, 0, 1 },
       { 0, 0, 0, 0 } // Required end   
     };
   
@@ -245,7 +258,9 @@ AppArgs::Parse( int argc, char** argv )
         	_featureX = 1 ;
         	_featureXArgs = optarg ? optarg : "";
           }
-
+          else if(optionName == "admdir") {
+            _varAdmDir = optarg ? optarg : "";
+          }
           break;
 
 

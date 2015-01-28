@@ -102,7 +102,27 @@ private:
    
 };
 
-static const Dir PkgAdmDir {"/var/adm/packages"} ; // TODO
+//static const Dir PkgAdmDir {"/var/adm/packages"} ; // TODO
+
+class PkgAdmDir
+{
+  static std::string name ;
+  PkgAdmDir() = default;
+public:
+
+  /// requires that it was set
+  static Dir get();
+
+  // I know I use this possible from different thread, but
+  // but set may be only called in AppCli.
+
+  /// needs to be set on startup and then never again
+  static void set(const std::string& n);
+
+};
+
+inline Dir
+pkgAdmDir() { return PkgAdmDir::get() ; }
 
 }
 

@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <sbbdep/dircontent.hpp>
 
 #include <sbbdep/error.hpp>
+#include <sbbdep/pathname.hpp> // for assert
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -156,6 +157,26 @@ Dir::forEach(ContentCall cb, IgnorFilter filter ) const
 }
 //------------------------------------------------------------------------------
 
+
+std::string PkgAdmDir::name{};
+
+Dir
+PkgAdmDir::get()
+{
+  SBBASSERT (not name.empty ()) ;
+  return Dir{name} ;
+}
+//------------------------------------------------------------------------------
+
+void PkgAdmDir::set(const std::string& n)
+{
+  SBBASSERT (name.empty ()) ;
+
+  name = n ;
+
+}
+
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

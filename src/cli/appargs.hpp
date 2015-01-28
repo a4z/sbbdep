@@ -46,7 +46,7 @@ class AppArgs
   int _lookup;
   int _featureX;
   std::string _featureXArgs;
-
+  std::string _varAdmDir;
   
 public:
   AppArgs();
@@ -68,6 +68,7 @@ public:
   bool getLookup() const { return _lookup ; }
   bool getFeatureX() const { return _featureX ; }
   const std::string& getFeatureXArgs() const { return _featureXArgs ; }
+  const std::string& getVarAdmDir() const { return _varAdmDir ; }
   
   void PrintHelp();
  

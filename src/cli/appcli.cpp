@@ -36,6 +36,7 @@
 
 #include <sbbdep/config.hpp> // generated 
 #include <sbbdep/cache.hpp>
+#include <sbbdep/dircontent.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/log.hpp>
 
@@ -103,6 +104,10 @@ AppCli::Run(const AppArgs& appargs)
     {
       LogSetup::create (std::cout, appargs.getQuiet ()) ;
     }
+
+
+  PkgAdmDir::set (appargs.getVarAdmDir ()) ;
+
 
   if (appargs.getLookup ())
     {

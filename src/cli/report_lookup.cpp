@@ -137,7 +137,7 @@ process (const std::string& pkgfile, const Path& search)
 std::vector<std::string>
 VarAdmPkgNames()
 {
-  auto admdir = PkgAdmDir;
+  auto admdir = pkgAdmDir();
   std::vector<std::string> retval;
 
   admdir.forEach ([&retval](const std::string& d,const std::string& f) -> bool

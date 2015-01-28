@@ -81,7 +81,7 @@ struct Case
     BOOST_REQUIRE_NO_THROW(db.Execute(sql));
     {
       a4sqlt3::DbValue cnt = db.selectSingleValue("select count(*) from rrunpath;");
-      BOOST_CHECK( cnt.getInt64() == 3 ) ;
+      BOOST_CHECK( cnt.getInt() == 3 ) ;
     }
 
   }

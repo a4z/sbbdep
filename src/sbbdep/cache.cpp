@@ -90,7 +90,7 @@ Cache::isNewDb()
 
   const DbValue countStar = selectValue(sql) ;
 
-  return countStar.getInt64() == 0;
+  return countStar.getInt() == 0;
 
 }
 //------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ Cache::checkDbSchemaVersion()
     const auto sql =
         "select count(*) from sqlite_master where name='version';";
     DbValue rc = this->selectValue(sql);
-    if(rc.getInt64() == 0)
+    if(rc.getInt() == 0)
       {
         sql::addVersionTable(*this);
       }
@@ -141,19 +141,19 @@ Cache::checkDbSchemaVersion()
 
   auto getDbMajorMinorVersion = [calcMajorMinorVersion, this]() -> int
     {
-      Dataset ds( {DbValueType::Int64, DbValueType::Int64} );
+      Dataset ds( {DbValueType::Int, DbValueType::Int} );
       execute("SELECT major, minor FROM version", ds);
       SBBASSERT (ds.size () == 1);
-      return calcMajorMinorVersion(ds[0][0].getInt64(), ds[0][1].getInt64());
+      return calcMajorMinorVersion(ds[0][0].getInt(), ds[0][1].getInt());
     };
   auto getDbVersion = [calcVersion, this]() -> int
     {
-      Dataset ds({DbValueType::Int64, DbValueType::Int64, DbValueType::Int64});
+      Dataset ds({DbValueType::Int, DbValueType::Int, DbValueType::Int});
       execute("SELECT major, minor , patchlevel FROM version", ds);
       SBBASSERT (ds.size () == 1);
-      return calcVersion(ds[0][0].getInt64(),
-                         ds[0][1].getInt64(),
-                         ds[0][2].getInt64());
+      return calcVersion(ds[0][0].getInt(),
+                         ds[0][1].getInt(),
+                         ds[0][2].getInt());
     };
 
   const auto app_version = calcVersion(MAJOR_VERSION,
@@ -206,7 +206,7 @@ Cache::checkDbSchemaVersion()
     const std::string sql=
       "SELECT COUNT(*) FROM keyvalstore WHERE key='ldsoconf';";
 
-    if(selectValue (sql).getInt64 () == 0)
+    if(selectValue (sql).getInt () == 0)
       {
         execute("INSERT INTO keyvalstore (key, value) "
                 "VALUES ('ldsoconf', 0);");
@@ -288,7 +288,7 @@ Cache::createNewSyncData()
       return true ;
     };
 
-  PkgAdmDir.forEach (newfiles_cb) ;
+  pkgAdmDir().forEach (newfiles_cb) ;
 
   return retval ;
 
@@ -322,7 +322,7 @@ Cache::createUpdateSyncData()
   StringSet newpkgs; // // all pks in file system with a newer date
 
   const auto val = selectValue (sql::maxPkgTimeStamp ());
-  const time_t maxknownftime = val.isNull () ? 0 : val.getInt64 () ;
+  const time_t maxknownftime = val.isNull () ? 0 : val.getInt () ;
 
 
   // callback for pkgadm dir, check pkg files add to all and new, if new
@@ -348,8 +348,8 @@ Cache::createUpdateSyncData()
         };
 
 
-
-  std::thread checkFS(&Dir::forEach, &PkgAdmDir,
+  const Dir admdir = pkgAdmDir() ;
+  std::thread checkFS(&Dir::forEach, &admdir,
                       fillAllAndNew, Dir::defaultFilter);
 
 
@@ -493,7 +493,7 @@ Cache::createIndex(const SyncData& data)
       std::string todo = picker();
       while(not todo.empty())
         {
-          const auto filename = PkgAdmDir.getName() + "/" + todo ;
+          const auto filename = pkgAdmDir().getName() + "/" + todo ;
           auto pkg = Pkg::create(filename, PkgType::Installed);
           LogDebug() << "load " << pkg.getPath().base() ;
           pkg.Load() ;
@@ -587,7 +587,7 @@ Cache::updateIndex(const SyncData& data)
         {
           if (not todo.second.empty ())
             {
-              const auto filename = PkgAdmDir.getName () + "/" + todo.second;
+              const auto filename = pkgAdmDir().getName () + "/" + todo.second;
               auto pkg = Pkg::create (filename, PkgType::Installed);
               LogInfo() << "load " << pkg.getPath ().base ();
               pkg.Load ();
