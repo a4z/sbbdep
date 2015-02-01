@@ -39,6 +39,7 @@ class AppArgs
   int _append_versions;
   int _sbbdep_version;
   int _nosync;
+  int _require;
   int _whoneeds;
   int _explain_dynlinked;
   int _quiet;
@@ -52,25 +53,31 @@ public:
   AppArgs();
   ~AppArgs();
   
-  bool Parse( int argc, char** argv ) ;
+  bool parse( int argc, char** argv ) ;
   
-  bool getHelp() const { return _help ;}
-  const std::string& getDBName() const { return _dbname ; }
-  const std::string& getQuery() const { return _query; }
+  bool help() const { return _help ;}
+  const std::string& dbname() const { return _dbname ; }
+  const std::string& query() const { return _query; }
   const std::string& getOutFile() const { return _outfile ; }
+
   bool getAppendVersions() const { return _append_versions ;}
-  bool getPrintVersions() const { return _sbbdep_version ;}
-  bool getNoSync() const { return _nosync ; }
-  bool getWhoNeeds() const { return _whoneeds ; }
-  bool getXDL() const { return _explain_dynlinked ; }
-  bool getQuiet() const { return _quiet ; }
-  bool getLdd() const { return _ldd ; }
-  bool getLookup() const { return _lookup ; }
-  bool getFeatureX() const { return _featureX ; }
-  const std::string& getFeatureXArgs() const { return _featureXArgs ; }
-  const std::string& getVarAdmDir() const { return _varAdmDir ; }
+  // todo this shall become short and flip logic where used
+  // or simply remove, but give a waring in this version and remove later
+
+
+  bool versions() const { return _sbbdep_version ;}
+  bool noSync() const { return _nosync ; }
+  bool whoNeeds() const { return _whoneeds ; }
+  bool require() const { return _require ; }
+  bool xdl() const { return _explain_dynlinked ; }
+  bool quiet() const { return _quiet ; }
+  bool ldd() const { return _ldd ; }
+  bool lookup() const { return _lookup ; }
+  bool featureX() const { return _featureX ; }
+  const std::string& featureXArgs() const { return _featureXArgs ; }
+  const std::string& varAdmDir() const { return _varAdmDir ; }
   
-  void PrintHelp();
+  void printHelp();
  
 };
 

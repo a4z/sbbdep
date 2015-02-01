@@ -145,51 +145,41 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
                 { // bookmark for later delete from map
                   notFound.insert(ld_line.first);
                 }
-              // ich glaub ich brauch hier ein else mit einer  notiz
-              // das required im eigengn pkg ist ...
             }
         }
 
-      if(not notFound.empty())
+      if (not notFound.empty ())
         {
           const auto filename = elf.getName ().str () ;
           notFoundMap.insert (NotFoundMap::value_type (filename, notFound));
-
+          // TODO , it this correct, what if a file has 2 not found
           for(const auto& so : notFound)
             {
               ldd_map.erase (so);
             }
-          // das scheint nicht zu stimmen,
-          // wenn ein not found im selben pkg ist,
-          // wird das anscheinend nicht behandelt
-          // wie bekomm ich das in die ausgab
-
-          // anscheinend muss ich dann einen
-          //Dataset ds {{ "pkgname", "filename", "soname" , "requiredby" } };
-          // schon anlegen und dann mergen
         }
 
 
-      if(ldd_map.empty ())
+      if (ldd_map.empty ())
         {
           continue;
         }
 
-      for(const auto& so_needed : ldd_map)
+      for (const auto& so_needed : ldd_map)
         {
           const SymFileLinkArch  sym_flnk_arch =
-              std::make_tuple( so_needed.first,
-                               so_needed.second , elf.getArch () ) ;
+              std::make_tuple (so_needed.first,
+                               so_needed.second , elf.getArch ()) ;
 
-          auto storepos = ldsym_byfile.find ( sym_flnk_arch );
+          auto storepos = ldsym_byfile.find (sym_flnk_arch);
 
-          if( storepos == ldsym_byfile.end ())
+          if (storepos == ldsym_byfile.end ())
             {
-              ldsym_byfile [sym_flnk_arch] = { elf.getName ().str () } ;
+              ldsym_byfile [sym_flnk_arch] = {elf.getName ().str ()};
             }
           else
             {
-              storepos->second.insert ( elf.getName ().str () ) ;
+              storepos->second.insert ( elf.getName ().str () );
             }
         }
 
@@ -202,7 +192,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
                 DbValueType::Text ,
                 DbValueType::Text } };
 
-  for(const auto& ldsym_files : ldsym_byfile )
+  for (const auto& ldsym_files : ldsym_byfile )
     {
 
       const SymFileLinkArch& sfa = ldsym_files.first ;
@@ -222,8 +212,8 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
           for(auto f : ldsym_files.second)
           {
             DbValues vals = {
-              pkgval.at (0) ,
-              DbValue (path.str()),
+              pkgval.at (0).getText (), /// is a variant so I need the type
+              DbValue (path.str ()),
               DbValue (sym) ,
               DbValue (f)
             };
@@ -233,7 +223,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
         }
     }
 
-  return std::make_tuple(ds, notFoundMap);
+  return std::make_tuple (ds, notFoundMap);
 
 
 }
@@ -501,10 +491,10 @@ printRequired(Cache& cache,
               WriteAppMsg() << "  " << so_files.first << " found in:";
               for(auto file_pkgs : so_files.second.node)
                 {
-                  WriteAppMsg() << "    " << file_pkgs.first << "( "
+                  WriteAppMsg() << "    " << file_pkgs.first << " ("
                       << utils::joinToString
                           (getKeySet (file_pkgs.second.node), " | ", makename)
-                      << " )";
+                      << ")";
                 }
             }
         }

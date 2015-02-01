@@ -52,12 +52,14 @@ public:
   int64_t getLdSoConfTime() const { return _ldSoConfTime;}
   const StringVec& getLdDirs() const  { return _lddirs;}
   const StringVec& getLdLnkDirs() const {  return _ldlnkdirs;}
+  const StringVec& getBinDirs() const {  return _binDirs;}
 
 private:
 
   int64_t _ldSoConfTime {0};
   StringVec _lddirs;
   StringVec _ldlnkdirs;
+  StringVec _binDirs ;
 };
 
 

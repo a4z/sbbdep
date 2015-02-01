@@ -40,7 +40,7 @@ public:
   AppCli();
   ~AppCli();
   
-  int Run( const AppArgs& appargs );
+  int run( const AppArgs& );
   
   
 private:

@@ -28,20 +28,24 @@ THE SOFTWARE.
 //--------------------------------------------------------------------------------------------------
 
 int
-main( int argc, char** argv )
+main (int argc, char** argv)
 {
-  
+
   int retVal = 0;
 
-  sbbdep::AppArgs args ;
-  if( !args.Parse(argc, argv) )
-      return 1; 
-  
-  if ( args.getHelp() )
-    args.PrintHelp() ;
-  else 
-    retVal = sbbdep::AppCli().Run(args) ; 
+  sbbdep::AppArgs args;
+  if (!args.parse (argc, argv))
+    {
+      return 1;
+    }
 
-
+  if (args.help ())
+    {
+      args.printHelp ();
+    }
+  else
+    {
+      retVal = sbbdep::AppCli ().run (args);
+    }
   return retVal;
 }

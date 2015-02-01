@@ -80,11 +80,11 @@ namespace
 } // ns ------------------------------------------------------------------------
 
 int
-AppCli::Run(const AppArgs& appargs)
+AppCli::run(const AppArgs& args)
 {
   // TODO if no cache access in search. -l no bin file, no cache update...
 
-  if (appargs.getPrintVersions ())
+  if (args.versions ())
     {
       std::cout << "sbbdep version "
           << sbbdep::MAJOR_VERSION << "."
@@ -94,69 +94,71 @@ AppCli::Run(const AppArgs& appargs)
     }
 
   std::ofstream outfile;
-  if (appargs.getOutFile ().size ())
+  if (args.getOutFile ().size ())
     {
-      outfile.open(appargs.getOutFile ().c_str (),
+      outfile.open(args.getOutFile ().c_str (),
                    std::ofstream::out | std::ofstream::trunc);
-      LogSetup::create (outfile, appargs.getQuiet ()) ;
+      LogSetup::create (outfile, args.quiet ()) ;
     }
   else
     {
-      LogSetup::create (std::cout, appargs.getQuiet ()) ;
+      LogSetup::create (std::cout, args.quiet ()) ;
     }
 
 
-  PkgAdmDir::set (appargs.getVarAdmDir ()) ;
+  PkgAdmDir::set (args.varAdmDir ()) ;
 
 
-  if (appargs.getLookup ())
+  if (args.lookup ())
     {
-      if (appargs.getQuery ().empty ())
+      if (args.query ().empty ())
         {
           LogInfo () << "error: lookup query missing, no argument provided" ;
           return  1;
         }
-       cli::lookupInPackages(appargs.getQuery ()) ;
+       cli::lookupInPackages(args.query ()) ;
+
        return 0;
+
     }
 
-  Path dbpath (appargs.getDBName ()) ;
+  Path dbpath (args.dbname ()) ;
 
-  if (not dbpath.isRegularFile () and appargs.getNoSync ())
+  if (not dbpath.isRegularFile () and args.noSync ())
     {
-      LogInfo () << appargs.getDBName () << " does not exist and need to "
+      LogInfo () << args.dbname () << " does not exist and need to "
           "be created. nosync makes therefore no sense. I exit now." ;
       return 2 ;
     }
 
 
 
-  Cache cache = openCache (appargs.getDBName ()) ;
-  if (cache.isNewDb () and appargs.getNoSync ())
+  Cache cache = openCache (args.dbname ()) ;
+  if (cache.isNewDb () and args.noSync ())
     { // could also have an empty db ...
-      LogInfo () << appargs.getDBName () << " db is empty and needs to "
+      LogInfo () << args.dbname () << " db is empty and needs to "
           "be created. nosync makes therefore no sense. I exit now." ;
       return 2 ;
     }
 
 
-  if (appargs.getFeatureX ())
+  if (args.featureX ())
     {
-      cli::runFx (appargs.getFeatureXArgs ()) ;
+      cli::runFx (args.featureXArgs ()) ;
       return 0  ;
     }
 
 
 
-  Path querypath (appargs.getQuery ());
-  if (not appargs.getQuery ().empty())
+  Path querypath (args.query ());
+  if (not args.query ().empty())
     {
       querypath.makeRealPath ();
     }
-  Pkg pkg = appargs.getQuery ().empty() ?
+  Pkg pkg = args.query ().empty() ?
       Pkg() : Pkg::create (querypath) ;
 
-  if(not appargs.getQuery ().empty() and pkg.getType () == PkgType::Unknown)
+  if(not args.query ().empty() and pkg.getType () == PkgType::Unknown)
     {
       try
         {
@@ -166,38 +168,41 @@ AppCli::Run(const AppArgs& appargs)
                   << querypath
                   << "\n try to find information in package list:";
               cli::fileInPackages (querypath);
+              return 0;
             }
           else
-            { // TODO  , possible this should be the -l option ?
-              LogInfo () << "not a file path: '" << appargs.getQuery () ;
-              LogInfo () << " try to find some info in package list:" ;
-              cli::fileInPackages (Path (appargs.getQuery ()));
+            {
+              LogInfo () << "not a file path: '" << args.query () ;
+              LogInfo () << "you might want to use the lookup option (-l)"
+                        " to search for " << args.query ()
+                         << " in the package database" ;
+              return 33;
             }
 
-          return 0;
+
         }
       catch (const Error& e)
         {
           LogError () << e ;
-          return -3;
+          return 3;
         }
       catch (...)
         {
           LogError () << "Unknown error" ;
-          return -3;
+          return 3;
         }
     }
 
 
 
-  if (not appargs.getNoSync ())
+  if (not args.noSync ())
     {
       auto syncdata = cache.doSync () ;
       cli::printSyncReport (cache, syncdata) ;
     }
 
 
-  if (appargs.getQuery ().empty ())
+  if (args.query ().empty ())
     { // was a sync only call ....
       return 0;
     }
@@ -211,47 +216,47 @@ AppCli::Run(const AppArgs& appargs)
   catch (const Error& e)
     {
       LogError () << e ;
-      return -4;
+      return 4;
     }
   catch (...)
     {
       LogError () << "Unknown error" ;
-      return -4;
+      return 4;
     }
 
 
-  if (appargs.getWhoNeeds ())
+  if (args.whoNeeds ())
     { // TODO test what happens if a DESTDIR is given as pkg :-)
       try
         {
           cli::printWhoNeed (cache, pkg ,
-                             appargs.getAppendVersions (),
-                             appargs.getXDL ()) ;
+                             args.getAppendVersions (),
+                             args.xdl ()) ;
         }
       catch (const Error& e)
         {
           LogError () << e ;
-          return -5;
+          return 5;
         }
       catch (...)
         {
           LogError () << "Unknown error";
-          return -5;
+          return 5;
         }
     }
-  else if (not appargs.getWhoNeeds ())
+  else if (not args.whoNeeds ())
     {
       cli::printRequired (cache, pkg ,
-                          appargs.getAppendVersions (),
-                          appargs.getXDL (),
-                          appargs.getLdd ()) ;
+                          args.getAppendVersions (),
+                          args.xdl (),
+                          args.ldd ()) ;
     }
   else
     {
       LogError () << "Can not run given combination of arguments";
       LogError () << "(could possible, but I do not want)";
       LogError () << "Please run just one QUERY." << std::endl;
-      return -6;
+      return 6;
     }
 
 

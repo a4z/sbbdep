@@ -101,7 +101,7 @@ fillFromLdSoCache ()
 
   std::sort (retval.begin (), retval.end ());
   auto last = std::unique (retval.begin (), retval.end ());
-  retval.resize (std::distance (retval.begin (), last));
+  retval.erase (last, retval.end ());
   return retval;
 
 } //-----------------------------------------------------------------------------
@@ -112,15 +112,33 @@ LDDirs::LDDirs ()
 
   auto ldcachedata = std::async (std::launch::async, fillFromLdSoCache);
 
-  _lddirs.emplace_back ("/lib");
 
-  if (Path ("/lib64").isFolder ())
-    _lddirs.emplace_back ("/lib64");
+  { // this should not be required, but to have a base ..
+    const auto lds = {"/lib", "/usr/lib", "/usr/local/lib",
+        "/lib64", "/usr/lib64", "/usr/local/lib64"};
 
-  _lddirs.emplace_back ("/usr/lib");
+    for (auto&& p : lds)
+      {
+        if (Path (p).isFolder ())
+          {
+            _lddirs.emplace_back (p) ;
+          }
+      }
+  }
 
-  if (Path ("/usr/lib64").isFolder ())
-    _lddirs.emplace_back ("/usr/lib64");
+  {
+    const auto lds = {"/bin", "/usr/bin", "/usr/local/bin",
+        "/sbin", "/usr/sbin", "/usr/local/sbin"};
+
+    for (auto&& p : lds)
+      {
+        if (Path (p).isFolder ())
+          {
+            _binDirs.emplace_back (p) ;
+          }
+      }
+  }
+
 
   const char* ldsoconf = "/etc/ld.so.conf";
 
@@ -160,10 +178,15 @@ LDDirs::LDDirs ()
     }
 
   std::sort (_lddirs.begin (), _lddirs.end ());
+  auto endr = std::unique (_lddirs.begin (), _lddirs.end ());
+  _lddirs.erase (endr, _lddirs.end ());
+
   auto ldcache = ldcachedata.get ();
 #ifdef DEBUG
   SBBASSERT (std::is_sorted (_lddirs.begin (), _lddirs.end ()));
 #endif
+
+
 
   std::set_difference (_lddirs.begin (), _lddirs.end (),
                        ldcache.begin (), ldcache.end (),
