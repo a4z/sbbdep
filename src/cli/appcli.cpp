@@ -82,7 +82,6 @@ namespace
 int
 AppCli::run(const AppArgs& args)
 {
-  // TODO if no cache access in search. -l no bin file, no cache update...
 
   if (args.versions ())
     {
@@ -226,11 +225,11 @@ AppCli::run(const AppArgs& args)
 
 
   if (args.whoNeeds ())
-    { // TODO test what happens if a DESTDIR is given as pkg :-)
+    {
       try
         {
           cli::printWhoNeed (cache, pkg ,
-                             args.getAppendVersions (),
+                             args.shortNames (),
                              args.xdl ()) ;
         }
       catch (const Error& e)
@@ -247,7 +246,7 @@ AppCli::run(const AppArgs& args)
   else if (not args.whoNeeds ())
     {
       cli::printRequired (cache, pkg ,
-                          args.getAppendVersions (),
+                          args.shortNames  (),
                           args.xdl (),
                           args.ldd ()) ;
     }

@@ -36,7 +36,7 @@ class AppArgs
   std::string _dbname ;
   std::string _query;
   std::string _outfile ;
-  int _append_versions;
+  int _short_names;
   int _sbbdep_version;
   int _nosync;
   int _require;
@@ -59,12 +59,7 @@ public:
   const std::string& dbname() const { return _dbname ; }
   const std::string& query() const { return _query; }
   const std::string& getOutFile() const { return _outfile ; }
-
-  bool getAppendVersions() const { return _append_versions ;}
-  // todo this shall become short and flip logic where used
-  // or simply remove, but give a waring in this version and remove later
-
-
+  bool shortNames() const { return _short_names ;}
   bool versions() const { return _sbbdep_version ;}
   bool noSync() const { return _nosync ; }
   bool whoNeeds() const { return _whoneeds ; }

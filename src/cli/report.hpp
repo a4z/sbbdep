@@ -48,7 +48,7 @@ namespace cli{
   void
   printRequired(Cache& cache,
                 const Pkg& pkg,
-                bool addversion,
+                bool shortNames,
                 bool xdl ,
                 bool ldd) ;
 
@@ -56,7 +56,7 @@ namespace cli{
   void
   printWhoNeed(Cache& cache,
                const Pkg& pkg,
-               bool addversion,
+               bool shortNames,
                bool xdl ) ;
 
 

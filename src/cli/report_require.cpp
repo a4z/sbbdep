@@ -386,114 +386,109 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
 void
 printRequired(Cache& cache,
               const Pkg& pkg,
-              bool addversion,
+              bool shortNames,
               bool xdl ,
               bool ldd)
 {
 
-  RequiredInfo requiredinfo =
-       ldd ? getRequiredInfosLDD(cache, pkg) :   getRequiredInfos(cache, pkg) ;
-
+  RequiredInfo requiredinfo = ldd ?
+       getRequiredInfosLDD (cache, pkg) : getRequiredInfos (cache, pkg);
 
   utils::ReportTree reptree;
 
   //pkgname,  filename , soname
-  auto& rs = std::get<0>(requiredinfo) ;
-  NotFoundMap& notFounds = std::get<1>(requiredinfo) ;
+  const auto& rs = std::get<0> (requiredinfo);
+  NotFoundMap& notFounds = std::get<1> (requiredinfo);
 
-  for(auto& row : rs)
+  for (const auto& row : rs)
     {
-      if(xdl)
+      if (xdl)
         {
-        reptree.add( {row.at(3).getText(),
-          row.at(2).getText(),
-          row.at(1).getText() ,
-          row.at(0).getText() } );
+          reptree.add (
+              { row.at (3).getText (), row.at (2).getText (),
+                  row.at (1).getText (), row.at (0).getText () });
         }
       else
         {
-          reptree.add( {
-            row.at(2).getText(),
-            row.at(1).getText() ,
-            row.at(0).getText() } );
+          reptree.add (
+              { row.at (2).getText (), row.at (1).getText (),
+                  row.at (0).getText () });
         }
     }
 
-  if( pkg.getType() == PkgType::BinLib )
+  if (pkg.getType () == PkgType::BinLib)
     {
-      a4sqlt3::Dataset ds = getPkgsOfFile(cache
-                                          , pkg.getPath ()
-                                          , pkg.getArch () ) ;
-      auto msgChannel = WriteAppMsg () ;
+      const a4sqlt3::Dataset ds = getPkgsOfFile (cache,
+                                                 pkg.getPath (),
+                                                 pkg.getArch ());
+      auto msgChannel = WriteAppMsg ();
 
-      msgChannel << "check " << pkg.getPath()
-                 << ", " << pkg.getElfFiles ().begin ()->getArch () << "bit " ;
+      msgChannel << "check " << pkg.getPath () << ", "
+                 << pkg.getElfFiles ().begin ()->getArch () << "bit ";
+
       if (pkg.getElfFiles ().begin ()->getType () == ElfFile::Binary)
         {
-          msgChannel << "binary " ;
+          msgChannel << "binary ";
         }
       else if (pkg.getElfFiles ().begin ()->getType () == ElfFile::Library)
         {
-          msgChannel << "library ("
-              << pkg.getElfFiles ().begin ()->soName ()
-              << ")" ;
+          msgChannel << "library (" << pkg.getElfFiles ().begin ()->soName ()
+              << ")";
         }
 
-      msgChannel << std::endl ;
+      msgChannel << std::endl;
 
-      if(ds.size()==0)
+      if (ds.size () == 0)
         {
           msgChannel << " .. not in a known package" << std::endl;
         }
       else
         {
-          for(const auto& flds : ds)
+          for (const auto& flds : ds)
             {
-              msgChannel << " .. from package "
-                            <<  flds.at(0).getText() <<std::endl;
+              msgChannel << " .. from package " << flds.at (0).getText ()
+                  << std::endl;
             }
         }
     }
 
-  auto makename = [addversion, xdl](const std::string val) -> const std::string
+  auto makename = [shortNames, xdl](const std::string val) -> const std::string
     {
       // in xdl mode, not using the slapt-get style of 'name >= version'
       if(xdl)
         {
-          if(addversion)
-            {
-              return val;
-            }
-
-          return PkgName (val).Name ();
+          return shortNames ?
+              PkgName (val).Name () : val;
         }
 
       PkgName pknam (val);
       std::string retval = pknam.Name ();
-      if (addversion)
+      if (not shortNames)
         {
-          retval+= " = " + pknam.FullName ()
-              .substr(pknam.Name ().size () + 1 , std::string::npos  ) ;
-         // see
-         // http://software.jaos.org/git/slapt-get/plain/FAQ.html#slgFAQ19
+          retval+= " = " + pknam.FullName ().substr (pknam.Name ().size () + 1,
+                                                     std::string::npos);
+          // see
+          // http://software.jaos.org/git/slapt-get/plain/FAQ.html#slgFAQ19
         }
       return retval;
 
     };
 
-  if( xdl )
+  if (xdl)
     {
-      for(auto requiredby_sos : reptree.node)
+      for (auto requiredby_sos : reptree.node)
         {
-          WriteAppMsg() << "file " << requiredby_sos.first << " needs:";
-          for(auto so_files : requiredby_sos.second.node)
+          WriteAppMsg () << "file " << requiredby_sos.first << " needs:";
+          for (auto so_files : requiredby_sos.second.node)
             {
-              WriteAppMsg() << "  " << so_files.first << " found in:";
-              for(auto file_pkgs : so_files.second.node)
+              WriteAppMsg () << "  " << so_files.first << " found in:";
+              for (auto file_pkgs : so_files.second.node)
                 {
-                  WriteAppMsg() << "    " << file_pkgs.first << " ("
-                      << utils::joinToString
-                          (getKeySet (file_pkgs.second.node), " | ", makename)
+                  const auto names = getKeySet (file_pkgs.second.node) ;
+                  WriteAppMsg () << "    "
+                      << file_pkgs.first
+                      << " ("
+                      << utils::joinToString (names, " | ", makename)
                       << ")";
                 }
             }
@@ -502,66 +497,64 @@ printRequired(Cache& cache,
   else
     {
       utils::StringSet pkglist;
-      std::string ignore_name ;
-      if(pkg.getType() == PkgType::Installed)
-        ignore_name = pkg.getPath().base();
+      const auto ignore_name =
+          pkg.getType () == PkgType::Installed ?
+                    pkg.getPath ().base () : std::string();
 
-
-      for(auto so_files: reptree.node) // filename so, just what the pkgs...
+      for (const auto& so_files : reptree.node) // filename so
         {
           utils::StringSet pkgsofso;
-          for(auto file_pkgs : so_files.second.node )
+          for (const auto& file_pkgs : so_files.second.node)
             {
-              const auto& pkgnames =  file_pkgs.second.node ;
-              if(not ignore_name.empty() &&
-                  pkgnames.find(ignore_name) != pkgnames.end() )
+              const auto& pkgnames = file_pkgs.second.node;
+              if (not ignore_name.empty ()
+                  && pkgnames.find (ignore_name) != pkgnames.end ())
                 { // avoid own package in the list
-                  pkgsofso.clear();
+                  pkgsofso.clear ();
                   break;
                 }
-              for (auto so_pkg : file_pkgs.second.node)
-                pkgsofso.insert( so_pkg.first ) ;
+              for (const auto& so_pkg : file_pkgs.second.node)
+                {
+                  pkgsofso.insert (so_pkg.first);
+                }
             }
 
-          if(not pkgsofso.empty())
-            pkglist.insert( utils::joinToString(pkgsofso, " | ", makename ) ) ;
+          if (not pkgsofso.empty ())
+            {
+              pkglist.insert (utils::joinToString (pkgsofso, " | ", makename));
+            }
         }
 
-      WriteAppMsg() << utils::joinToString(pkglist, addversion ? "\n" : ", " ) ;
+      WriteAppMsg () << utils::joinToString (pkglist, shortNames ? ", " : "\n");
 
     }
 
+  if (not notFounds.empty ())
+    {
+      WriteAppMsg () << std::endl;
+      WriteAppMsg () << "sonames not found via "
+          << (ldd ? "ldd\n" : "standard paths: ");
 
-
-    if(not notFounds.empty())
-      {
-        WriteAppMsg() << std::endl;
-        WriteAppMsg() << "sonames not found via " <<
-            (ldd ? "ldd\n" : "standard paths: ") ;
-
-        for(auto val : notFounds){
-            WriteAppMsg() << " for " << val.first
-                << ": "<<utils::joinToString(val.second, ", ")  ;
+      for (auto val : notFounds)
+        {
+          WriteAppMsg () << " for " << val.first << ": "
+              << utils::joinToString (val.second, ", ");
         }
 
-        WriteAppMsg() << "this does not necessarily mean there is a problem ";
-        if(not ldd)
-          {
-            WriteAppMsg() <<
-                "the application can either have its own environment "
-                " or the soname is resolved via a link name" ;
-            WriteAppMsg() <<
-                "you can re-check the affected files with --ldd" ;
-          }
-        else
-          {
-            WriteAppMsg() << "but it's very likely that there is one";
-          }
+      WriteAppMsg () << "this does not necessarily mean there is a problem ";
+      if (not ldd)
+        {
+          WriteAppMsg ()
+              << "the application can either have its own environment "
+                  " or the soname is resolved via a link name";
+          WriteAppMsg () << "you can re-check the affected files with --ldd";
+        }
+      else
+        {
+          WriteAppMsg () << "but it's very likely that there is one";
+        }
 
-      }
-
-
-
+    }
 
 }
 //------------------------------------------------------------------------------

@@ -119,23 +119,22 @@ AND p2.fullname  = ?
 
 
 void
-printWhoNeed(Cache& cache, const Pkg& pkg, bool addversion, bool xdl )
+printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
 {
   // works for single files and installed package
 
-  using namespace a4sqlt3 ;
+  using namespace a4sqlt3;
 
-  Dataset ds ; //{ "pkg", "filename" , "soname" , "fromfile"  }
-
+  Dataset ds; //{ "pkg", "filename" , "soname" , "fromfile"  }
 
   if (pkg.getType () == PkgType::BinLib)
     {
       auto& cmd = cache.namedCommand ("WhoNeedFileQuery",
                                       getWhoNeedFileQuery ());
-      const DbValues args = { { pkg.getElfFiles ()[0].getName () } };
+      const DbValues args = { { pkg.getElfFiles () [0].getName () } };
       ds = cmd.select (args);
     }
-  else if(pkg.getType () == PkgType::Installed)
+  else if (pkg.getType () == PkgType::Installed)
     {
       auto& cmd = cache.namedCommand ("WhoNeedPkgQuery", getWhoNeedPkgQuery ());
       const DbValues args = { { pkg.getPath ().base () } };
@@ -143,57 +142,59 @@ printWhoNeed(Cache& cache, const Pkg& pkg, bool addversion, bool xdl )
     }
   else
     {
-      LogInfo() << "whoneeds option for this type of query not supported";
+      LogInfo () << "whoneeds option for this type of query not supported";
       return;
     }
 
-
-  if(xdl)
-     {
-       utils::ReportTree reptree;
-       for(auto& row : ds )
-         {
-           reptree.add( {
-             row.at (3).getText () + " (" + row.at (2).getText () +")",
-             row.at (0).getText () ,
-             row.at (1).getText () } ) ;
-         }
-
-       std::function<void(const utils::ReportElement&, size_t)> printChild =
-           [&printChild](const utils::ReportElement& elem , size_t level ){
-         for(const auto& node: elem.node)
-           {
-             { // scope log channel for new line
-               WriteAppMsg ()
-                 << std::string(level, ' ')
-                 << node.first ;
-             }
-             printChild(node.second, level+2);
-           }
-       };
-
-      for(auto elem : reptree.node)
+  if (xdl)
+    {
+      utils::ReportTree reptree;
+      for (const auto& row : ds)
         {
-          { // scope log channel for new line
-            WriteAppMsg () << elem.first << " is used from:";
-          }
+          reptree.add (
+              { row.at (3).getText () + " (" + row.at (2).getText () + ")",
+                  row.at (0).getText (), row.at (1).getText () });
+        }
+
+      std::function<void
+      (const utils::ReportElement&, size_t)> printChild =
+          [&printChild](const utils::ReportElement& elem , size_t level )
+            {
+              for(const auto& node: elem.node)
+                {
+                    { // scope log channel for new line
+                      WriteAppMsg ()
+                      << std::string(level, ' ')
+                      << node.first;
+                    }
+                  printChild(node.second, level+2);
+                }
+            };
+
+      for (const auto& elem : reptree.node)
+        {
+            { // scope log channel for new line
+              WriteAppMsg () << elem.first << " is used from:";
+            }
           printChild (elem.second, 2);
         }
 
-     }
-   else
-     {
-       utils::StringSet pkgnames ;
-       for(auto& row : ds )
-         {
-           pkgnames.insert(addversion ?
-               row.at(0).getText() : PkgName(row.at(0).getText()).Name() ) ;
-         }
+    }
+  else
+    {
+      utils::StringSet pkgnames;
+      for (auto& row : ds)
+        {
+          pkgnames.insert (
+              shortNames ?
+                  PkgName (row.at (0).getText ()).Name () :
+                  row.at (0).getText ());
+        }
 
-       WriteAppMsg()
-         << utils::joinToString( pkgnames, addversion ? "\n": ", " )
-         << std::endl ;
-     }
+      WriteAppMsg ()
+          << utils::joinToString (pkgnames, shortNames ? ", " : "\n")
+          << std::endl;
+    }
 
 
 

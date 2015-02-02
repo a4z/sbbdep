@@ -102,8 +102,6 @@ private:
    
 };
 
-//static const Dir PkgAdmDir {"/var/adm/packages"} ; // TODO
-
 class PkgAdmDir
 {
   static std::string name ;

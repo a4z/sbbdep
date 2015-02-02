@@ -39,7 +39,7 @@ AppArgs::AppArgs()
   , _dbname(std::string(std::getenv("HOME") + std::string("/sbbdep.cache")))
   , _query()
   , _outfile()
-  , _append_versions(1)
+  , _short_names(0)
   , _sbbdep_version(0)
   , _nosync(0)
   , _require(0)
@@ -161,7 +161,7 @@ AppArgs::parse( int argc, char** argv )
       { "file", required_argument, 0, 1 },
       { "cache", required_argument, 0, 1 },
       { "help", no_argument, &_help, 1 },
-      { "short", no_argument, &_append_versions, 0 },
+      { "short", no_argument, &_short_names, 1 },
       { "version", no_argument, &_sbbdep_version, 1 },
       { "nosync", no_argument, &_nosync, 1 },
       { "quiet", no_argument, &_quiet, 1 },
@@ -223,7 +223,7 @@ AppArgs::parse( int argc, char** argv )
           break;
 
         case 's' :
-          _append_versions = false;
+          _short_names = true;
           break;
 
         case 'v' :
