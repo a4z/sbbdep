@@ -284,57 +284,57 @@ auto makeCommand(a4sqlt3::Database& db, Cache::sqlid id)
   ->a4sqlt3::SqlCommand
 {
 
-  using a4sqlt3::DbValueType ;
+  using a4sqlt3::ValueType ;
 
   switch (id)
   {
     case Cache::sqlid::insert_pkg:
-      return db.command(sql::insertPkg(),{ DbValueType::Text,
-                                           DbValueType::Text,
-                                           DbValueType::Text,
-                                           DbValueType::Text,
-                                           DbValueType::Int,
-                                           DbValueType::Text,
-                                           DbValueType::Int } );
+      return db.command(sql::insertPkg(),{ ValueType::Text,
+                                           ValueType::Text,
+                                           ValueType::Text,
+                                           ValueType::Text,
+                                           ValueType::Int,
+                                           ValueType::Text,
+                                           ValueType::Int } );
       break;
 
     case Cache::sqlid::insert_dynlinked:
-      return db.command(sql::insertDynLinked(), {DbValueType::Int,
-                                                DbValueType::Text,
-                                                DbValueType::Text,
-                                                DbValueType::Text,
-                                                DbValueType::Text,
-                                                DbValueType::Int });
+      return db.command(sql::insertDynLinked(), {ValueType::Int,
+                                                ValueType::Text,
+                                                ValueType::Text,
+                                                ValueType::Text,
+                                                ValueType::Text,
+                                                ValueType::Int });
 
 
       break;
 
     case Cache::sqlid::insert_required:
-      return db.command(sql::insertRequired(), { DbValueType::Int,
-                                                  DbValueType::Text } );
+      return db.command(sql::insertRequired(), { ValueType::Int,
+                                                  ValueType::Text } );
       break;
 
     case Cache::sqlid::insert_rrunpath:
-      return db.command(sql::insertRRunPath(),{ DbValueType::Int,
-                                                  DbValueType::Text,
-                                                  DbValueType::Text });
+      return db.command(sql::insertRRunPath(),{ ValueType::Int,
+                                                  ValueType::Text,
+                                                  ValueType::Text });
       break;
 
     case Cache::sqlid::insert_ldDir:
-      return db.command(sql::insertLdDir(), {DbValueType::Text});
+      return db.command(sql::insertLdDir(), {ValueType::Text});
       break;
 
     case Cache::sqlid::insert_ldLnkDir:
-      return db.command(sql::insertLdLnkDir(), {DbValueType::Text});
+      return db.command(sql::insertLdLnkDir(), {ValueType::Text});
       break;
 
     case Cache::sqlid::set_keyval:
-      return db.command(sql::setKeyVal(), {DbValueType::Text,
-                                           DbValueType::Variant});
+      return db.command(sql::setKeyVal(), {ValueType::Text,
+                                           ValueType::Variant});
       break;
 
     case Cache::sqlid::del_byfullname :
-      return  db.command(sql::deletePkgByFullname(),{ DbValueType::Text });
+      return  db.command(sql::deletePkgByFullname(),{ ValueType::Text });
       break;
 
     default:

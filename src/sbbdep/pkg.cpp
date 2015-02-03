@@ -210,7 +210,7 @@ Pkg::doLoadInstalled()
           if (not pn.str ().compare (0, s.size () ,s ))
             return true;
         }
-      for(auto& s : getLDDirs ().getBinDirs ())
+      for(auto& s : getLDDirs ().getLdDirs ())
         {
           if (not pn.str ().compare(0, s.size () ,s ))
             return true;

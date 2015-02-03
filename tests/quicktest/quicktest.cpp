@@ -11,15 +11,30 @@
 #include <sbbdep/dircontent.hpp>
 
 
+struct Foo{
+  enum X {a,b,c} ;
+};
 
+void a(Foo::X )
+{
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+}
+
+void a(int )
+{
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+}
 
 
 int main(int argc, char* argv[])
 {
   (void)(argc) , (void)(argv);
 
-  std::cout << std::setw(10) << std::left
-                << "foo" << std::setw(0) << "bar" << std::endl;
+  a(1) ;
+  a(Foo::a);
+
+  int b = Foo::a ;
+  a(b);
 
 }
 
