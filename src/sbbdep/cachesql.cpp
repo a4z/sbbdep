@@ -353,7 +353,7 @@ namespace {
                       sqlite3_value**  argv)
   {
     if (argc != 2)
-      { // TODO this needs a test
+      {
         conststr errmsg { "incorrect count of arguments, should be 2" };
         sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
       }
@@ -374,7 +374,7 @@ namespace {
                      sqlite3_value**  argv)
   {
     if (argc != 1)
-      { // TODO this needs a test
+      {
         conststr errmsg {"incorrect count of arguments, should be 1"} ;
         sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
       }

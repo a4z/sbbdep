@@ -29,7 +29,14 @@ void CheckFunctions()
   BOOST_REQUIRE_EQUAL( result.getText() , "/usr/local/lib"  );
 
   
+  std::string c3sql = "SELECT mkRealPath('/usr/local/../local/bin');" ;
+
+  BOOST_REQUIRE_NO_THROW(result = c.selectValue(c3sql)) ;
+  BOOST_REQUIRE_EQUAL( result.getText() , "/usr/local/bin"  );
+
+
 }
+
 
 a4TestSimple("replorig", CheckFunctions ) ;
 

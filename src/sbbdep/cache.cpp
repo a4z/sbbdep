@@ -70,7 +70,7 @@ Cache::Cache(const std::string& dbname)
 :Database(dbname)
 ,_name(dbname)
 {
-  sql::register_own_functions(_connection->db()) ;
+  sql::register_own_functions (_connection->db ()) ;
 }
 //------------------------------------------------------------------------------
 
