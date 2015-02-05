@@ -39,14 +39,19 @@ typedef std::basic_ostream<char, typename std::char_traits<char>>  log_stream_ty
   
 class LogChannel
 {
- 
-public:
-  
-  // TODO make private and friend create function ....
+
+
   LogChannel(std::shared_ptr<log_stream_type> stm) 
   : _stm(stm)
   {
   }
+
+  friend LogChannel LogDebug() ;
+  friend LogChannel LogError() ;
+  friend LogChannel LogInfo() ;
+  friend LogChannel WriteAppMsg() ;
+public:
+
 
   
   ~LogChannel()

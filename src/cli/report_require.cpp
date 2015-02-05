@@ -152,7 +152,6 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
         {
           const auto filename = elf.getName ().str () ;
           notFoundMap.insert (NotFoundMap::value_type (filename, notFound));
-          // TODO , it this correct, what if a file has 2 not found
           for(const auto& so : notFound)
             {
               ldd_map.erase (so);

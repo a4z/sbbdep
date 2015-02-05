@@ -392,10 +392,9 @@ namespace {
 
 void register_own_functions(sqlite3* db)
 {
-  //TODO  parameter 4 , this is only in newer version
-  // also, the sqlite header from the project must be included before the
-  // system header
-  //
+  // parameter 4 , this is only in newer version
+  // possible I should force using the internal db ...
+
   sqlite3_create_function(db,
                           "replaceOrigin",
                           2,
