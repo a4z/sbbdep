@@ -103,7 +103,7 @@ public:
   getName(){ return _name ; } //;
 
   // will create the command if it does not exist
-  a4sqlt3::SqlCommand&
+  a4sqlt3::Command&
   namedCommand(const std::string& name,
                const char* sql) ;
 
@@ -133,7 +133,7 @@ private:
 
 
   // get stored command, if it does not exist, its created
-  a4sqlt3::SqlCommand&
+  a4sqlt3::Command&
   getCommand(sqlid id) ;
 
   // stores package in the db
@@ -145,11 +145,11 @@ private:
 
 
   // stored sql commands
-  using commandMap = std::map<sqlid,a4sqlt3::SqlCommand> ;
+  using commandMap = std::map<sqlid,a4sqlt3::Command> ;
   commandMap _commands;
 
   //give user(report system) a way to store a command
-  using nameCommandMap = std::map<std::string,a4sqlt3::SqlCommand> ;
+  using nameCommandMap = std::map<std::string,a4sqlt3::Command> ;
   nameCommandMap _nameCommands;
 
 // when I update sqlite I can remove this and use function

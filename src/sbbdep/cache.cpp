@@ -61,7 +61,7 @@ auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
 
 
 using a4sqlt3::Dataset;
-using a4sqlt3::SqlCommand;
+using a4sqlt3::Command;
 using a4sqlt3::DbValue;
 using a4sqlt3::ValueType;
 
@@ -356,7 +356,7 @@ Cache::createUpdateSyncData()
 // while this runs, get all from the db
   StringSet allpkgindb; // all pks in the db
   // get all in the database
-  auto rh = [&allpkgindb](a4sqlt3::SqlQueryRow& qrow) -> bool
+  auto rh = [&allpkgindb](a4sqlt3::QueryRow& qrow) -> bool
         {
           allpkgindb.insert (qrow [0].getText ());
           return true ;
@@ -621,7 +621,7 @@ Cache::updateIndex(const SyncData& data)
 //------------------------------------------------------------------------------
 
 
-a4sqlt3::SqlCommand&
+a4sqlt3::Command&
 Cache::getCommand(sqlid id)
 {
   auto fi = _commands.find(id);
@@ -739,7 +739,7 @@ Cache::updateLdDirInfo()
 //------------------------------------------------------------------------------
 
 
-a4sqlt3::SqlCommand&
+a4sqlt3::Command&
 Cache::namedCommand(const std::string& name,
                     const char* sql)
 {

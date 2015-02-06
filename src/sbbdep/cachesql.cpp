@@ -281,7 +281,7 @@ void addVersionTable(a4sqlt3::Database& db)
 
 
 auto makeCommand(a4sqlt3::Database& db, Cache::sqlid id)
-  ->a4sqlt3::SqlCommand
+  ->a4sqlt3::Command
 {
 
   using a4sqlt3::ValueType ;

@@ -36,7 +36,7 @@ THE SOFTWARE.
 #include <sbbdep/pkgname.hpp>
 
 
-#include <a4sqlt3/sqlcommand.hpp>
+#include <a4sqlt3/command.hpp>
 #include <a4sqlt3/dataset.hpp>
 
 #include <algorithm>
