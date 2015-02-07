@@ -566,7 +566,7 @@ Cache::updateIndex(const SyncData& data)
         if(not action.rem.empty())
           { LogInfo() << "clear " << action.rem ;
             auto& delcmd =  getCommand(sqlid::del_byfullname) ;
-            delcmd .execute( { {action.rem} } );
+            delcmd .execute( Command::Parameters{ {action.rem} } );
           }
 
         if(action.inst.isLoaded())
@@ -615,7 +615,7 @@ Cache::updateIndex(const SyncData& data)
 
   transaction.commit() ;
 
-  LogInfo () << "run db analyzer\n";
+  LogDebug () << "run db analyzer\n";
   execute ("ANALYZE ;");
 }
 //------------------------------------------------------------------------------
@@ -651,12 +651,13 @@ Cache::indexPkg(const Pkg& pkg)
 
   SBBASSERT (pkg.isLoaded ()) ;
 
+  using Parameters = Command::Parameters ;
   try
     {
       const auto pkgname = PkgName (pkg.getPath ().base ());
       const auto timestamp = pkg.getPath ().getLastModificationTime ();
 
-      getCommand(sqlid::insert_pkg).execute( {
+      getCommand(sqlid::insert_pkg).execute( Parameters{
                  { pkgname.FullName() } ,
                  { pkgname.Name() } ,
                  { pkgname.Version() } ,
@@ -668,9 +669,9 @@ Cache::indexPkg(const Pkg& pkg)
 
       const auto pkgid = getLastInsertRowid() ;
 
-      for(const ElfFile& elf : pkg.getElfFiles())
+      for (const ElfFile& elf : pkg.getElfFiles ())
         {
-          getCommand(sqlid::insert_dynlinked).execute( {
+          getCommand(sqlid::insert_dynlinked).execute( Parameters{
                    { pkgid } ,
                    { elf.getName().str() } ,
                    { elf.getName().dir() } ,
@@ -686,14 +687,14 @@ Cache::indexPkg(const Pkg& pkg)
          for(const auto& needed : elf.getNeeded())
            {
              getCommand(sqlid::insert_required).execute(
-                 { {dynlinked_id}, {needed} }
+                 Parameters{ {dynlinked_id}, {needed} }
              );
            }
 
          for(const auto& rrunpaht : elf.getRRunPaths())
            {
-             getCommand(sqlid::insert_rrunpath).execute(
-                 { {dynlinked_id}, {rrunpaht} , {elf.getName().dir()} }
+             getCommand(sqlid::insert_rrunpath).execute( Parameters {
+               {dynlinked_id}, {rrunpaht} , {elf.getName().dir()} }
              );
            }
         }
@@ -711,28 +712,29 @@ Cache::indexPkg(const Pkg& pkg)
 void
 Cache::updateLdDirInfo()
 {
-  auto ldinfos = getLDDirs() ;
+  auto ldinfos = getLDDirs ();
 
-  auto transaction = beginTransaction();
+  auto transaction = beginTransaction ();
 
-  execute("DELETE FROM lddirs;");
-  execute("DELETE FROM ldlnkdirs;");
+  execute ("DELETE FROM lddirs;");
+  execute ("DELETE FROM ldlnkdirs;");
 
-  getCommand(sqlid::set_keyval).execute({  {"ldsoconf"},
-                                           {ldinfos.getLdSoConfTime()}  });
+  using Parameters =Command::Parameters ;
 
+  getCommand (sqlid::set_keyval).execute ( Parameters
+      { { "ldsoconf" }, {ldinfos.getLdSoConfTime ()}});
 
-  for (auto&&  d:  ldinfos.getLdDirs())
+  for (auto&& d : ldinfos.getLdDirs ())
     {
-      getCommand(sqlid::insert_ldDir).execute({{d}});
+      getCommand (sqlid::insert_ldDir).execute ( Parameters{{ d }});
     }
 
-  for (auto&&  d:  ldinfos.getLdLnkDirs())
+  for (auto&& d : ldinfos.getLdLnkDirs ())
     {
-      getCommand(sqlid::insert_ldLnkDir).execute({{d}});
+      getCommand (sqlid::insert_ldLnkDir).execute ( Parameters{{ d }});
     }
 
-  transaction.commit();
+  transaction.commit ();
 
 
 }
@@ -744,15 +746,15 @@ Cache::namedCommand(const std::string& name,
                     const char* sql)
 {
 
-  auto f = _nameCommands.find(name) ;
-  if (f == _nameCommands.end())
+  auto f = _nameCommands.find (name);
+  if (f == _nameCommands.end ())
     {
-      auto in = _nameCommands.emplace(name, command(sql)) ;
+      auto in = _nameCommands.emplace (name, command (sql));
       // assert in.second  TOOD
-      f=  in.first;
+      f = in.first;
     }
 
-  return f->second ;
+  return f->second;
 
 }
 
