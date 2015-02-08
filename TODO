@@ -5,30 +5,5 @@ Documentation:
 manpage
 
 
-mostly done but check:
-log, work through all log and channel usage, check the right one is used, 
-unify usage in cli by either pass channel or access (pass channel prefered)
- 
- 
-
-review: merge lddirs with all other pathname stuff to have all on one place
-
-todo, review error.hpp , use new style and check what's needed
-check dircontent open if it wouldn't be better to return true/false
 
 
-implement ldd check, 
- think about an tree view for xdl queries
-
-add option to add extra deps to the output is it is a default dep querz for packages.
-think about a --surpress filter that takes away elements form an a|b choice if element is found in the supress list.
-(see mail roberto)
-
-
-pkgadmdir, integrate functions into dircontent, than the cls becomes a typdef
-
-
-
-
-add package name to message
-Note: can not read file: /usr/lib64/X11/app-defaults/GXditview-color

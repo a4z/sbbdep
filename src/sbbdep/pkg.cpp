@@ -246,7 +246,8 @@ Pkg::doLoadInstalled()
         // place a warning here if file still not exists...
         if (not p.isValid ())
           {
-            LogInfo () << "Note: can not read file: " << p << "\n";
+            LogInfo ()  << "Note: can not read file: " << p
+                << " (" << this->getPath().base() << ")";
           }
       }
 
