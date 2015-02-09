@@ -7,3 +7,8 @@ manpage
 
 
 
+check all select distinct * from lddirs union select distinct * from ldlnkdirs
+ldusrdir is missing, I think I can remove it,
+this would also be a good idea the go to version -0.3, different schema... 
+therefor ldtree option, that does respect user settings...
+

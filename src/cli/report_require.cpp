@@ -186,10 +186,10 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 
 
   //Dataset ds {{ "pkgname", "filename", "soname" , "requiredby" } };
-  Dataset ds {{ ValueType::Text,
-                ValueType::Text,
-                ValueType::Text ,
-                ValueType::Text } };
+  Dataset ds {{ Type::Text,
+                Type::Text,
+                Type::Text ,
+                Type::Text } };
 
   for (const auto& ldsym_files : ldsym_byfile )
     {
@@ -273,10 +273,10 @@ elfdeps( Cache& cache
     " );" ;
 
   using namespace a4sqlt3;
-  ValueTypes tps { {ValueType::Text,
-                      ValueType::Text,
-                      ValueType::Text,
-                      ValueType::Text} } ;
+  Types tps { {Type::Text,
+                      Type::Text,
+                      Type::Text,
+                      Type::Text} } ;
 
 
   return  cache.select (sql, tps) ;
@@ -320,10 +320,10 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
 
   // return data
   //Dataset ds {{ "pkgname", "filename", "soname" , "requiredby" } };
-  Dataset ds {{ ValueType::Text,
-                ValueType::Text,
-                ValueType::Text ,
-                ValueType::Text } };
+  Dataset ds {{ Type::Text,
+                Type::Text,
+                Type::Text ,
+                Type::Text } };
   NotFoundMap not_found;
 
 //  StringSet known_needed ;

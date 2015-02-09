@@ -63,7 +63,7 @@ auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
 using a4sqlt3::Dataset;
 using a4sqlt3::Command;
 using a4sqlt3::DbValue;
-using a4sqlt3::ValueType;
+using a4sqlt3::Type;
 
 
 Cache::Cache(const std::string& dbname)
@@ -141,14 +141,14 @@ Cache::checkDbSchemaVersion()
 
   auto getDbMajorMinorVersion = [calcMajorMinorVersion, this]() -> int
     {
-      Dataset ds( {ValueType::Int, ValueType::Int} );
+      Dataset ds( {Type::Int, Type::Int} );
       execute("SELECT major, minor FROM version", ds);
       SBBASSERT (ds.size () == 1);
       return calcMajorMinorVersion(ds[0][0].getInt(), ds[0][1].getInt());
     };
   auto getDbVersion = [calcVersion, this]() -> int
     {
-      Dataset ds({ValueType::Int, ValueType::Int, ValueType::Int});
+      Dataset ds({Type::Int, Type::Int, Type::Int});
       execute("SELECT major, minor , patchlevel FROM version", ds);
       SBBASSERT (ds.size () == 1);
       return calcVersion(ds[0][0].getInt(),
@@ -678,7 +678,7 @@ Cache::indexPkg(const Pkg& pkg)
                    { elf.getName().base() } ,
                    (elf.soName().size()> 0 ?
                            DbValue(elf.soName()) :
-                           DbValue(a4sqlt3::ValueType::Null) ) ,
+                           DbValue(a4sqlt3::Type::Null) ) ,
                    { elf.getArch() }
           });
 
