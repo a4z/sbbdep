@@ -51,6 +51,7 @@ AppArgs::AppArgs()
   , _featureX(0)
   , _featureXArgs{""}
   , _varAdmDir{"/var/adm/packages"}
+  , _bdtree(0)
 {
   
 }
@@ -172,6 +173,7 @@ AppArgs::parse( int argc, char** argv )
       { "lookup", no_argument, &_lookup, 1 },
       { "fx", optional_argument, 0, 1 }, // undocumented option for  test...
       { "admdir", required_argument, 0, 1 },
+      { "bdtree", no_argument, &_bdtree, 1 },
       { 0, 0, 0, 0 } // Required end   
     };
   
@@ -191,9 +193,13 @@ AppArgs::parse( int argc, char** argv )
         case 1 :
           optionName = long_options [optionIdx].name;
           if (optionName == "file")
-            _outfile = optarg ? optarg : "";
+            {
+              _outfile = optarg ? optarg : "";
+            }
           else if (optionName == "cache")
-            _dbname = optarg ? optarg : "";
+            {
+              _dbname = optarg ? optarg : "";
+            }
           else if (optionName == "fx")
             {
               _featureX = 1;

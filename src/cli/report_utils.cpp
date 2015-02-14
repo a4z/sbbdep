@@ -24,8 +24,9 @@ THE SOFTWARE.
 
 #include "report.hpp"
 
+#include "sbbdep/cache.hpp"
 #include "sbbdep/log.hpp"
-
+#include "sbbdep/path.hpp"
 
 
 namespace sbbdep {
@@ -55,6 +56,28 @@ ReportTree::add(const StringVec& path)
 }
 //------------------------------------------------------------------------------
 
+a4sqlt3::Dataset
+getPkgsOfFile (Cache& cache,const PathName& fname, int arch)
+{
+
+  const char* sql = R"~(
+  SELECT fullname 
+  FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
+  WHERE dynlinked.filename=?  AND dynlinked.arch=? ; 
+  )~";
+
+  const std::string cmdname = "getPkgsOfFilebyFile" ;
+
+  auto& cmd = cache.namedCommand(cmdname, sql) ;
+
+  return cmd.select( { fname.str (), arch }) ;
+
+}
+//------------------------------------------------------------------------------
+
+
+
+
 #ifdef DEBUG
 void printTree(const ReportTree& tree)
 {
@@ -79,9 +102,11 @@ void printTree(const ReportTree& tree)
   }
 }
 #endif // DEBUG
+//------------------------------------------------------------------------------
 
 
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 }
 }} // ns

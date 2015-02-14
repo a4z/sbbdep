@@ -163,7 +163,7 @@ printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
               for(const auto& node: elem.node)
                 {
                     { // scope log channel for new line
-                      WriteAppMsg ()
+                      LogMsg ()
                       << std::string(level, ' ')
                       << node.first;
                     }
@@ -174,7 +174,7 @@ printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
       for (const auto& elem : reptree.node)
         {
             { // scope log channel for new line
-              WriteAppMsg () << elem.first << " is used from:";
+              LogMsg () << elem.first << " is used from:";
             }
           printChild (elem.second, 2);
         }
@@ -191,7 +191,7 @@ printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
                   row.at (0).getText ());
         }
 
-      WriteAppMsg ()
+      LogMsg ()
           << utils::joinToString (pkgnames, shortNames ? ", " : "\n")
           << std::endl;
     }

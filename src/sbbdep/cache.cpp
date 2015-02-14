@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <sbbdep/config.hpp>
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/error.hpp>
-#include <sbbdep/lddirs.hpp>
+#include <sbbdep/ldconf.hpp>
 #include <sbbdep/log.hpp>
 #include <sbbdep/path.hpp>
 #include <sbbdep/pkg.hpp>

@@ -99,6 +99,7 @@ Path::operator= (Path&& rhs)
     {
       m_type = std::move (rhs.m_type);
       m_stat = std::move (rhs.m_stat);
+      PathName::operator =(rhs) ;
     }
 
   return *this;
@@ -126,6 +127,14 @@ Path::operator= (const PathName& rhs)
   if (&rhs != this)
     setURL (rhs.str ());
 
+  return *this;
+}
+//------------------------------------------------------------------------------
+
+Path&
+Path::operator+= (const std::string& p)
+{
+  setURL (str() + p);
   return *this;
 }
 //------------------------------------------------------------------------------
@@ -239,7 +248,16 @@ Path::makeRealPath ()
   return isValid ();
 
 }
+//------------------------------------------------------------------------------
 
+Path
+Path::getRealPath() const
+{
+  Path ret = *this ;
+  ret.makeRealPath() ;
+  return ret ;
+
+}
 //------------------------------------------------------------------------------
 
 std::ostream&

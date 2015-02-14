@@ -21,7 +21,7 @@
  -----------------------------------------------------------------------------
  */
 
-#include <sbbdep/lddirs.hpp>
+#include <sbbdep/ldconf.hpp>
 
 #include <sbbdep/path.hpp>
 #include <sbbdep/dircontent.hpp>
@@ -29,11 +29,14 @@
 #include <sbbdep/log.hpp>
 #include <sbbdep/elffile.hpp>
 
-#include <fstream>
-#include <string>
 #include <algorithm>
+#include <fstream>
 #include <future>
 #include <iterator>
+#include <map>
+#include <sstream>
+#include <string>
+
 #include <boost/algorithm/string/trim.hpp>
 
 namespace sbbdep {
@@ -76,7 +79,8 @@ fillFromLdSoCache ()
 
           const char* file_begin = std::search (buff_start, buff_end,
                                                 begin (arrow), end (arrow))
-              + arrow.size ();
+                      + arrow.size ();
+
           if (not posFound (file_begin))
             {
               continue;
@@ -107,7 +111,133 @@ fillFromLdSoCache ()
 } //-----------------------------------------------------------------------------
 } //anno ns
 
-LDDirs::LDDirs ()
+std::multimap<std::string, std::string>
+Ldconf::cache ()
+{
+
+  using namespace std ;
+  multimap<string, string> retval;
+
+  const string cmd = "/sbin/ldconfig -p";
+  FILE* popin = popen (cmd.c_str (), "r");
+  if (popin)
+    {
+      char buff [512];
+
+      while (std::fgets (buff, sizeof(buff), popin) != NULL)
+        {
+          const char* buff_start = buff;
+          const char* buff_end = buff + sizeof(buff);
+
+          auto posFound = [&buff](const char* pos) -> bool
+            {
+              if(pos == buff + sizeof( buff ))
+                { // first line might look like
+                  // 2683 libs found in cache `/etc/ld.so.cache
+                  // it's not good to have a debug message for this
+                  //LogDebug()<< "Info: not to parse: " << buff ;
+                return false;
+              }
+            return true;
+          };
+
+          const std::string arrow = "=> ";
+
+
+          using std::binary_search;
+
+          const char* file_begin = std::search (buff_start, buff_end,
+                                                begin (arrow), end (arrow))
+                      + arrow.size ();
+
+          if (not posFound (file_begin))
+            {
+              continue;
+            }
+
+          const std::string lineend = "\n";
+          const char* file_end = std::search (file_begin, buff_end,
+                                              begin (lineend), end (lineend));
+          if (not posFound (file_end))
+            {
+              continue;
+            }
+
+          auto isSpace = [](const char c)
+          { //LogDebug() << "@@" << c << "@@" ;
+            return c == ' '  || c == '\t'  ;
+          } ;
+
+          const char* so_begin = find_if_not (buff_start, buff_end,
+                                                   isSpace) ;
+          //LogDebug() << "--- " ;
+          const char* so_end = find_if  (so_begin, file_begin,
+                                                         isSpace) ;
+
+
+          retval.emplace (std::string (so_begin, so_end),
+                          std::string (file_begin, file_end)) ;
+
+        }
+
+      pclose (popin);
+    }
+
+  return retval ;
+}
+//------------------------------------------------------------------------------
+
+Ldconf::LddMap
+Ldconf::lddMap (const PathName& f)
+{
+  LddMap retval;
+
+  const std::string cmd = "ldd " + f.str ();
+  FILE* popin = popen (cmd.c_str (), "r");
+  std::stringstream output;
+  if (popin)
+    {
+      char buff [512];
+      while (std::fgets (buff, sizeof(buff), popin) != NULL)
+        output << buff;
+
+      pclose (popin);
+    }
+
+  std::string line;
+  const std::string splitter = " => ";
+  while (std::getline (output, line))
+    {
+      using size_t = std::size_t;
+      size_t npos = std::string::npos;
+
+      size_t begin = line.find_first_not_of (" \t");
+      if (begin == npos)
+        continue;
+
+      size_t splitt = line.find (splitter, begin);
+      if (splitt == npos)
+        continue;
+
+      size_t end = line.find (" ", splitt + splitter.size ());
+      if (begin == npos)
+        continue;
+
+      retval.emplace (
+          LddMap::value_type (
+              line.substr (begin, splitt - begin),
+              line.substr (splitt + splitter.size (),
+                           end - splitt - splitter.size ())));
+    }
+
+  return retval;
+
+}
+
+
+
+//------------------------------------------------------------------------------
+Ldconf::Ldconf ()
 {
 
   auto ldcachedata = std::async (std::launch::async, fillFromLdSoCache);
@@ -195,10 +325,10 @@ LDDirs::LDDirs ()
 }
 //------------------------------------------------------------------------------
 
-const LDDirs&
+const Ldconf&
 getLDDirs ()
 {
-  static const LDDirs lddirs;
+  static const Ldconf lddirs;
   return lddirs;
 }
 

@@ -114,14 +114,14 @@ process (const std::string& pkgfile, const Path& search)
 
           if (path_is_same_or_incoming (match))
             {
-              WriteAppMsg () << "absolute match in "
+              LogMsg () << "absolute match in "
                   << pkgfile  << ": " << search  << "\n"
                   << "    -> " << line   ;
             }
 
           else
             {
-              WriteAppMsg () << " filename found in " << pkgfile << ": "
+              LogMsg () << " filename found in " << pkgfile << ": "
                   << search.base () << "\n" << " -> line was :" << line ;
             }
 
@@ -229,7 +229,7 @@ lookupInPackages(const std::string& what)
                 }
               if (not results.empty ())
                 {
-                  WriteAppMsg () << results ;
+                  LogMsg () << results ;
                 }
             }
 

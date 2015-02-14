@@ -26,7 +26,7 @@
 #include <sbbdep/dircontent.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/log.hpp>
-#include <sbbdep/lddirs.hpp>
+#include <sbbdep/ldconf.hpp>
 
 #include <fstream>
 
@@ -37,7 +37,8 @@ Pkg
 Pkg::create(const Path& path, PkgType type_hint)
 {
 
-  Path pkgpath = path;
+  Path pkgpath = path.getRealPath ();
+
   PkgType pkgtype = PkgType::Unknown;
 
   pkgpath.makeRealPath ();
@@ -57,7 +58,7 @@ Pkg::create(const Path& path, PkgType type_hint)
             {
               pkgtype = PkgType::Installed;
             }
-          else if (isElfBinOrElfLib (pkgpath))
+          else if (ElfFile (pkgpath).isElf ())
             {
               pkgtype = PkgType::BinLib;
             }
@@ -84,7 +85,7 @@ Pkg::create(const Path& path, PkgType type_hint)
         }
       else if (type_hint == PkgType::BinLib)
         {
-          if (isElfBinOrElfLib (pkgpath))
+          if (ElfFile (pkgpath).isElf ())
             {
               pkgtype = PkgType::Installed;
             }
@@ -140,7 +141,7 @@ Pkg::doLoadOneBinLib()
 {
 
   ElfFile elfile(_path);
-  if( elfile.isBinaryOrLibrary() )
+  if( elfile.isElf () )
     _elfFiles.push_back(elfile);
 
 
@@ -169,7 +170,7 @@ Pkg::doLoadDestDir()
         else if (path.isRegularFile ())
           {
             ElfFile elfile (path);
-            if (elfile.isBinaryOrLibrary ())
+            if (elfile.isElf ())
               {
                 _elfFiles.push_back (elfile);
               }
@@ -254,7 +255,7 @@ Pkg::doLoadInstalled()
     if (p.isRegularFile ())
       {
         ElfFile elfile (p);
-        if (elfile.isBinaryOrLibrary ())
+        if (elfile.isElf ())
           {
             _elfFiles.push_back (elfile);
           }

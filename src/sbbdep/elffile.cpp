@@ -35,8 +35,21 @@ THE SOFTWARE.
 namespace sbbdep {
 
 
-ElfFile::ElfFile(const PathName& name) noexcept
-  : _name{name}
+ElfFile::ElfFile() noexcept
+  : _name{}
+  , _arch{ArchNA}
+  , _type{TypeNA}
+  , _soName{}
+  , _needed{}
+  , _rrunpaths{}
+  , _hasRunPath{false}
+{
+
+}
+//------------------------------------------------------------------------------
+
+ElfFile::ElfFile(Path name) noexcept
+  : _name{std::move(name)}
   , _arch{ArchNA}
   , _type{TypeNA}
   , _soName{}
@@ -54,41 +67,42 @@ ElfFile::ElfFile(const PathName& name) noexcept
   }
 
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 
 ElfFile::~ElfFile()
 {
 
 }
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 
 void
 ElfFile::load()
 {
   // firewall against invalid pathnames
-  if(not Path(_name).isRegularFile())
-    return ;
+// TODO !!
+//  if (not _name.isRegularFile ())
+//    return;
 
   ELFIO::elfio elfreader;
 
-  if ( not elfreader.load( _name ) ) {
+  if (not elfreader.load (_name))
+    {
       return;
-  }
+    }
 
-  int elfclass = elfreader.get_class();
+  int elfclass = elfreader.get_class ();
   if (elfclass == ELFCLASSNONE)
-    throw ErrUnexpected("should already have returned false");
+    throw ErrUnexpected ("should already have returned false");
   else if (elfclass == ELFCLASS32)
     _arch = Arch32;
   else if (elfclass == ELFCLASS64)
     _arch = Arch64;
   else
-    throw ErrUnexpected("unknown arch should not happen");
+    throw ErrUnexpected ("unknown arch should not happen");
 
-
-  ELFIO::Elf_Half type = elfreader.get_type();
+  ELFIO::Elf_Half type = elfreader.get_type ();
 
   if (type == ET_NONE)
     _type = TypeNA;
@@ -97,130 +111,95 @@ ElfFile::load()
   else if (type == ET_DYN)
     _type = Library;
   else
-    _type=Other;
+    _type = Other;
 
+  if (!(_type == Binary || _type == Library))
+    return;
 
-  if( !( _type == Binary || _type == Library ) )
-    return ;
-
-
-
-  ELFIO::Elf_Half n = elfreader.sections.size();
-  for(ELFIO::Elf_Half i = 0; i < n; ++i)
+  ELFIO::Elf_Half n = elfreader.sections.size ();
+  for (ELFIO::Elf_Half i = 0; i < n; ++i)
     { // For all sections
-      ELFIO::section* sec = elfreader.sections[i];
-      if( SHT_DYNAMIC == sec->get_type() )
+      ELFIO::section* sec = elfreader.sections [i];
+      if ( SHT_DYNAMIC == sec->get_type ())
         {
-          ELFIO::dynamic_section_accessor dynamic(elfreader, sec);
+          ELFIO::dynamic_section_accessor dynamic (elfreader, sec);
 
-          if( not dynamic.get_entries_num() > 0 )
-            return ;
+          if (not dynamic.get_entries_num () > 0)
+            return;
 
-          for(ELFIO::Elf_Xword i = 0; i < dynamic.get_entries_num(); ++i)
+          for (ELFIO::Elf_Xword i = 0; i < dynamic.get_entries_num (); ++i)
             {
               ELFIO::Elf_Xword tag = DT_NULL;
               ELFIO::Elf_Xword value;
               std::string val;
-              dynamic.get_entry(i, tag, value, val);
+              dynamic.get_entry (i, tag, value, val);
 
-              if( tag == DT_NEEDED )
+              if (tag == DT_NEEDED)
                 {
-                  _needed.push_back(std::string(val));
+                  _needed.push_back (std::string (val));
                 }
-              else if( tag == DT_SONAME )
+              else if (tag == DT_SONAME)
                 {
                   _soName = val;
                 }
-              else if( tag == DT_RPATH )
-                {
+              else if (tag == DT_RPATH)
+                { // TODO make a warning  that file uses DT_RPATH
                   std::string pathes = val;
 
-                  for(std::size_t spos = 0, epos = pathes.find(":", spos);
-                      spos != epos && spos != pathes.size(); epos = pathes.find(":", spos))
+                  for (std::size_t spos = 0, epos = pathes.find (":", spos);
+                      spos != epos && spos != pathes.size (); epos =
+                          pathes.find (":", spos))
                     {
-                      std::string rpath = pathes.substr(spos, epos - spos);
-                      _rrunpaths.push_back(rpath);
-                      spos = epos == std::string::npos ? std::string::npos : epos + 1;
+                      std::string rpath = pathes.substr (spos, epos - spos);
+                      _rrunpaths.push_back (rpath);
+                      spos =
+                          epos == std::string::npos ?
+                              std::string::npos : epos + 1;
                     }
 
                 }
-              else if( tag == DT_RUNPATH )
-                { // assume that runpath is always after rpath
-                  // what should be the case, rpath only if runpath does not exist
-                  _rrunpaths.clear();
+              else if (tag == DT_RUNPATH)
+                { //  rpath only if runpath does not exist
+                  //  so we can overwrite ..
+                  _rrunpaths.clear ();
                   _hasRunPath = true;
 
                   std::string pathes = val;
 
-                  for(std::size_t spos = 0, epos = pathes.find(":", spos);
-                      spos != epos && spos != pathes.size(); epos = pathes.find(":", spos))
+                  for (std::size_t spos = 0, epos = pathes.find (":", spos);
+                      spos != epos && spos != pathes.size (); epos =
+                          pathes.find (":", spos))
                     {
-                      std::string rpath = pathes.substr(spos, epos - spos);
-                      _rrunpaths.push_back(rpath);
-                      spos = epos == std::string::npos ? std::string::npos : epos + 1;
+                      std::string rpath = pathes.substr (spos, epos - spos);
+                      _rrunpaths.push_back (rpath);
+                      spos =
+                          epos == std::string::npos ?
+                              std::string::npos : epos + 1;
                     }
 
                 }
 
-              else if( DT_NULL == tag )
+              else if ( DT_NULL == tag)
                 {
                   break;
                 }
             }
 
-          return ;
+          if (_soName.empty ())
+            _soName = _name.base ();
+
+          return;
 
         }
     }
 
-
 }
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 
-bool isElfBinOrElfLib(const PathName& pn)
-{
-  ELFIO::elfio elfreader;
 
-  if ( not elfreader.load( pn ) ) {
-      return false;
-  }
-
-  bool retval = false;
-  int elfclass = elfreader.get_class();
-  if( elfclass == ELFCLASS32 || elfclass == ELFCLASS64 )
-    {
-      ELFIO::Elf_Half type = elfreader.get_type();
-      if(type == ET_EXEC || type == ET_DYN)
-        retval = true;
-    }
-
-  return retval;
-}
-
-
-bool isElfLib(const PathName& pn)
-{
-  ELFIO::elfio elfreader;
-
-  if ( not elfreader.load( pn ) ) {
-      return false;
-  }
-
-  bool retval = false;
-  int elfclass = elfreader.get_class();
-  if( elfclass == ELFCLASS32 || elfclass == ELFCLASS64 )
-    {
-      ELFIO::Elf_Half type = elfreader.get_type();
-      if (type == ET_DYN)
-        retval = true;
-    }
-
-  return retval;
-}
-//--------------------------------------------------------------------------------------------------
-
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 std::string
 replaceORIGIN(const std::string& originstr,
@@ -237,9 +216,30 @@ replaceORIGIN(const std::string& originstr,
            "$ORIGIN",
            destfile.str()) ;
 }
+//------------------------------------------------------------------------------
+
+
+std::string
+replaceLIB(const std::string& str, ElfFile::Arch arch)
+{ // $LIB
+
+  using boost::algorithm::replace_first_copy;
+
+  if (arch == ElfFile::Arch32)
+    {   // lib
+      return replace_first_copy(str,"$LIB","lib") ;
+    }
+  else if (arch == ElfFile::Arch64)
+    { // lib64
+      return replace_first_copy(str,"$LIB","lib64") ;
+    }
+
+  throw ErrUnexpected("replaceLIB ElfFile::ArchNA") ;
+
+}
 
 
 
-//--------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 }

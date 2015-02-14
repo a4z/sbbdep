@@ -5,7 +5,7 @@
 #include <ctime>
 #include <string>
 
-#include <sbbdep/lddirs.hpp>
+#include <sbbdep/ldconf.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/pathname.hpp>
 #include <sbbdep/dircontent.hpp>

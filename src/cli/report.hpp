@@ -25,6 +25,8 @@ THE SOFTWARE.
 #ifndef SBBDEP_CLI_REPORT_HPP_
 #define SBBDEP_CLI_REPORT_HPP_
 
+#include <a4sqlt3/dataset.hpp>
+
 #include<functional>
 #include<map>
 #include<set>
@@ -60,6 +62,10 @@ namespace cli{
                bool xdl ) ;
 
 
+  void
+  bdTree (Cache& cache, const Pkg& pkg, bool shortNames) ;
+
+
 
   bool
   fileInPackages (const sbbdep::Path& filepath);
@@ -74,9 +80,6 @@ namespace cli{
     using StringVec = std::vector<std::string> ;
     using StringSet = std::set<std::string> ;
 
-    // soname, requires ...
-    std::map<std::string, std::string>
-    getLddMap(const sbbdep::PathName& f) ;
 
     //--------------------------------------------------------------------------
 
@@ -140,6 +143,10 @@ namespace cli{
       void add(const StringVec& path) ;
     };
     //--------------------------------------------------------------------------
+
+    a4sqlt3::Dataset
+    getPkgsOfFile (Cache& cache,const PathName& fname, int arch);
+
     //--------------------------------------------------------------------------
 
 #ifdef DEBUG

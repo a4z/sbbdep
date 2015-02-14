@@ -12,3 +12,12 @@ ldusrdir is missing, I think I can remove it,
 this would also be a good idea the go to version -0.3, different schema... 
 therefor ldtree option, that does respect user settings...
 
+
+changelog 
+
+speed sync 
+l feature
+no openmp so clang
+code claenup
+deptree
+multilibhandling improvment for special case

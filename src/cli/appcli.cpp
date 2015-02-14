@@ -243,20 +243,24 @@ AppCli::run(const AppArgs& args)
           return 5;
         }
     }
-  else if (not args.whoNeeds ())
+  else if (args.bdtree ())
+    {
+      cli::bdTree(cache, pkg, args.shortNames ()) ;
+    }
+  else // if no other option, than it is required...
     {
       cli::printRequired (cache, pkg ,
                           args.shortNames  (),
                           args.xdl (),
                           args.ldd ()) ;
     }
-  else
-    {
-      LogError () << "Can not run given combination of arguments";
-      LogError () << "(could possible, but I do not want)";
-      LogError () << "Please run just one QUERY." << std::endl;
-      return 6;
-    }
+//  else
+//    {
+//      LogError () << "Can not run given combination of arguments";
+//      LogError () << "(could possible, but I do not want)";
+//      LogError () << "Please run just one QUERY." << std::endl;
+//      return 6;
+//    }
 
 
   return 0;

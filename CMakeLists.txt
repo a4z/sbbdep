@@ -72,8 +72,7 @@ include/sbbdep/cache.hpp
 include/sbbdep/dircontent.hpp
 include/sbbdep/elffile.hpp
 include/sbbdep/error.hpp
-include/sbbdep/lddirs.hpp
-include/sbbdep/lddmap.hpp
+include/sbbdep/ldconf.hpp
 include/sbbdep/log.hpp
 include/sbbdep/path.hpp
 include/sbbdep/pathname.hpp
@@ -100,8 +99,7 @@ src/sbbdep/cachesql.cpp
 src/sbbdep/dircontent.cpp
 src/sbbdep/error.cpp
 src/sbbdep/elffile.cpp
-src/sbbdep/lddmap.cpp
-src/sbbdep/lddirs.cpp
+src/sbbdep/ldconf.cpp
 src/sbbdep/log.cpp
 src/sbbdep/path.cpp
 src/sbbdep/pathname.cpp
@@ -134,6 +132,7 @@ SET ( sbbdepcli_SRC
     src/cli/report_whoneed.cpp
     src/cli/report_utils.cpp    
     src/cli/report_lookup.cpp
+    src/cli/report_bdtree.cpp
     
     src/cli/featurex.hpp
     src/cli/featurex.cpp

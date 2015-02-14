@@ -27,32 +27,36 @@ THE SOFTWARE.
 
 #include <vector>
 #include <string>
+#include <map>
 
 namespace sbbdep
 {
 
+class PathName;
 
-
-
-
-class LDDirs
+class Ldconf
 {
   using StringVec = std::vector<std::string> ;
 
 
+  friend const Ldconf& getLDDirs() ;
 
-  friend const LDDirs& getLDDirs() ;
 
-
-  LDDirs();
+  Ldconf();
 public:
 
-  ~LDDirs() = default ;
+  ~Ldconf() = default ;
   
   int64_t getLdSoConfTime() const { return _ldSoConfTime;}
   const StringVec& getLdDirs() const  { return _lddirs;}
   const StringVec& getLdLnkDirs() const {  return _ldlnkdirs;}
   const StringVec& getBinDirs() const {  return _binDirs;}
+
+  using CacheType =std::multimap<std::string, std::string> ;
+  static CacheType cache() ;
+
+  using LddMap = std::map<std::string, std::string> ;
+  static LddMap lddMap(const PathName&) ;
 
 private:
 
@@ -63,7 +67,7 @@ private:
 };
 
 
-const LDDirs& getLDDirs() ;
+const Ldconf& getLDDirs() ;
 
 
 

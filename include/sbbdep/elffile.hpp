@@ -28,13 +28,9 @@ THE SOFTWARE.
 
 #include <string>
 #include <vector>
-#include <sbbdep/pathname.hpp>
+#include <sbbdep/path.hpp>
 
 namespace sbbdep {
-
-
-
-
 
 
 // opens the file and reads the info, if file is n
@@ -46,42 +42,39 @@ public:
   enum Arch { ArchNA = 0, Arch32 = 32 , Arch64 = 64 };
   enum Type { TypeNA= 0 , Other,  Binary , Library};
 
-  // calls load, catches all exceptions and swallows them
-  // so if arch and type stays NA than either not an elf file or file does not exist
-  ElfFile(const PathName& name) noexcept ;
+  ElfFile() noexcept ;
+
+  ElfFile(Path name) noexcept ;
   
+  ElfFile(const ElfFile&) = default ;
+  ElfFile(ElfFile&&) = default ;
+
+  ElfFile& operator= (const ElfFile&) = default ;
+  ElfFile& operator= (ElfFile&&) = default ;
+
   ~ElfFile();
 
-  const PathName& getName() const { return _name; }
+  const Path& getName() const { return _name; }
   
   Arch getArch() const {return _arch;}
 
   Type getType()  const{ return _type; }  
   
-  std::string soName() const {
-    if(getType()== ElfFile::Library && _soName.empty())
-      return getName().base();
-
-    return _soName ;
-  }
+  const std::string& soName() const { return _soName; };
   
   const StringVec& getNeeded() const { return _needed ; }
   
   const StringVec& getRRunPaths() const { return _rrunpaths ; }
   
-  bool isBinaryOrLibrary()
-  { return getType() == ElfFile::Binary || getType() == ElfFile::Library ;}
+  bool isElf() const { return _type == Binary || _type == Library ; }
 
   bool hasRPath() const {return !_hasRunPath && !_rrunpaths.empty();}
+
   bool hasRunPath() const {return _hasRunPath && !_rrunpaths.empty();}
 
-
-
-
 private:
-  
 
-  PathName _name;
+  Path _name;
   Arch _arch ;
   Type _type ;
   
@@ -96,14 +89,13 @@ private:
   
 };
 
-// if just the info is required if given path points to a bin or lib file, this is ok
-bool isElfBinOrElfLib(const PathName& pn);
-bool isElfLib(const PathName& pn);
 
 // since this comes form elf files, this seems to be the right location
 // will not use this in here, so elf info will have ORIGIN in the dyn paths
 std::string replaceORIGIN(const std::string& originstr,
                                  const std::string& fromfile);
+
+std::string replaceLIB(const std::string& str, ElfFile::Arch arch);
 
 
 }

@@ -23,14 +23,10 @@ THE SOFTWARE.
 
 
 #include "report.hpp"
-#include <sbbdep/cache.hpp>
-
-#include <a4sqlt3/dataset.hpp>
-
 
 #include <sbbdep/cache.hpp>
 #include <sbbdep/elffile.hpp>
-#include <sbbdep/lddmap.hpp>
+#include <sbbdep/ldconf.hpp>
 #include <sbbdep/log.hpp>
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgname.hpp>
@@ -67,24 +63,7 @@ namespace
 
 }
 
-a4sqlt3::Dataset
-getPkgsOfFile (Cache& cache,const PathName& fname, int arch)
-{
 
-  const char* sql = R"~(
-  SELECT fullname 
-  FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
-  WHERE dynlinked.filename=?  AND dynlinked.arch=? ; 
-  )~";
-
-  const std::string cmdname = "getPkgsOfFilebyFile" ;
-
-  auto& cmd = cache.namedCommand(cmdname, sql) ;
-
-  return cmd.select( { fname.str (), arch }) ;
-
-}
-//------------------------------------------------------------------------------
 
 /**
  * this is top down, get ldd info and pack it
@@ -136,7 +115,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
     {
       StringSet notFound; // for delete an insert as problems
       // soname - filename
-      StringMap ldd_map = getLddMap (elf.getName()) ;
+      StringMap ldd_map = Ldconf::lddMap (elf.getName()) ;
       for(const auto& ld_line : ldd_map)
         { // is 'not found', but search for on "/"
           if( ld_line.second.find("/") == std::string::npos )
@@ -203,7 +182,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
       while(path.isLink ())
         path.makeRealPath ();
 
-      Dataset dspkgs = getPkgsOfFile (cache, path, arch);
+      Dataset dspkgs = utils::getPkgsOfFile (cache, path, arch);
 
       //need  "pkgname", "filename", "soname" , "requiredby"
       for(const auto& pkgval : dspkgs)
@@ -417,10 +396,10 @@ printRequired(Cache& cache,
 
   if (pkg.getType () == PkgType::BinLib)
     {
-      const a4sqlt3::Dataset ds = getPkgsOfFile (cache,
+      const a4sqlt3::Dataset ds = utils::getPkgsOfFile (cache,
                                                  pkg.getPath (),
                                                  pkg.getArch ());
-      auto msgChannel = WriteAppMsg ();
+      auto msgChannel = LogMsg ();
 
       msgChannel << "check " << pkg.getPath () << ", "
                  << pkg.getElfFiles ().begin ()->getArch () << "bit ";
@@ -477,14 +456,14 @@ printRequired(Cache& cache,
     {
       for (auto requiredby_sos : reptree.node)
         {
-          WriteAppMsg () << "file " << requiredby_sos.first << " needs:";
+          LogMsg () << "file " << requiredby_sos.first << " needs:";
           for (auto so_files : requiredby_sos.second.node)
             {
-              WriteAppMsg () << "  " << so_files.first << " found in:";
+              LogMsg () << "  " << so_files.first << " found in:";
               for (auto file_pkgs : so_files.second.node)
                 {
                   const auto names = getKeySet (file_pkgs.second.node) ;
-                  WriteAppMsg () << "    "
+                  LogMsg () << "    "
                       << file_pkgs.first
                       << " ("
                       << utils::joinToString (names, " | ", makename)
@@ -524,33 +503,33 @@ printRequired(Cache& cache,
             }
         }
 
-      WriteAppMsg () << utils::joinToString (pkglist, shortNames ? ", " : "\n");
+      LogMsg () << utils::joinToString (pkglist, shortNames ? ", " : "\n");
 
     }
 
   if (not notFounds.empty ())
     {
-      WriteAppMsg () << std::endl;
-      WriteAppMsg () << "sonames not found via "
+      LogMsg () << std::endl;
+      LogMsg () << "sonames not found via "
           << (ldd ? "ldd\n" : "standard paths: ");
 
       for (auto val : notFounds)
         {
-          WriteAppMsg () << " for " << val.first << ": "
+          LogMsg () << " for " << val.first << ": "
               << utils::joinToString (val.second, ", ");
         }
 
-      WriteAppMsg () << "this does not necessarily mean there is a problem ";
+      LogMsg () << "this does not necessarily mean there is a problem ";
       if (not ldd)
         {
-          WriteAppMsg ()
+          LogMsg ()
               << "the application can either have its own environment "
                   " or the soname is resolved via a link name";
-          WriteAppMsg () << "you can re-check the affected files with --ldd";
+          LogMsg () << "you can re-check the affected files with --ldd";
         }
       else
         {
-          WriteAppMsg () << "but it's very likely that there is one";
+          LogMsg () << "but it's very likely that there is one";
         }
 
     }

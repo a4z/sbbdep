@@ -49,7 +49,7 @@ class LogChannel
   friend LogChannel LogDebug() ;
   friend LogChannel LogError() ;
   friend LogChannel LogInfo() ;
-  friend LogChannel WriteAppMsg() ;
+  friend LogChannel LogMsg() ;
 public:
 
 
@@ -116,7 +116,7 @@ public:
 LogChannel LogDebug();
 LogChannel LogError();
 LogChannel LogInfo();
-LogChannel WriteAppMsg();
+LogChannel LogMsg();
 
 
 

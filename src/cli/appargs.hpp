@@ -48,6 +48,7 @@ class AppArgs
   int _featureX;
   std::string _featureXArgs;
   std::string _varAdmDir;
+  int _bdtree ;
   
 public:
   AppArgs();
@@ -71,6 +72,7 @@ public:
   bool featureX() const { return _featureX ; }
   const std::string& featureXArgs() const { return _featureXArgs ; }
   const std::string& varAdmDir() const { return _varAdmDir ; }
+  bool bdtree() const { return _bdtree ; }
   
   void printHelp();
  

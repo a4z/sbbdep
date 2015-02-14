@@ -185,7 +185,7 @@ LogChannel LogInfo()
 }
 //------------------------------------------------------------------------------
 
-LogChannel WriteAppMsg()
+LogChannel LogMsg()
 {
   using std::shared_ptr;
   using std::make_shared;

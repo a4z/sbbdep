@@ -69,6 +69,8 @@ public:
   Path& operator=(const char* rhs);
   Path& operator=(const PathName& rhs);
   
+  Path& operator+=(const std::string& p);
+
   bool operator==( const Path& other ) const 
   { return str() == other.str() ; }
 
@@ -108,6 +110,8 @@ public:
   const time_t& getLastStatusChangeTime() const ;
   
   bool makeRealPath()  ;
+
+  Path getRealPath() const ;
 
   friend std::ostream& operator<<(std::ostream& os, const Path& p);  
   
