@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2001-2011 by Serge Lamikhov-Center
+Copyright (C) 2001-2015 by Serge Lamikhov-Center
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -332,8 +332,10 @@ class relocation_section_accessor
         const endianess_convertor& convertor = elf_file.get_convertor();
 
         T entry;
-        entry.r_offset = convertor( offset );
-        entry.r_info   = convertor( info );
+        entry.r_offset = offset;
+        entry.r_info   = info;
+        entry.r_offset = convertor( entry.r_offset );
+        entry.r_info   = convertor( entry.r_info );
 
         relocation_section->append_data( reinterpret_cast<char*>( &entry ), sizeof( entry ) );
     }
