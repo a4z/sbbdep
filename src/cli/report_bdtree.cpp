@@ -211,10 +211,13 @@ findElfSo(const ElfFile& elf, const std::string& soname)
     }
 
   {
-    auto elfso = findInPaths (elf.getArch(), soname,
-                              std::getenv ("LD_LIBRARY_PATH"));
-    if (elfso.getArch () == elf.getArch())
-      return elfso;
+    auto ldlibpath = std::getenv ("LD_LIBRARY_PATH") ;
+    if (ldlibpath != nullptr)
+      {
+        auto elfso = findInPaths (elf.getArch (), soname, ldlibpath);
+        if (elfso.getArch () == elf.getArch ())
+          return elfso;
+      }
   }
 
   if (elf.hasRunPath ())
@@ -331,7 +334,7 @@ printElfs(const ElfFile& elf, int level, Cache& cache, bool shortNames)
 
       auto soelf = findElfSo (elf, soname);
 
-      if (not soelf.getArch () == elf.getArch ())
+      if (soelf.getArch () != elf.getArch ())
         {
           LogMsg () << soname << " NOT FOUND" ;
           continue ;
@@ -359,8 +362,15 @@ printLIBC6 (const ElfFile& elf, Cache& cache, bool shortNames)
       if (soname.size () > libc6.size () &&
           std::equal (begin (libc6), end (libc6), begin (soname)))
         {
-          LogMsg() << "used by all:" ;
           auto c6 = findElfSo (elf, soname) ;
+
+          LogMsg() << "used by all:" ;
+          if(c6.getArch() == ElfFile::ArchNA)
+            {
+              LogMsg() << "libc.so* "<< " NOT FOUND" ;
+              break ;
+            }
+
           printElf(soname, c6, 2, cache, shortNames) ;
 
           auto ldlsoname = *begin (c6.getNeeded ()) ;
