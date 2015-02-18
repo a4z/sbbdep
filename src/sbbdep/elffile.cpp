@@ -80,10 +80,6 @@ ElfFile::~ElfFile()
 void
 ElfFile::load()
 {
-  // firewall against invalid pathnames
-// TODO !!
-//  if (not _name.isRegularFile ())
-//    return;
 
   ELFIO::elfio elfreader;
 
@@ -143,7 +139,7 @@ ElfFile::load()
                   _soName = val;
                 }
               else if (tag == DT_RPATH)
-                { // TODO make a warning  that file uses DT_RPATH
+                { LogDebug () << _name.str() << " uses DT_RPATH" ;
                   std::string pathes = val;
 
                   for (std::size_t spos = 0, epos = pathes.find (":", spos);

@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <sbbdep/dircontent.hpp>
 
 #include <sbbdep/error.hpp>
+#include <sbbdep/log.hpp>      // for assert
 #include <sbbdep/pathname.hpp> // for assert
 
 #include <sys/types.h>

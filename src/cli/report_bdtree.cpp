@@ -141,7 +141,6 @@ findInLdSoCache (ElfFile::Arch arch, const std::string& soname)
 
   while (b != e)
     {
-     // LogDebug() << b->first << " " << b->second ;
       ElfFile elf (Path (b->second));
       if (elf.getArch () == arch)
         {
@@ -247,7 +246,8 @@ printElf( const std::string& soname,
           bool shortNames)
 {
 
-  // TODO here would be a good chance to check if soname is realy soelf.
+  SBBASSERT (elf.isElf()) ;
+
 
   std::string indentDep ;
 

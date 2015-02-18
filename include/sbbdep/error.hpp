@@ -86,15 +86,19 @@ namespace sbbdep{
   using ErrUnexpected   =  ErrType<ErrCode::UNEXPECTED>;
 
 
-
-
-
 } // ns 
 
+#ifdef DEBUG
 #define SBBASSERT( exp ) if ( !( exp ) ) \
   throw  sbbdep::ErrAssert( std::string(" assertion in ")\
             + sbbdep::PathName ( __FILE__ ).base() + ":" \
             +  __PRETTY_FUNCTION__ + ": " + #exp )
+#else
 
+#define SBBASSERT( exp ) if ( !( exp ) ) \
+  LogError () << "assertion  failed: " \
+              << sbbdep::PathName ( __FILE__ ).base() << ":" \
+              << __PRETTY_FUNCTION__ << ":" <<  #exp  ;
+#endif
 
 #endif /* ...ERROR_HPP_ */

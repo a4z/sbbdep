@@ -23,7 +23,8 @@
 
 #include <sbbdep/pathname.hpp>
 #include <sbbdep/error.hpp>
-
+#include <sbbdep/log.hpp>
+#include <sbbdep/pathname.hpp>
 
 #include <algorithm>
 #include <climits>

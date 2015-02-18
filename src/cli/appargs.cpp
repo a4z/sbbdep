@@ -122,6 +122,11 @@ usage: sbbdep [OPTION]... [QUERY]
      in the dependencies of the requirements.
      This option is useless for a --whoneeds query.
 
+  --bdtree
+     Prints a hierarchical dependency tree of QUERY.
+     This can produce a quite long output of for some binaries or libraries and
+     a very very big long for some package.
+
   -l, --lookup
      Search for QUERY in the package database and skip all other operations
                              
