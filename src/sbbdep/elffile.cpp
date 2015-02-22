@@ -139,7 +139,7 @@ ElfFile::load()
                   _soName = val;
                 }
               else if (tag == DT_RPATH)
-                { LogDebug () << _name.str() << " uses DT_RPATH" ;
+                { //LogDebug () << _name.str() << " uses DT_RPATH" ;
                   std::string pathes = val;
 
                   for (std::size_t spos = 0, epos = pathes.find (":", spos);
