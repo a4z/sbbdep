@@ -24,7 +24,7 @@ replorig.cpp
 
 
 ADD_EXECUTABLE( sbbtest ${sbbtest_SRC} )
-# if a4sqlt3 build is mt, pthread requried ... 
+# if sq3 build is mt, pthread requried ... 
 TARGET_LINK_LIBRARIES( sbbtest pthread ${SBBDEP_REQURIED_LIBS} ${myBoostLibs} )
 
 

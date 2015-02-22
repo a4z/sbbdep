@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(sbbdep C CXX) 
 
-include( a4sqlt3/a4cmk/myMacros.cmake )
+include( a4sqlt3/a4cmk/macros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 2)
@@ -22,7 +22,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 
-include( a4sqlt3/a4cmk/myCompilerSetup.cmake )
+include( a4sqlt3/a4cmk/setup_compiler.cmake )
 
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
@@ -44,9 +44,9 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
-include( a4sqlt3/a4cmk/myBoostSetup.cmake )
+include( a4sqlt3/a4cmk/setup_boost.cmake )
 
-set (a4sqlt3_library a4sqlt3) 
+set (sq3_library sq3) 
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
   #in Release only add testing if explicite asked to do so
@@ -142,9 +142,9 @@ SET ( sbbdepcli_SRC
 #ADD_EXECUTABLE( sbbdepcli src/dummy.cpp )
 ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
-#TODO, sqlite & dl only needed  if a4sqlt3 was build with that requirement ...
+#TODO, sqlite & dl only needed  if sq3 was build with that requirement ...
 #set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl ) 
-set(SBBDEP_REQURIED_LIBS sbbdep ${a4sqlt3_library} )
+set(SBBDEP_REQURIED_LIBS sbbdep ${sq3_library} )
 
 set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
 
@@ -169,7 +169,7 @@ endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
   
-include( a4sqlt3/a4cmk/myTestSetup.cmake )  
+include( a4sqlt3/a4cmk/setup_testing.cmake )  
 
 
 

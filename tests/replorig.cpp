@@ -16,7 +16,7 @@ void CheckFunctions()
   
   Cache c{"memory:"};
 
-  a4sqlt3::DbValue result(a4sqlt3::Type::Text);
+  sq3::DbValue result(sq3::Type::Text);
   
   std::string c1sql = "SELECT replaceOrigin('$ORIGIN/../lib', '/usr/lib')" ;
   std::string c2sql = "SELECT replaceOrigin('$ORIGIN/local/lib', '/usr')" ;

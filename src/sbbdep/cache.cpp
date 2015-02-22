@@ -38,7 +38,7 @@ THE SOFTWARE.
 #include "cachesql.hpp"
 
 
-#include <a4sqlt3/error.hpp>
+#include <sq3/error.hpp>
 
 #include <vector>
 #include <set>
@@ -60,10 +60,10 @@ auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
 
 
 
-using a4sqlt3::Dataset;
-using a4sqlt3::Command;
-using a4sqlt3::DbValue;
-using a4sqlt3::Type;
+using sq3::Dataset;
+using sq3::Command;
+using sq3::DbValue;
+using sq3::Type;
 
 
 Cache::Cache(const std::string& dbname)
@@ -257,7 +257,7 @@ Cache::doSync()
           updateIndex (syncdata);
         }
     }
-  catch (const a4sqlt3::Error& e)
+  catch (const sq3::Error& e)
     {
       LogError () << e ;
       throw;
@@ -356,7 +356,7 @@ Cache::createUpdateSyncData()
 // while this runs, get all from the db
   StringSet allpkgindb; // all pks in the db
   // get all in the database
-  auto rh = [&allpkgindb](a4sqlt3::QueryRow& qrow) -> bool
+  auto rh = [&allpkgindb](sq3::QueryRow& qrow) -> bool
         {
           allpkgindb.insert (qrow [0].getText ());
           return true ;
@@ -621,7 +621,7 @@ Cache::updateIndex(const SyncData& data)
 //------------------------------------------------------------------------------
 
 
-a4sqlt3::Command&
+sq3::Command&
 Cache::getCommand(sqlid id)
 {
   auto fi = _commands.find(id);
@@ -678,7 +678,7 @@ Cache::indexPkg(const Pkg& pkg)
                    { elf.getName().base() } ,
                    (elf.soName().size()> 0 ?
                            DbValue(elf.soName()) :
-                           DbValue(a4sqlt3::Type::Null) ) ,
+                           DbValue(sq3::Type::Null) ) ,
                    { elf.getArch() }
           });
 
@@ -700,7 +700,7 @@ Cache::indexPkg(const Pkg& pkg)
         }
 
     }
-  catch (const a4sqlt3::Error& e)
+  catch (const sq3::Error& e)
     {
       LogError () << e;
       throw;
@@ -741,7 +741,7 @@ Cache::updateLdDirInfo()
 //------------------------------------------------------------------------------
 
 
-a4sqlt3::Command&
+sq3::Command&
 Cache::namedCommand(const std::string& name,
                     const char* sql)
 {

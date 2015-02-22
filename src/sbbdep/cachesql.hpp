@@ -28,8 +28,8 @@ THE SOFTWARE.
 
 #include <string>
 
-#include <a4sqlt3/database.hpp>
-#include <a4sqlt3/command.hpp>
+#include <sq3/database.hpp>
+#include <sq3/command.hpp>
 #include <sbbdep/cache.hpp>
 
 
@@ -39,11 +39,11 @@ namespace sbbdep {
 
 namespace sql {
 
-  a4sqlt3::Command makeCommand(a4sqlt3::Database& db, Cache::sqlid id);
+  sq3::Command makeCommand(sq3::Database& db, Cache::sqlid id);
   
-  void createSchema(a4sqlt3::Database& db);
+  void createSchema(sq3::Database& db);
   
-  void addVersionTable(a4sqlt3::Database& db);
+  void addVersionTable(sq3::Database& db);
   
   void register_own_functions(sqlite3* db);
 

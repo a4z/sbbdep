@@ -32,8 +32,8 @@ THE SOFTWARE.
 #include <sbbdep/pkgname.hpp>
 
 
-#include <a4sqlt3/command.hpp>
-#include <a4sqlt3/dataset.hpp>
+#include <sq3/command.hpp>
+#include <sq3/dataset.hpp>
 
 #include <algorithm>
 #include <string>
@@ -49,7 +49,7 @@ namespace cli{
 namespace
 {
 
-  using Dataset = a4sqlt3::Dataset ;
+  using Dataset = sq3::Dataset ;
 
   using StringVec = std::vector<std::string> ;
   using StringSet = std::set<std::string> ;
@@ -72,7 +72,7 @@ RequiredInfo
 getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 {
 
-  using namespace a4sqlt3;
+  using namespace sq3;
 
   // not found collection
   // filename, so symbols
@@ -207,7 +207,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 }
 //------------------------------------------------------------------------------
 
-a4sqlt3::Dataset
+sq3::Dataset
 elfdeps( Cache& cache
         , const PathName& fromfile
         , const StringVec& needed
@@ -251,7 +251,7 @@ elfdeps( Cache& cache
     + unionrunpath +
     " );" ;
 
-  using namespace a4sqlt3;
+  using namespace sq3;
   Types tps { {Type::Text,
                       Type::Text,
                       Type::Text,
@@ -269,7 +269,7 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
   // no idea anymore how this works in detail,
   // I think I should write some docu
 
-  using namespace a4sqlt3;
+  using namespace sq3;
 
   // not found collection
   // filename, so symbols
@@ -396,7 +396,7 @@ printRequired(Cache& cache,
 
   if (pkg.getType () == PkgType::BinLib)
     {
-      const a4sqlt3::Dataset ds = utils::getPkgsOfFile (cache,
+      const sq3::Dataset ds = utils::getPkgsOfFile (cache,
                                                  pkg.getPath (),
                                                  pkg.getArch ());
       auto msgChannel = LogMsg ();

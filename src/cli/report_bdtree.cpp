@@ -37,8 +37,8 @@ THE SOFTWARE.
 #include <sbbdep/error.hpp>
 
 
-#include <a4sqlt3/command.hpp>
-#include <a4sqlt3/dataset.hpp>
+#include <sq3/command.hpp>
+#include <sq3/dataset.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -54,7 +54,7 @@ namespace cli{
 namespace
 {
 
-  using Dataset = a4sqlt3::Dataset ;
+  using Dataset = sq3::Dataset ;
   using string = std::string ;
   using StringVec = std::vector<string> ;
 
@@ -275,7 +275,7 @@ printElf( const std::string& soname,
     }
   else
     {
-      using a4sqlt3::DbValues ;
+      using sq3::DbValues ;
       auto getName =  [shortNames](const DbValues& row)
       {
           PkgName name (row [0].getText ());

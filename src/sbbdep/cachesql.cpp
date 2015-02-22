@@ -268,23 +268,23 @@ constexpr const char* setKeyVal()
 
 
 
-void createSchema(a4sqlt3::Database& db)
+void createSchema(sq3::Database& db)
 { //LogDebug() << createSchema() ;
   db.execute(createSchema()) ;
 
 }//-----------------------------------------------------------------------------
 
-void addVersionTable(a4sqlt3::Database& db)
+void addVersionTable(sq3::Database& db)
 {
   db.execute(createVersion()) ;
 }//-----------------------------------------------------------------------------
 
 
-auto makeCommand(a4sqlt3::Database& db, Cache::sqlid id)
-  ->a4sqlt3::Command
+auto makeCommand(sq3::Database& db, Cache::sqlid id)
+  ->sq3::Command
 {
 
-  using a4sqlt3::Type ;
+  using sq3::Type ;
 
   switch (id)
   {
