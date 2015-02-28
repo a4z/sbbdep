@@ -22,6 +22,8 @@ THE SOFTWARE.
 */
 
 #include <sbbdep/log.hpp>
+#include <sbbdep/error.hpp>
+
 #include <boost/iostreams/stream.hpp>
 
 #include <mutex>
@@ -131,8 +133,10 @@ std::unique_ptr<LogSetup::Setup> LogSetup::_setup{nullptr};
 void LogSetup::create(std::ostream& appstm, bool quiet)
 {
   if( _setup != nullptr )
-    throw "TODO"; 
-  
+    {
+      throw ErrUnexpected("Log already created");
+    }
+
   _setup.reset(new Setup{appstm, quiet});
 }
 //------------------------------------------------------------------------------

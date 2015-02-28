@@ -481,7 +481,7 @@ Cache::createIndex(const SyncData& data)
 
   BackgroundJob<Pkg> dbjob(
       [this](const Pkg& pkg)
-      {  LogDebug() << "index " << pkg.getPath().base() ;
+      {  LogInfo() << "index " << pkg.getPath().base() ;
         this->indexPkg(pkg) ;
       });
 
@@ -495,7 +495,7 @@ Cache::createIndex(const SyncData& data)
         {
           const auto filename = pkgAdmDir().getName() + "/" + todo ;
           auto pkg = Pkg::create(filename, PkgType::Installed);
-          LogDebug() << "load " << pkg.getPath().base() ;
+          LogInfo() << "load " << pkg.getPath().base() ;
           pkg.Load() ;
           dbjob.push(std::move(pkg));
           todo = picker();
