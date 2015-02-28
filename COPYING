@@ -1,6 +1,6 @@
 MIT License
 
---------------Copyright (c) 2010-2014 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2015 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@ THE SOFTWARE.
 
 
 sbbdep uses:
-liba4z and liba4sqlt3, which are release under the MIT License
-https://bitbucket.org/a4z
+liba4sqlt3, which is release under the MIT License
+https://bitbucket.org/a4z/a4sqlt3
 
 sqlite3, http://sqlite.org/
 which is public domain software

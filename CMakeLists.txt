@@ -16,7 +16,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config.in" "${sbbdep_CONFIG_HEAD
 
 if(NOT CMAKE_BUILD_TYPE)
 
-  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+  SET(CMAKE_BUILD_TYPE Release CACHE STRING
       "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
       FORCE )
 endif(NOT CMAKE_BUILD_TYPE)
@@ -39,22 +39,14 @@ unset(_DEFAULT_FLAGS)
 
 if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
+    # for internal build dir use no LIB_SUFFIX, but might change
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
-include( a4sqlt3/a4cmk/setup_boost.cmake )
 
 set (sq3_library sq3) 
-
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  #in Release only add testing if explicite asked to do so
-  if (NOT DEFINED ALL_A4_TESTING_DISABLED)
-    set (ALL_A4_TESTING_DISABLED TRUE)
-  endif (NOT DEFINED ALL_A4_TESTING_DISABLED)
-endif (CMAKE_BUILD_TYPE STREQUAL "Release")  
-
 
 add_subdirectory(a4sqlt3)
 include_directories( BEFORE
@@ -146,28 +138,48 @@ ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 #set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl ) 
 set(SBBDEP_REQURIED_LIBS sbbdep ${sq3_library} )
 
-set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
+# disable until I have a real split
+# set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
 
 TARGET_LINK_LIBRARIES( sbbdepcli ${SBBDEP_REQURIED_LIBS} )
 SET_TARGET_PROPERTIES(sbbdepcli PROPERTIES OUTPUT_NAME sbbdep)
 set(sbbdep_install_targets ${sbbdep_install_targets} sbbdepcli)
 
-#FIND_PACKAGE( OpenMP ) 
 
-#set_target_properties(sbbdep sbbdepcli PROPERTIES COMPILE_FLAGS ${OpenMP_CXX_FLAGS})
-#set_target_properties(sbbdepcli PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
+if(NOT CMAKE_DOC_DIR)
+  SET(CMAKE_DOC_DIR "doc/sbbdep-${sbbdep_VERSION}"  CACHE STRING
+      "Choose the target directory where documentation files will be installed."
+      FORCE )
+endif(NOT CMAKE_DOC_DIR)
+
+
+set(SBBDEP_DOC_FILES 
+  README.txt README_db.txt AUTHORS COPYING
+)
+
 
 #only add install target if this is the top level project
 if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
-    INSTALL(FILES ${sbbdep_HDR} DESTINATION include/sbbdep)
+  #    INSTALL(FILES ${sbbdep_HDR} DESTINATION include/sbbdep)
     INSTALL(TARGETS ${sbbdep_install_targets} 
       RUNTIME DESTINATION bin
-      LIBRARY DESTINATION lib${LIB_SUFFIX}
-      ARCHIVE DESTINATION lib${LIB_SUFFIX}
+  #    LIBRARY DESTINATION lib${LIB_SUFFIX}
+  #    ARCHIVE DESTINATION lib${LIB_SUFFIX}
     )
+    INSTALL(FILES ${SBBDEP_DOC_FILES} DESTINATION  ${CMAKE_DOC_DIR})
+
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
+
+include( a4sqlt3/a4cmk/setup_boost.cmake )
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  #in Release only add testing if explicite asked to do so
+  if (NOT DEFINED ALL_A4_TESTING_DISABLED)
+    set (ALL_A4_TESTING_DISABLED TRUE)
+  endif (NOT DEFINED ALL_A4_TESTING_DISABLED)
+endif (CMAKE_BUILD_TYPE STREQUAL "Release")  
   
 include( a4sqlt3/a4cmk/setup_testing.cmake )  
 
