@@ -97,6 +97,13 @@ AppCli::run(const AppArgs& args)
     {
       outfile.open(args.getOutFile ().c_str (),
                    std::ofstream::out | std::ofstream::trunc);
+
+      if (not outfile.good ())
+        {
+          std::cerr << "can not open logfile " << args.getOutFile () << '\n';
+          return 1;
+        }
+
       LogSetup::create (outfile, args.quiet ()) ;
     }
   else
