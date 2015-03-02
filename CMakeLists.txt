@@ -6,7 +6,7 @@ include( a4sqlt3/a4cmk/macros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 2)
-set(sbbdep_PATCH_VERSION 4)
+set(sbbdep_PATCH_VERSION 5)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
@@ -44,6 +44,17 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
+
+include( a4sqlt3/a4cmk/setup_boost.cmake )
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  #in Release only add testing if explicite asked to do so
+  if (NOT DEFINED ALL_A4_TESTING_DISABLED)
+    set (ALL_A4_TESTING_DISABLED TRUE)
+  endif (NOT DEFINED ALL_A4_TESTING_DISABLED)
+endif (CMAKE_BUILD_TYPE STREQUAL "Release")  
+  
+include( a4sqlt3/a4cmk/setup_testing.cmake )  
 
 
 set (sq3_library sq3) 
@@ -172,16 +183,6 @@ endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
 
-include( a4sqlt3/a4cmk/setup_boost.cmake )
-
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  #in Release only add testing if explicite asked to do so
-  if (NOT DEFINED ALL_A4_TESTING_DISABLED)
-    set (ALL_A4_TESTING_DISABLED TRUE)
-  endif (NOT DEFINED ALL_A4_TESTING_DISABLED)
-endif (CMAKE_BUILD_TYPE STREQUAL "Release")  
-  
-include( a4sqlt3/a4cmk/setup_testing.cmake )  
 
 
 
