@@ -322,7 +322,7 @@ Cache::createUpdateSyncData()
   StringSet newpkgs; // // all pks in file system with a newer date
 
   const auto val = selectValue (sql::maxPkgTimeStamp ());
-  const time_t maxknownftime = val.isNull () ? 0 : val.getInt () ;
+  const int64_t maxknownftime = val.isNull () ? 0 : val.getInt () ;
 
 
   // callback for pkgadm dir, check pkg files add to all and new, if new
@@ -655,7 +655,7 @@ Cache::indexPkg(const Pkg& pkg)
   try
     {
       const auto pkgname = PkgName (pkg.getPath ().base ());
-      const auto timestamp = pkg.getPath ().getLastModificationTime ();
+      const int64_t timestamp = pkg.getPath ().getLastModificationTime ();
 
       getCommand(sqlid::insert_pkg).execute( Parameters{
                  { pkgname.FullName() } ,
