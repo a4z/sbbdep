@@ -56,7 +56,7 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Release")
   
 include( a4sqlt3/a4cmk/setup_testing.cmake )  
 
-
+set (SQ3_SQLITE_USERDEFINES SQLITE_ENABLE_STAT4)
 set (sq3_library sq3) 
 
 add_subdirectory(a4sqlt3)
