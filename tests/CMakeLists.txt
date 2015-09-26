@@ -11,6 +11,13 @@ add_definitions(${sbbdep_TEST_DEFINES})
     set( myBoostLibs  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} )   
 #endif(USE_BOOSTTESTING_DYNLINK)
 
+#no idea why the include and link fieles do not wiork since there is a sub dir..
+
+include_directories(
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/a4sqlt3/include
+)
+
 SET( sbbtest_SRC
 a4testing.cpp
 a4testing.hpp
@@ -25,7 +32,7 @@ replorig.cpp
 
 ADD_EXECUTABLE( sbbtest ${sbbtest_SRC} )
 # if sq3 build is mt, pthread requried ... 
-TARGET_LINK_LIBRARIES( sbbtest pthread ${SBBDEP_REQURIED_LIBS} ${myBoostLibs} )
+TARGET_LINK_LIBRARIES( sbbtest pthread  sbbdep sq3 ${myBoostLibs} )
 
 
 
