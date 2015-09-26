@@ -72,9 +72,35 @@ namespace test_pkname {
   }
 
 
+  void RunExtra()
+  {
+    {
+      PkgName pkn1("mesa-mesa-7.8.1-i486-1");
+      BOOST_REQUIRE( pkn1.Name() == "mesa-mesa" );
+      BOOST_REQUIRE( pkn1.Version() == "7.8.1" );
+      BOOST_REQUIRE( pkn1.Arch() == "i486" );
+      BOOST_REQUIRE( pkn1.BuildStr() == "1" );
+      BOOST_REQUIRE( pkn1.Build().Tag() == "" );
+      BOOST_REQUIRE( pkn1.Build().Num() == 1 );
+    }
+
+
+    {
+      PkgName pkn1("mesa-mesa-mesa-7.8.1-i486-1");
+      BOOST_REQUIRE( pkn1.Name() == "mesa-mesa-mesa" );
+      BOOST_REQUIRE( pkn1.Version() == "7.8.1" );
+      BOOST_REQUIRE( pkn1.Arch() == "i486" );
+      BOOST_REQUIRE( pkn1.BuildStr() == "1" );
+      BOOST_REQUIRE( pkn1.Build().Tag() == "" );
+      BOOST_REQUIRE( pkn1.Build().Num() == 1 );
+    }
+
+
+  }
+
 
 
 a4TestSimple("pkgname", RunDefault) ;
-
+a4TestSimple("pkgname2", RunExtra) ;
 }
 }
