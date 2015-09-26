@@ -1,14 +1,10 @@
-
 BUILDDIR=buildDebug
-
-A4SQLT3DIR=$(dirname $(pwd))/a4sqlt3
 
 if [ -d $BUILDDIR ] ; then
  rm -r $BUILDDIR/*
 else
  mkdir $BUILDDIR
 fi
-
 
 cd $BUILDDIR && cmake ../ -DCMAKE_BUILD_TYPE=Debug \
 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
