@@ -15,7 +15,6 @@ add_definitions(${sbbdep_TEST_DEFINES})
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/a4sqlt3/include
 )
 
 SET( sbbtest_SRC

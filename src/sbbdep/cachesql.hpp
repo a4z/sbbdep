@@ -30,6 +30,7 @@ THE SOFTWARE.
 
 #include <sq3/database.hpp>
 #include <sq3/command.hpp>
+#include <sq3/types.hpp>
 #include <sbbdep/cache.hpp>
 
 

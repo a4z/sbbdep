@@ -39,6 +39,7 @@ THE SOFTWARE.
 
 
 #include <sq3/error.hpp>
+#include <sq3/columns.hpp>
 
 #include <vector>
 #include <set>
@@ -70,7 +71,7 @@ Cache::Cache(const std::string& dbname)
 :Database(dbname)
 ,_name(dbname)
 {
-  sql::register_own_functions (_connection->db ()) ;
+  sql::register_own_functions (db ()) ;
 }
 //------------------------------------------------------------------------------
 
@@ -141,15 +142,15 @@ Cache::checkDbSchemaVersion()
 
   auto getDbMajorMinorVersion = [calcMajorMinorVersion, this]() -> int
     {
-      Dataset ds( {Type::Int, Type::Int} );
-      execute("SELECT major, minor FROM version", ds);
+      Dataset ds =
+      select ("SELECT major, minor FROM version", {Type::Int, Type::Int});
       SBBASSERT (ds.size () == 1);
       return calcMajorMinorVersion(ds[0][0].getInt(), ds[0][1].getInt());
     };
   auto getDbVersion = [calcVersion, this]() -> int
     {
-      Dataset ds({Type::Int, Type::Int, Type::Int});
-      execute("SELECT major, minor , patchlevel FROM version", ds);
+      Dataset ds =  select("SELECT major, minor , patchlevel FROM version",
+                           {Type::Int, Type::Int, Type::Int});
       SBBASSERT (ds.size () == 1);
       return calcVersion(ds[0][0].getInt(),
                          ds[0][1].getInt(),
@@ -356,9 +357,9 @@ Cache::createUpdateSyncData()
 // while this runs, get all from the db
   StringSet allpkgindb; // all pks in the db
   // get all in the database
-  auto rh = [&allpkgindb](sq3::QueryRow& qrow) -> bool
+  auto rh = [&allpkgindb](sq3::Columns& cols) -> bool
         {
-          allpkgindb.insert (qrow [0].getText ());
+          allpkgindb.insert (cols.at (0).getText ());
           return true ;
         } ;
 
@@ -561,17 +562,17 @@ Cache::updateIndex(const SyncData& data)
   //LogDebug() << "here with " << todos.size() ;
 
   BackgroundJob<DbAction> dbjob(
-      [this](const DbAction& action)
+      [this] (const DbAction& action)
       {
-        if(not action.rem.empty())
+        if(not action.rem.empty ())
           { LogInfo() << "clear " << action.rem ;
-            auto& delcmd =  getCommand(sqlid::del_byfullname) ;
-            delcmd .execute( Command::Parameters{ {action.rem} } );
+            auto& delcmd =  getCommand (sqlid::del_byfullname) ;
+            delcmd .execute ({action.rem});
           }
 
-        if(action.inst.isLoaded())
-          { LogInfo() << "index " << action.inst.getPath().base() ;
-            this->indexPkg(action.inst) ;
+        if(action.inst.isLoaded ())
+          { LogInfo () << "index " << action.inst.getPath ().base () ;
+            this->indexPkg (action.inst) ;
           }
       });
 
@@ -651,13 +652,13 @@ Cache::indexPkg(const Pkg& pkg)
 
   SBBASSERT (pkg.isLoaded ()) ;
 
-  using Parameters = Command::Parameters ;
+
   try
     {
       const auto pkgname = PkgName (pkg.getPath ().base ());
       const int64_t timestamp = pkg.getPath ().getLastModificationTime ();
 
-      getCommand(sqlid::insert_pkg).execute( Parameters{
+      getCommand(sqlid::insert_pkg).execute( {
                  { pkgname.FullName() } ,
                  { pkgname.Name() } ,
                  { pkgname.Version() } ,
@@ -671,7 +672,7 @@ Cache::indexPkg(const Pkg& pkg)
 
       for (const ElfFile& elf : pkg.getElfFiles ())
         {
-          getCommand(sqlid::insert_dynlinked).execute( Parameters{
+          getCommand(sqlid::insert_dynlinked).execute( {
                    { pkgid } ,
                    { elf.getName().str() } ,
                    { elf.getName().dir() } ,
@@ -687,13 +688,13 @@ Cache::indexPkg(const Pkg& pkg)
          for(const auto& needed : elf.getNeeded())
            {
              getCommand(sqlid::insert_required).execute(
-                 Parameters{ {dynlinked_id}, {needed} }
+                   { {dynlinked_id}, {needed} }
              );
            }
 
          for(const auto& rrunpaht : elf.getRRunPaths())
            {
-             getCommand(sqlid::insert_rrunpath).execute( Parameters {
+             getCommand(sqlid::insert_rrunpath).execute(  {
                {dynlinked_id}, {rrunpaht} , {elf.getName().dir()} }
              );
            }
@@ -719,19 +720,19 @@ Cache::updateLdDirInfo()
   execute ("DELETE FROM lddirs;");
   execute ("DELETE FROM ldlnkdirs;");
 
-  using Parameters =Command::Parameters ;
 
-  getCommand (sqlid::set_keyval).execute ( Parameters
+
+  getCommand (sqlid::set_keyval).execute (
       { { "ldsoconf" }, {ldinfos.getLdSoConfTime ()}});
 
   for (auto&& d : ldinfos.getLdDirs ())
     {
-      getCommand (sqlid::insert_ldDir).execute ( Parameters{{ d }});
+      getCommand (sqlid::insert_ldDir).execute ( {{ d }});
     }
 
   for (auto&& d : ldinfos.getLdLnkDirs ())
     {
-      getCommand (sqlid::insert_ldLnkDir).execute ( Parameters{{ d }});
+      getCommand (sqlid::insert_ldLnkDir).execute ( {{ d }});
     }
 
   transaction.commit ();
@@ -749,7 +750,7 @@ Cache::namedCommand(const std::string& name,
   auto f = _nameCommands.find (name);
   if (f == _nameCommands.end ())
     {
-      auto in = _nameCommands.emplace (name, command (sql));
+      auto in = _nameCommands.emplace (name, prepare (sql));
       // assert in.second  TOOD
       f = in.first;
     }

@@ -34,6 +34,8 @@ THE SOFTWARE.
 
 #include <sq3/command.hpp>
 #include <sq3/dataset.hpp>
+#include <sq3/dbvalues.hpp>
+#include <sq3/types.hpp>
 
 #include <algorithm>
 #include <string>

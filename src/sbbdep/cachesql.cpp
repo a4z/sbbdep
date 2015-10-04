@@ -32,6 +32,8 @@ THE SOFTWARE.
 #include <sbbdep/log.hpp>
 #include <sqlite3.h>
 
+
+
 #define STRINGIZE(A) #A
 #define AS_STR(A) STRINGIZE(A)
 
@@ -289,7 +291,7 @@ auto makeCommand(sq3::Database& db, Cache::sqlid id)
   switch (id)
   {
     case Cache::sqlid::insert_pkg:
-      return db.command(sql::insertPkg(),{ Type::Text,
+      return db.prepare(sql::insertPkg(),{ Type::Text,
                                            Type::Text,
                                            Type::Text,
                                            Type::Text,
@@ -299,7 +301,7 @@ auto makeCommand(sq3::Database& db, Cache::sqlid id)
       break;
 
     case Cache::sqlid::insert_dynlinked:
-      return db.command(sql::insertDynLinked(), {Type::Int,
+      return db.prepare(sql::insertDynLinked(), {Type::Int,
                                                 Type::Text,
                                                 Type::Text,
                                                 Type::Text,
@@ -310,31 +312,31 @@ auto makeCommand(sq3::Database& db, Cache::sqlid id)
       break;
 
     case Cache::sqlid::insert_required:
-      return db.command(sql::insertRequired(), { Type::Int,
+      return db.prepare(sql::insertRequired(), { Type::Int,
                                                   Type::Text } );
       break;
 
     case Cache::sqlid::insert_rrunpath:
-      return db.command(sql::insertRRunPath(),{ Type::Int,
+      return db.prepare(sql::insertRRunPath(),{ Type::Int,
                                                   Type::Text,
                                                   Type::Text });
       break;
 
     case Cache::sqlid::insert_ldDir:
-      return db.command(sql::insertLdDir(), {Type::Text});
+      return db.prepare(sql::insertLdDir(), {Type::Text});
       break;
 
     case Cache::sqlid::insert_ldLnkDir:
-      return db.command(sql::insertLdLnkDir(), {Type::Text});
+      return db.prepare(sql::insertLdLnkDir(), {Type::Text});
       break;
 
     case Cache::sqlid::set_keyval:
-      return db.command(sql::setKeyVal(), {Type::Text,
+      return db.prepare(sql::setKeyVal(), {Type::Text,
                                            Type::Variant});
       break;
 
     case Cache::sqlid::del_byfullname :
-      return  db.command(sql::deletePkgByFullname(),{ Type::Text });
+      return  db.prepare(sql::deletePkgByFullname(),{ Type::Text });
       break;
 
     default:

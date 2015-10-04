@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(sbbdep C CXX) 
 
-include( a4sqlt3/a4cmk/macros.cmake )
+include( a4cmk/macros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 2)
@@ -22,7 +22,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 
-include( a4sqlt3/a4cmk/setup_compiler.cmake )
+include( a4cmk/setup_compiler.cmake )
 
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
@@ -45,7 +45,7 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
-include( a4sqlt3/a4cmk/setup_boost.cmake )
+include( a4cmk/setup_boost.cmake )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
   #in Release only add testing if explicite asked to do so
@@ -54,15 +54,10 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
   endif (NOT DEFINED ALL_A4_TESTING_DISABLED)
 endif (CMAKE_BUILD_TYPE STREQUAL "Release")  
   
-include( a4sqlt3/a4cmk/setup_testing.cmake )  
+include( a4cmk/setup_testing.cmake )  
 
-set (SQ3_SQLITE_USERDEFINES SQLITE_ENABLE_STAT4)
-set (sq3_library sq3) 
-
-add_subdirectory(a4sqlt3)
 include_directories( BEFORE
 include
-a4sqlt3/include/
 )
 
 
@@ -147,7 +142,7 @@ ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
 #TODO, sqlite & dl only needed  if sq3 was build with that requirement ...
 #set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl ) 
-set(SBBDEP_REQURIED_LIBS sbbdep ${sq3_library} )
+set(SBBDEP_REQURIED_LIBS sq3 sbbdep  )
 
 # disable until I have a real split
 # set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
