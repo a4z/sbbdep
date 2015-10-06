@@ -32,10 +32,10 @@ THE SOFTWARE.
 #include <sbbdep/pkgname.hpp>
 
 
-#include <sq3/command.hpp>
-#include <sq3/dataset.hpp>
-#include <sq3/dbvalues.hpp>
-#include <sq3/types.hpp>
+#include <sl3/command.hpp>
+#include <sl3/dataset.hpp>
+#include <sl3/dbvalues.hpp>
+#include <sl3/types.hpp>
 
 #include <algorithm>
 #include <string>
@@ -51,7 +51,7 @@ namespace cli{
 namespace
 {
 
-  using Dataset = sq3::Dataset ;
+  using Dataset = sl3::Dataset ;
 
   using StringVec = std::vector<std::string> ;
   using StringSet = std::set<std::string> ;
@@ -74,7 +74,7 @@ RequiredInfo
 getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 {
 
-  using namespace sq3;
+  using namespace sl3;
 
   // not found collection
   // filename, so symbols
@@ -209,7 +209,7 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
 }
 //------------------------------------------------------------------------------
 
-sq3::Dataset
+sl3::Dataset
 elfdeps( Cache& cache
         , const PathName& fromfile
         , const StringVec& needed
@@ -253,7 +253,7 @@ elfdeps( Cache& cache
     + unionrunpath +
     " );" ;
 
-  using namespace sq3;
+  using namespace sl3;
   Types tps { {Type::Text,
                       Type::Text,
                       Type::Text,
@@ -271,7 +271,7 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
   // no idea anymore how this works in detail,
   // I think I should write some docu
 
-  using namespace sq3;
+  using namespace sl3;
 
   // not found collection
   // filename, so symbols
@@ -398,7 +398,7 @@ printRequired(Cache& cache,
 
   if (pkg.getType () == PkgType::BinLib)
     {
-      const sq3::Dataset ds = utils::getPkgsOfFile (cache,
+      const sl3::Dataset ds = utils::getPkgsOfFile (cache,
                                                  pkg.getPath (),
                                                  pkg.getArch ());
       auto msgChannel = LogMsg ();

@@ -38,8 +38,8 @@ THE SOFTWARE.
 #include "cachesql.hpp"
 
 
-#include <sq3/error.hpp>
-#include <sq3/columns.hpp>
+#include <sl3/error.hpp>
+#include <sl3/columns.hpp>
 
 #include <vector>
 #include <set>
@@ -61,10 +61,10 @@ auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
 
 
 
-using sq3::Dataset;
-using sq3::Command;
-using sq3::DbValue;
-using sq3::Type;
+using sl3::Dataset;
+using sl3::Command;
+using sl3::DbValue;
+using sl3::Type;
 
 
 Cache::Cache(const std::string& dbname)
@@ -258,7 +258,7 @@ Cache::doSync()
           updateIndex (syncdata);
         }
     }
-  catch (const sq3::Error& e)
+  catch (const sl3::Error& e)
     {
       LogError () << e ;
       throw;
@@ -357,7 +357,7 @@ Cache::createUpdateSyncData()
 // while this runs, get all from the db
   StringSet allpkgindb; // all pks in the db
   // get all in the database
-  auto rh = [&allpkgindb](sq3::Columns& cols) -> bool
+  auto rh = [&allpkgindb](sl3::Columns cols) -> bool
         {
           allpkgindb.insert (cols.at (0).getText ());
           return true ;
@@ -622,7 +622,7 @@ Cache::updateIndex(const SyncData& data)
 //------------------------------------------------------------------------------
 
 
-sq3::Command&
+sl3::Command&
 Cache::getCommand(sqlid id)
 {
   auto fi = _commands.find(id);
@@ -679,7 +679,7 @@ Cache::indexPkg(const Pkg& pkg)
                    { elf.getName().base() } ,
                    (elf.soName().size()> 0 ?
                            DbValue(elf.soName()) :
-                           DbValue(sq3::Type::Null) ) ,
+                           DbValue(sl3::Type::Null) ) ,
                    { elf.getArch() }
           });
 
@@ -701,7 +701,7 @@ Cache::indexPkg(const Pkg& pkg)
         }
 
     }
-  catch (const sq3::Error& e)
+  catch (const sl3::Error& e)
     {
       LogError () << e;
       throw;
@@ -742,7 +742,7 @@ Cache::updateLdDirInfo()
 //------------------------------------------------------------------------------
 
 
-sq3::Command&
+sl3::Command&
 Cache::namedCommand(const std::string& name,
                     const char* sql)
 {

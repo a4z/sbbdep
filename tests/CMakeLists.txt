@@ -30,8 +30,8 @@ replorig.cpp
 
 
 ADD_EXECUTABLE( sbbtest ${sbbtest_SRC} )
-# if sq3 build is mt, pthread requried ... 
-TARGET_LINK_LIBRARIES( sbbtest pthread  sbbdep sq3 ${myBoostLibs} )
+# if sl3 build is mt, pthread requried ... 
+TARGET_LINK_LIBRARIES( sbbtest pthread  sbbdep sl3 ${myBoostLibs} )
 
 
 

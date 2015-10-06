@@ -7,6 +7,6 @@ add_definitions(${sbbdep_TEST_DEFINES})
 
 
 ADD_EXECUTABLE( quicktest quicktest.cpp )
-# if sq3 build is mt, pthread requried ... 
+# if sl3 build is mt, pthread requried ... 
 TARGET_LINK_LIBRARIES( quicktest pthread ${SBBDEP_REQURIED_LIBS} )
 

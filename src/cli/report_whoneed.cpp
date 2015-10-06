@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 #include "sbbdep/log.hpp"
 
-#include "sq3/dataset.hpp"
+#include "sl3/dataset.hpp"
 
 
 namespace sbbdep {
@@ -123,7 +123,7 @@ printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
 {
   // works for single files and installed package
 
-  using namespace sq3;
+  using namespace sl3;
 
   Dataset ds; //{ "pkg", "filename" , "soname" , "fromfile"  }
 

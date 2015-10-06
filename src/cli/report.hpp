@@ -25,7 +25,7 @@ THE SOFTWARE.
 #ifndef SBBDEP_CLI_REPORT_HPP_
 #define SBBDEP_CLI_REPORT_HPP_
 
-#include <sq3/dataset.hpp>
+#include <sl3/dataset.hpp>
 
 #include<functional>
 #include<map>
@@ -144,7 +144,7 @@ namespace cli{
     };
     //--------------------------------------------------------------------------
 
-    sq3::Dataset
+    sl3::Dataset
     getPkgsOfFile (Cache& cache,const PathName& fname, int arch);
 
     //--------------------------------------------------------------------------

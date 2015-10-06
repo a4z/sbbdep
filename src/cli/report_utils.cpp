@@ -56,7 +56,7 @@ ReportTree::add(const StringVec& path)
 }
 //------------------------------------------------------------------------------
 
-sq3::Dataset
+sl3::Dataset
 getPkgsOfFile (Cache& cache,const PathName& fname, int arch)
 {
 

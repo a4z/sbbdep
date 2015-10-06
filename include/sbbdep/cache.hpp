@@ -26,7 +26,7 @@ THE SOFTWARE.
 #ifndef SBBDEP_CACHE_HPP_
 #define SBBDEP_CACHE_HPP_
 
-#include <sq3/database.hpp>
+#include <sl3/database.hpp>
 
 #include <sbbdep/pkgname.hpp>
 #include <sbbdep/error.hpp>
@@ -61,7 +61,7 @@ struct SyncData{
 
 
 
-class Cache : public sq3::Database
+class Cache : public sl3::Database
 {
 
 public:
@@ -103,7 +103,7 @@ public:
   getName(){ return _name ; } //;
 
   // will create the command if it does not exist
-  sq3::Command&
+  sl3::Command&
   namedCommand(const std::string& name,
                const char* sql) ;
 
@@ -133,7 +133,7 @@ private:
 
 
   // get stored command, if it does not exist, its created
-  sq3::Command&
+  sl3::Command&
   getCommand(sqlid id) ;
 
   // stores package in the db
@@ -145,11 +145,11 @@ private:
 
 
   // stored sql commands
-  using commandMap = std::map<sqlid,sq3::Command> ;
+  using commandMap = std::map<sqlid,sl3::Command> ;
   commandMap _commands;
 
   //give user(report system) a way to store a command
-  using nameCommandMap = std::map<std::string,sq3::Command> ;
+  using nameCommandMap = std::map<std::string,sl3::Command> ;
   nameCommandMap _nameCommands;
 
 // when I update sqlite I can remove this and use function

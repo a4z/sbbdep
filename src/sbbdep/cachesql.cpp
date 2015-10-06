@@ -270,23 +270,23 @@ constexpr const char* setKeyVal()
 
 
 
-void createSchema(sq3::Database& db)
+void createSchema(sl3::Database& db)
 { //LogDebug() << createSchema() ;
   db.execute(createSchema()) ;
 
 }//-----------------------------------------------------------------------------
 
-void addVersionTable(sq3::Database& db)
+void addVersionTable(sl3::Database& db)
 {
   db.execute(createVersion()) ;
 }//-----------------------------------------------------------------------------
 
 
-auto makeCommand(sq3::Database& db, Cache::sqlid id)
-  ->sq3::Command
+auto makeCommand(sl3::Database& db, Cache::sqlid id)
+  ->sl3::Command
 {
 
-  using sq3::Type ;
+  using sl3::Type ;
 
   switch (id)
   {
