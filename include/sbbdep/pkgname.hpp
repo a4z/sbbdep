@@ -58,12 +58,12 @@ public:
   PkgName(const char* name): _fullname(name) {makeDetails();}
   ~PkgName() = default;
 
-  const BuildTag& Build() const { return _build; }
-  const std::string& BuildStr() const { return _buildstr ; }
-  const std::string& Arch() const { return _arch; }
-  const std::string& Version() const { return _version; }
-  const std::string& Name() const { return _name; }
-  const std::string& FullName() const { return _fullname; }
+  const BuildTag& build() const { return _build; }
+  const std::string& buildStr() const { return _buildstr ; }
+  const std::string& arch() const { return _arch; }
+  const std::string& version() const { return _version; }
+  const std::string& name() const { return _name; }
+  const std::string& fullName() const { return _fullname; }
   
   
   

@@ -26,6 +26,7 @@ THE SOFTWARE.
 #define SBBDEP_APPARGS_HPP_
 
 #include <string>
+#include <vector>
 
 namespace sbbdep {
 
@@ -49,6 +50,7 @@ class AppArgs
   std::string _featureXArgs;
   std::string _varAdmDir;
   int _bdtree ;
+  std::vector<std::string> _ignore;
   
 public:
   AppArgs();
@@ -74,6 +76,9 @@ public:
   const std::string& varAdmDir() const { return _varAdmDir ; }
   bool bdtree() const { return _bdtree ; }
   
+  const std::vector<std::string>& ingore() const { return _ignore ; }
+
+
   void printHelp();
  
 };

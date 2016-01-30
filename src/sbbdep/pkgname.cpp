@@ -93,7 +93,7 @@ PkgName::makeDetails()
 
 std::ostream& operator<<(std::ostream& os, const PkgName& pkg)
 {
-  os << pkg.Name();
+  os << pkg.name();
   return os; 
 }
 

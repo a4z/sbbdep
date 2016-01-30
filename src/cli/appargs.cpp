@@ -29,10 +29,37 @@ THE SOFTWARE.
 #include <iomanip>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <boost/tokenizer.hpp>
 
 #include <getopt.h>
 
 namespace sbbdep {
+
+
+  namespace
+  {
+    std::vector<std::string>
+    ignoreList(const std::string& list)
+    {
+      using namespace std;
+
+      if (list.empty())
+        return vector<string>() ;
+
+      using tokenizer = boost::tokenizer<boost::char_separator<char>>;
+      boost::char_separator<char> sep(", ");
+      tokenizer tokens(list, sep);
+
+      vector<string> vec {begin (tokens), end (tokens)} ;
+      sort (begin (vec), end (vec));
+
+      return vec ;
+    }
+
+  }
+
+
 
 AppArgs::AppArgs()
   : _help(0)
@@ -106,26 +133,32 @@ usage: sbbdep [OPTION]... [QUERY]
       this is the default option if not --whoneeds is used.
       If this option is explicit given and QUERY is not a binary file 
       the search in the package database will be skipped.  
-                                                                                                                                                                
-  --whoneeds                                                                                                   
+
+  --whoneeds
       Instead of printing the requirements of the given QUERY packages that 
       depend on QUERY are reported.
 
   --xdl  
-      explain dynamic linked file. Reports detailed information, 
-      works with require and whoneeds queries.                                                                                      
+      explain dynamic linked file. Reports detailed information,
+      works with require and whoneeds queries.
 
   --ldd
-     Per default sbbdep uses the ELF information from files for the search 
-     of required libraries. Using this option sbbdep will use the ldd command.
+     You do not want to use this option to obtain dependency information.
+     Using this option sbbdep will use the ldd command.
      This will not only print direct requirements of a given file but also pull
-     in the dependencies of the requirements.
+     in the dependencies of the requirements. 
      This option is useless for a --whoneeds query.
 
   --bdtree
      Prints a hierarchical dependency tree of QUERY.
      This can produce a quite long output of for some binaries or libraries and
      a very very big long for some package.
+
+  --ignore
+     Takes a comma separated list of package names, either the base name or
+     the full package name, to ignore in the output.
+     aaa_base,cxxlibs might be an example for this option.
+     This option is valid for dependency queries, useless otherwise.
 
   -l, --lookup
      Search for QUERY in the package database and skip all other operations
@@ -179,6 +212,7 @@ AppArgs::parse( int argc, char** argv )
       { "fx", optional_argument, 0, 1 }, // undocumented option for  test...
       { "admdir", required_argument, 0, 1 },
       { "bdtree", no_argument, &_bdtree, 1 },
+      { "ignore", required_argument, 0, 1 },
       { 0, 0, 0, 0 } // Required end   
     };
   
@@ -213,6 +247,12 @@ AppArgs::parse( int argc, char** argv )
           else if (optionName == "admdir")
             {
               _varAdmDir = optarg ? optarg : "";
+            }
+          else if (optionName == "ignore")
+            {
+              const std::string l = optarg ? optarg : "";
+              if (not l.empty ())
+                _ignore  = ignoreList (l) ;
             }
           break;
 
@@ -285,6 +325,7 @@ AppArgs::parse( int argc, char** argv )
   
 }
 //------------------------------------------------------------------------------
+
 
 
 //------------------------------------------------------------------------------

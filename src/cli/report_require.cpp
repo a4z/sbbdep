@@ -366,10 +366,18 @@ getRequiredInfos(Cache& cache, const Pkg& pkg)
 void
 printRequired(Cache& cache,
               const Pkg& pkg,
+              const StringVec& ignores,
               bool shortNames,
               bool xdl ,
               bool ldd)
 {
+
+
+  auto ignore = [&ignores](const std::string& name)
+    {
+      return std::binary_search (ignores.cbegin (), ignores.cend (), name) ;
+    };
+
 
   RequiredInfo requiredinfo = ldd ?
        getRequiredInfosLDD (cache, pkg) : getRequiredInfos (cache, pkg);
@@ -382,6 +390,9 @@ printRequired(Cache& cache,
 
   for (const auto& row : rs)
     {
+      if (ignore (PkgName(row.at (0).getText ()).name ()))
+        continue ;
+
       if (xdl)
         {
           reptree.add (
@@ -438,14 +449,14 @@ printRequired(Cache& cache,
       if(xdl)
         {
           return shortNames ?
-              PkgName (val).Name () : val;
+              PkgName (val).name () : val;
         }
 
       PkgName pknam (val);
-      std::string retval = pknam.Name ();
+      std::string retval = pknam.name ();
       if (not shortNames)
         {
-          retval+= " = " + pknam.FullName ().substr (pknam.Name ().size () + 1,
+          retval+= " = " + pknam.fullName ().substr (pknam.name ().size () + 1,
                                                      std::string::npos);
           // see
           // http://software.jaos.org/git/slapt-get/plain/FAQ.html#slgFAQ19

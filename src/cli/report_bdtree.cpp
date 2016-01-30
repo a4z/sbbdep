@@ -279,7 +279,7 @@ printElf( const std::string& soname,
       auto getName =  [shortNames](const DbValues& row)
       {
           PkgName name (row [0].getText ());
-          return shortNames ? name.Name () : name.FullName ();
+          return shortNames ? name.name () : name.fullName ();
       } ;
 
       std::transform (begin (ds), end (ds), begin (pkgs), getName) ;

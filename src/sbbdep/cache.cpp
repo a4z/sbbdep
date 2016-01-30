@@ -420,7 +420,7 @@ Cache::createUpdateSyncData()
 
         auto samename = [&pkn](const string& n)
         {
-          return PkgName(n).Name() == pkn.Name() ;
+          return PkgName(n).name() == pkn.name() ;
         };
         auto fiter = find_if(begin(allnames), end(allnames),  samename) ;
 
@@ -459,7 +459,7 @@ Cache::createUpdateSyncData()
     {
       auto p = make_pair(PkgName(updataOld[i]),PkgName(updateNew[i])) ;
 
-      SBBASSERT (p.first.Name () == p.second.Name ()) ;
+      SBBASSERT (p.first.name () == p.second.name ()) ;
 
       retval.updated.emplace_back(p);
     }
@@ -542,7 +542,7 @@ Cache::updateIndex(const SyncData& data)
     todos.emplace_back(v, string());
 
   for(auto&& v : data.updated)
-    todos.emplace_back(v.first.FullName(), v.second.FullName());
+    todos.emplace_back(v.first.fullName(), v.second.fullName());
 
   for(auto&& v : data.reinstalled)
     todos.emplace_back(v, v);
@@ -659,12 +659,12 @@ Cache::indexPkg(const Pkg& pkg)
       const int64_t timestamp = pkg.getPath ().getLastModificationTime ();
 
       getCommand(sqlid::insert_pkg).execute( {
-                 { pkgname.FullName() } ,
-                 { pkgname.Name() } ,
-                 { pkgname.Version() } ,
-                 { pkgname.Arch() } ,
-                 { pkgname.Build().Num() } ,
-                 { pkgname.Build().Tag() } ,
+                 { pkgname.fullName() } ,
+                 { pkgname.name() } ,
+                 { pkgname.version() } ,
+                 { pkgname.arch() } ,
+                 { pkgname.build().Num() } ,
+                 { pkgname.build().Tag() } ,
                  { timestamp }
        });
 

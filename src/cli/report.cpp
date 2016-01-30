@@ -80,7 +80,7 @@ printSyncReport(Cache& cache,
       size_t longest = 0 ;
       for(auto&& pp : syncdata.updated)
         {
-          const auto len = pp.second.FullName ().size();
+          const auto len = pp.second.fullName ().size();
           if(len > longest)
             longest = len ;
         }
@@ -91,10 +91,10 @@ printSyncReport(Cache& cache,
         {
           LogInfo () << "updated: "
               << std::setw(longest + 3) << std::left
-              << pp.second.FullName ()
+              << pp.second.fullName ()
               << std::setw(0)
               << "from " // extract version arch buildstr
-              << pp.first.FullName ().substr ( pp.first.Name ().size () + 1)
+              << pp.first.fullName ().substr ( pp.first.name ().size () + 1)
               ;
         }
     }

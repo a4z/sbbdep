@@ -257,6 +257,7 @@ AppCli::run(const AppArgs& args)
   else // if no other option, than it is required...
     {
       cli::printRequired (cache, pkg ,
+                          args.ingore () ,
                           args.shortNames  (),
                           args.xdl (),
                           args.ldd ()) ;

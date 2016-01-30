@@ -43,6 +43,8 @@ namespace sbbdep{
 
 namespace cli{
 
+  using StringVec = std::vector<std::string> ;
+
   void
   printSyncReport(Cache& cache,
                   const SyncData& syncdata);
@@ -50,6 +52,7 @@ namespace cli{
   void
   printRequired(Cache& cache,
                 const Pkg& pkg,
+                const StringVec& ignores,
                 bool shortNames,
                 bool xdl ,
                 bool ldd) ;

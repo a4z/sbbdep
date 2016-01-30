@@ -187,7 +187,7 @@ printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
         {
           pkgnames.insert (
               shortNames ?
-                  PkgName (row.at (0).getText ()).Name () :
+                  PkgName (row.at (0).getText ()).name () :
                   row.at (0).getText ());
         }
 
