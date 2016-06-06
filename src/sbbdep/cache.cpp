@@ -416,16 +416,22 @@ Cache::createUpdateSyncData()
 
   auto isIn = [](const StringVec& allnames, const string& name) -> bool
     {
-        PkgName pkn(name) ;
+        PkgName pkn (name) ;
 
-        auto samename = [&pkn](const string& n)
+        auto samename = [&pkn] (const string& n)
         {
-          return PkgName(n).name() == pkn.name() ;
+          return PkgName (n).name () == pkn.name () ;
         };
-        auto fiter = find_if(begin(allnames), end(allnames),  samename) ;
+        auto fiter = find_if (begin (allnames), end (allnames),  samename) ;
 
-        return fiter != end(allnames) ;
+        return fiter != end (allnames) ;
     };
+
+  // TODO check what happens if the system is in an unexpected state
+  // like if a package is installed in 2 versions.
+  // foo-1.2.3 foo-1.2.4, and than
+  // one gets updated/deleted/ and the other removed ..
+  // things like this that could cause the assert below strike.
 
 
   for (auto&& name : removed)
