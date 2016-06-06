@@ -227,12 +227,12 @@ findElfSo(const ElfFile& elf, const std::string& soname)
     }
 
   {
-    auto elfso = findInLdSoCache (elf.getArch(), soname);
-    if (elfso.getArch () == elf.getArch())
+    auto elfso = findInLdSoCache (elf.getArch (), soname);
+    if (elfso.getArch () == elf.getArch ())
       return elfso;
   }
 
-  return findInLdDefaultPathes(elf.getArch(), soname) ;
+  return findInLdDefaultPathes(elf.getArch (), soname) ;
 
 
 }
@@ -246,18 +246,18 @@ printElf( const std::string& soname,
           bool shortNames)
 {
 
-  SBBASSERT (elf.isElf()) ;
+  SBBASSERT (elf.isElf ()) ;
 
 
   std::string indentDep ;
 
   for (int i = 0; i < level -1; ++i)
     {
-      indentDep.append("|   ");
+      indentDep.append ("|   ");
     }
   std::string indentDepPkgs = indentDep ;
-  indentDep.append("|---" );
-  indentDepPkgs.append("|   " );
+  indentDep.append ("|---" );
+  indentDepPkgs.append ("|   " );
 
   using namespace utils ;
 
@@ -266,7 +266,7 @@ printElf( const std::string& soname,
   auto  realpath = path.getRealPath () ;
 
   const auto ds = utils::getPkgsOfFile (cache, realpath, elf.getArch ());
-  StringVec pkgs (ds.size()) ;
+  StringVec pkgs (ds.size ()) ;
 
   std::string pkgnames ;
   if (ds.size () == 0)
@@ -288,24 +288,24 @@ printElf( const std::string& soname,
 
   if (shortNames)
     {
-      LogMsg() << indentDep << soname << " (" << pkgnames << ")" ;
+      LogMsg () << indentDep << soname << " (" << pkgnames << ")" ;
     }
   else
     {
       if (path.isLink ())
         {
-          LogMsg()<< indentDep << "| "
+          LogMsg ()<< indentDep << "| "
               << soname << " => "
                 << path.str()  << " => " << realpath ;
         }
       else
         {
-          LogMsg() << indentDep  << "| "
+          LogMsg () << indentDep  << "| "
               << soname << " => "
                 << path.str() ;
          }
-      pkgnames = joinToString(pkgs, ", ") ;
-      LogMsg()<< indentDepPkgs<< "" << "| (" << pkgnames << ")";
+      pkgnames = joinToString (pkgs, ", ") ;
+      LogMsg ()<< indentDepPkgs<< "" << "| (" << pkgnames << ")";
     }
 
 
@@ -319,7 +319,7 @@ printElfs(const ElfFile& elf, int level, Cache& cache, bool shortNames)
 
 
 
-  for (const auto& soname : elf.getNeeded() )
+  for (const auto& soname : elf.getNeeded ())
     {
 // this is used form all bin/libs, so irgnore it here.
 // ---libc.so.6 (glibc-solibs, glibc)
@@ -328,7 +328,7 @@ printElfs(const ElfFile& elf, int level, Cache& cache, bool shortNames)
       if (soname.size () > libc6.size () &&
           std::equal (begin (libc6), end (libc6), begin (soname)))
         {
-         continue ;
+          continue ;
         }
 
 
