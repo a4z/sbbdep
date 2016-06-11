@@ -86,7 +86,6 @@ printSyncReport(Cache& cache,
         }
 
 
-
       for(auto&& pp : syncdata.updated)
         {
           LogInfo () << "updated: "
@@ -97,6 +96,32 @@ printSyncReport(Cache& cache,
               << pp.first.fullName ().substr ( pp.first.name ().size () + 1)
               ;
         }
+
+      if (syncdata.problemsOld.size () > 0 or syncdata.problemsNew.size () > 0)
+        {
+          LogInfo () << "\nNote: problem analyzing following packages:" ;
+          LogInfo () << " (This does not mean that there is any problem "
+              "or inconsistency on this system\n"
+              " but maybe you want to double check those packages)" ;
+
+            for (auto&& p : syncdata.problemsOld )
+              {
+                LogInfo () << "(updated/removed)?: " << p ;
+              }
+
+            for (auto&& p : syncdata.problemsNew )
+              {
+                LogInfo () << "(updated/installed)?: " << p;
+              }
+
+            LogInfo () << "If everything is OK and this message "
+                "comes again you can rebuild the cache by remove "
+                "the existing one.\n"
+                "Please consider also sending the cache to the sbbdep author "
+                "so that this problem can be analyzed." ;
+        }
+
+
     }
   LogInfo() << "" ; // append new line
 }

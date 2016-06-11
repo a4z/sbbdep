@@ -24,7 +24,7 @@ findbinpath.cpp
 pathtest.cpp
 pknametest.cpp
 replorig.cpp
-
+cachestuff.cpp
 #cacheup1_2.cppnot supported anymore
 )
 

@@ -50,14 +50,33 @@ THE SOFTWARE.
 
 namespace sbbdep {
 
+  namespace
+  {
+    auto waitfor = [](std::thread& th) { if (th.joinable ()) th.join ();};
+  }
 
-namespace
-{
 
 
-auto waitfor = [](std::thread& th){ if(th.joinable()) th.join(); };
+  SyncData::StringVec
+  SyncData::pkgNameDiff (const StringVec& a, const StringVec& b)
+  {
 
-}
+    using namespace std;
+    auto samePkgName = [] (const string& n1, const string& n2) -> bool
+      {
+        return PkgName (n1).name () < PkgName (n2).name ();
+      };
+
+    StringVec ret;
+    auto retInserter = inserter (ret, begin (ret));
+
+    set_difference (begin (a), end (a),
+                    begin (b), end (b),
+                    retInserter,
+                    samePkgName);
+
+    return ret;
+  }
 
 
 
@@ -427,36 +446,52 @@ Cache::createUpdateSyncData()
         return fiter != end (allnames) ;
     };
 
-  // TODO check what happens if the system is in an unexpected state
-  // like if a package is installed in 2 versions.
-  // foo-1.2.3 foo-1.2.4, and than
-  // one gets updated/deleted/ and the other removed ..
-  // things like this that could cause the assert below strike.
 
 
   for (auto&& name : removed)
     {
       if (isIn(installed, name))
         {
-          updataOld.emplace_back(name);
+          updataOld.emplace_back (name);
         }
       else
         {
-          retval.removed.emplace_back(name);
+          retval.removed.emplace_back( name);
         }
     }
 
-  for (auto&& name : installed)
-    {
-      if (isIn(removed, name))
-        {
-          updateNew.emplace_back(name);
-        }
-      else
-        {
-          retval.installed.emplace_back(name);
-        }
-    }
+    for (auto&& name : installed)
+      {
+        if (isIn (removed, name))
+          {
+            updateNew.emplace_back (name);
+          }
+        else
+          {
+            retval.installed.emplace_back (name);
+          }
+      }
+
+    // this means something is strange, maybe a 2 packages with the same name
+    // but different version have been installed/removed ....
+    if (updataOld.size () != updateNew.size ())
+      {
+        StringVec diffOld = SyncData::pkgNameDiff (updataOld, updateNew);
+        StringVec diffNew = SyncData::pkgNameDiff (updateNew, updataOld);
+
+        if (not diffOld.empty ())
+          {
+            updataOld = SyncData::pkgNameDiff (updataOld, diffOld);
+          }
+
+        if (not diffNew.empty ())
+          {
+            updateNew = SyncData::pkgNameDiff (updateNew, diffNew);
+          }
+
+        retval.problemsOld = std::move (diffOld) ;
+        retval.problemsNew = std::move (diffNew) ;
+      }
 
   SBBASSERT( updataOld.size() == updateNew.size() ) ;
   //"filter update did not work"

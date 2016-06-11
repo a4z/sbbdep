@@ -36,7 +36,8 @@ namespace sbbdep {
 class Pkg;
 
 
-struct SyncData{
+struct SyncData
+{
   using UpdateInfo = std::pair<PkgName, PkgName> ;
   using StringVec = std::vector<std::string> ;
   StringVec removed;
@@ -44,6 +45,9 @@ struct SyncData{
   StringVec reinstalled;
   std::vector<UpdateInfo> updated;
   bool wasNewCache;
+
+  StringVec problemsOld;
+  StringVec problemsNew;
 
   bool empty() const
   {
@@ -57,7 +61,11 @@ struct SyncData{
   }
 
 
+  static StringVec pkgNameDiff(const StringVec& a, const StringVec& b) ;
+
 };
+
+
 
 
 
