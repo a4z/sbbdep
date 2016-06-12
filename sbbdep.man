@@ -1,0 +1,87 @@
+.\" Manpage for sbbdep.
+.\" Contact harald.achitz@gmail.com to correct errors or typos.
+.TH man 1 "11 Juni 2016" "0.2.6" "sbbdep man page"
+.SH NAME
+sbbdep \- Slack Build Binary Dependencies
+.br
+The tool for exploring binary runtime dependencies on Slackware and Slackware based systems
+
+
+.SH SYNOPSIS
+sbbdep [\fBOPTIONS\fR]... [\fIQUERY\fR]
+
+\fIQUERY\fR can be:
+.RS 7
+A single binary/library file
+.br 
+A file from /var/adm/packages
+.br 
+A package DESTDIR of a slackbuild
+.br 
+Some existing file
+.RE
+
+If \fIQUERY\fR is omitted sbbdep runs only the cache synchronisation.
+.br
+The default behavior is to find dependencies of \fIQUERY\fR.
+.br
+If \fIQUERY\fR is not a binary file or an installed package but a valid file name
+.br
+sbbdep will search for it in the package database and reports the package it belongs to.
+
+
+.SH OPTIONS
+
+.IP  "\fB-c, --cache=[\fIFILENAME\fB]\fR" 
+Cache file to use. The cache file must be read/writable.
+.br
+If this option is omitted \fI~/sbbdep.cache\fR is used.
+
+.IP "\fB-f, --file=[\fIFILENAME\fB]\fR"
+Write output to file
+.B \fIFILENAME\fR
+.br
+If this option is omitted the output will go to \fIstdout\fR.   
+
+.IP "\fB-s, --short" 
+Report package name without version
+
+
+.IP \fB--nosync 
+Skip synchronise the cache. Only useful if cache is up to date.
+.br
+If the cache is out of date wrong results might be reported. 
+
+.IP \fB --quiet
+Suppress status information during sync
+
+.IP \fB --require
+This is the default option if not --whoneeds is used.
+.br
+If this option is explicit given and \fIQUERY\fR is not a binary file 
+.br
+The search in the package database will be skipped.  
+
+
+
+
+.SH FILES
+.I ~/.sbbdep.cache
+.RS
+The cache sbbdep creates and uses.
+.br
+The filename can be changed via the \fB-c/--cache\fR option.
+.br
+Whatever file you use you might want to keep it.
+
+
+
+.SH BUGS
+No known bugs at the moment.
+.br
+If you have found a bug or want to place a feature request please use the issue tracer.
+.br
+https://bitbucket.org/a4z/sbbdep/issues
+
+.SH AUTHOR
+Harald Achitz (harald.achitz@gmail.com)
