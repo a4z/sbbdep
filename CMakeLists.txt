@@ -141,8 +141,7 @@ SET ( sbbdepcli_SRC
 ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
 #TODO, sqlite & dl only needed  if sl3 was build with that requirement ...
-#set(SBBDEP_REQURIED_LIBS sbbdep a4zsqlt3 a4z sqlite3  dl ) 
-set(SBBDEP_REQURIED_LIBS sl3 sbbdep  )
+set(SBBDEP_REQURIED_LIBS sbbdep sl3  )
 
 # disable until I have a real split
 # set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
