@@ -25,8 +25,11 @@ THE SOFTWARE.
 #define SBBDEP_ERROR_HPP_
 
 
-#include <iosfwd>
+#include <exception>
+#include <stdexcept>
 #include <string>
+
+#include <iosfwd>
 
 namespace sbbdep{
 
@@ -42,23 +45,15 @@ namespace sbbdep{
   
 
 
-  class Error
+  class Error :  public std::runtime_error
   {
 
   public:
-    Error( std::string info ) ;
-    virtual ~Error() noexcept ;
+
+    using std::runtime_error::runtime_error ;
 
     virtual ErrCode id() const = 0 ;
 
-    const std::string& info() const ;
-
-  protected:
-    const std::string _info;
-
-    friend std::ostream& operator<<(std::ostream& os, const Error& e);
-
-    virtual void toStream(std::ostream& os) const;
   };
 
   std::ostream& operator<< (std::ostream& os, const Error& e);

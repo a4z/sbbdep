@@ -30,52 +30,26 @@ namespace sbbdep{
 
 
 namespace {
-  std::string ErrCodeName(ErrCode ec)
+  constexpr const char* ErrCodeName(ErrCode ec)
   {
-    static const std::map<ErrCode, std::string> names{
-      { ErrCode::TODO               , "TODO" } ,
-      { ErrCode::UNEXPECTED         , "UNEXPECTED" }
-    };
 
-    auto i = names.find( ec );
-    if( i != std::end( names ) )
-      return i->second;
+    return ec == ErrCode::GENERIC      ? "GENERIC" :
+           ec == ErrCode::ASSERT       ?  "ASSERT" :
+           ec == ErrCode::TODO         ?  "TODO" :
+           ec == ErrCode::UNEXPECTED   ?  "UNEXPECTED" :
+               "NA" ;
 
-    return std::to_string( (int)ec );
   }
 }//------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 
-Error::Error( std::string info )
-:_info(std::move(info))
-{
-}
-//--------------------------------------------------------------------------------------------------
-Error::~Error() noexcept
-{
-}
-//--------------------------------------------------------------------------------------------------
-
-const std::string&
-Error::info() const
-{
-  return _info ;
-}
-//--------------------------------------------------------------------------------------------------
-
-void
-Error::toStream(std::ostream& os) const
-{
-  os << "sbbdep::" << ErrCodeName(id()) << ":" << info();
-}
-//--------------------------------------------------------------------------------------------------
 
 
 //--------------------------------------------------------------------------------------------------
 
 std::ostream& operator<< (std::ostream& os, const Error& e)
 {
-  e.toStream(os) ;
+  os << "sbbdep::" << ErrCodeName(e.id()) << ":" << e.what();
   return os;
 }
 //--------------------------------------------------------------------------------------------------
