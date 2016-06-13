@@ -13,6 +13,7 @@ set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATC
 set(sbbdep_CONFIG_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/sbbdep/config.hpp")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config.in" "${sbbdep_CONFIG_HEADER}")
 
+# TODO make the man page using the version and copy it to the doc dir:w 
 
 if(NOT CMAKE_BUILD_TYPE)
 

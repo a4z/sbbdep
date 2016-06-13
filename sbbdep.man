@@ -52,16 +52,73 @@ Skip synchronise the cache. Only useful if cache is up to date.
 .br
 If the cache is out of date wrong results might be reported. 
 
-.IP \fB --quiet
+.IP \fB--quiet
 Suppress status information during sync
 
-.IP \fB --require
-This is the default option if not --whoneeds is used.
+.IP \fB--require
+This is the default option if not \fB--whoneeds\fR is used.
 .br
 If this option is explicit given and \fIQUERY\fR is not a binary file 
 .br
 The search in the package database will be skipped.  
 
+.IP \fB--whoneeds
+Show packages that depend on \fIQUERY\fR.
+.br
+Using this option will show which packages need a certain one. 
+
+
+.IP \fB--xdl
+Explain dynamic linked file, reports detailed information.
+.br
+Works with require and whoneeds queries.
+
+
+.IP \fB--bdtree
+Prints a hierarchical dependency tree of \fIQUERY\fR.
+.br
+This can produce a quite long output of for some binaries or libraries.
+.br
+This can produce a very very big and long output for some package.
+
+.IP \fB--ignore=[\fINAME,LIST\fR]
+Takes a comma separated list of package names to ignore in the output.
+.br
+Either the base name or the full package name can be used. 
+.br
+\fIaaa_base,cxxlibs\fR might be an example for this option.
+.br
+This option is valid for dependency queries, useless otherwise.
+
+.IP "\fB-l, --lookup"
+Search for \fIQUERY\fR in the package database and skip all other operations.
+                             
+.IP \fB--admdir=[\fIDIRNAME\fR]
+Usually you do not want to use this option.
+.br
+Use \fIDIRNAME\fR as package database.
+.br
+The default is /var/adm/packages.
+
+                         
+
+.IP \fB--ldd
+You do not want to use this option to obtain dependency information.
+.br
+Using this option sbbdep will use the ldd command.
+.br
+This will not only print direct requirements of a given file.
+.br
+It will also pull in the dependencies of the requirements. 
+.br
+This option is useless for a \fB--whoneeds\fR query.
+
+
+.IP "\fB-v,  --version"
+Display sbbdep version.
+
+.IP "\fB-h,  --help"
+Display this text.
 
 
 
@@ -82,6 +139,11 @@ No known bugs at the moment.
 If you have found a bug or want to place a feature request please use the issue tracer.
 .br
 https://bitbucket.org/a4z/sbbdep/issues
+
+.SH SEE ALSO
+There is a comprehensive documentation online.
+.br
+http://a4z.bitbucket.org/docs/sbbdep/
 
 .SH AUTHOR
 Harald Achitz (harald.achitz@gmail.com)
