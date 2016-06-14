@@ -13,7 +13,6 @@ set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATC
 set(sbbdep_CONFIG_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/sbbdep/config.hpp")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config.in" "${sbbdep_CONFIG_HEADER}")
 
-# TODO make the man page using the version and copy it to the doc dir:w 
 
 if(NOT CMAKE_BUILD_TYPE)
 
@@ -142,15 +141,18 @@ SET ( sbbdepcli_SRC
 ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
 #TODO, sqlite & dl only needed  if sl3 was build with that requirement ...
-set(SBBDEP_REQURIED_LIBS sbbdep sl3  )
+set(sbbdep_REQURIED_LIBS sbbdep sl3  )
 
 # disable until I have a real split
 # set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
 
-TARGET_LINK_LIBRARIES( sbbdepcli ${SBBDEP_REQURIED_LIBS} )
+TARGET_LINK_LIBRARIES( sbbdepcli ${sbbdep_REQURIED_LIBS} )
 SET_TARGET_PROPERTIES(sbbdepcli PROPERTIES OUTPUT_NAME sbbdep)
 set(sbbdep_install_targets ${sbbdep_install_targets} sbbdepcli)
 
+
+# normaly  I should use CMAKE_INSTALL_DOCDIR/MANDIR
+# but here I know the locations on Slackware   
 
 if(NOT CMAKE_DOC_DIR)
   SET(CMAKE_DOC_DIR "doc/sbbdep-${sbbdep_VERSION}"  CACHE STRING
@@ -158,10 +160,26 @@ if(NOT CMAKE_DOC_DIR)
       FORCE )
 endif(NOT CMAKE_DOC_DIR)
 
+if(NOT CMAKE_MAN_DIR)
+  SET(CMAKE_MAN_DIR "usr/man"  CACHE STRING
+      "Choose the target directory where man files will be installed."
+      FORCE )
+endif(NOT CMAKE_MAN_DIR)
 
-set(SBBDEP_DOC_FILES 
+
+
+set(sbbdep_DOC_FILES 
   README.txt README_db.txt AUTHORS COPYING
 )
+
+set(sbbdep_MAN_PAGE "${CMAKE_BINARY_DIR}/share/man/man1/sbbdep.1")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sbbdep.man" "${sbbdep_MAN_PAGE}")
+
+MESSAGE("HERE : ${sbbdep_MAN_PAGE}")
+MESSAGE("HERE 1: ${CMAKE_DOC_DIR}")
+MESSAGE("HERE 1: ${CMAKE_MAN_DIR}")
+
+
 
 
 #only add install target if this is the top level project
@@ -172,7 +190,8 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
   #    LIBRARY DESTINATION lib${LIB_SUFFIX}
   #    ARCHIVE DESTINATION lib${LIB_SUFFIX}
     )
-    INSTALL(FILES ${SBBDEP_DOC_FILES} DESTINATION  ${CMAKE_DOC_DIR})
+  INSTALL(FILES ${sbbdep_DOC_FILES} DESTINATION  ${CMAKE_DOC_DIR})
+  INSTALL(FILES ${sbbdep_MAN_PAGE} DESTINATION  ${CMAKE_MAN_DIR}/man1)
 
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 

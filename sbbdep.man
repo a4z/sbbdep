@@ -1,6 +1,6 @@
 .\" Manpage for sbbdep.
 .\" Contact harald.achitz@gmail.com to correct errors or typos.
-.TH man 1 "11 Juni 2016" "0.2.6" "sbbdep man page"
+.TH man 1 "14 Juni 2016" "${sbbdep_VERSION}" "sbbdep man page"
 .SH NAME
 sbbdep \- Slack Build Binary Dependencies
 .br
