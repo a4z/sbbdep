@@ -175,12 +175,6 @@ set(sbbdep_DOC_FILES
 set(sbbdep_MAN_PAGE "${CMAKE_BINARY_DIR}/share/man/man1/sbbdep.1")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sbbdep.man" "${sbbdep_MAN_PAGE}")
 
-MESSAGE("HERE : ${sbbdep_MAN_PAGE}")
-MESSAGE("HERE 1: ${CMAKE_DOC_DIR}")
-MESSAGE("HERE 1: ${CMAKE_MAN_DIR}")
-
-
-
 
 #only add install target if this is the top level project
 if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
