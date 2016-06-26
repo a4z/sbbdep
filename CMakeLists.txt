@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project(sbbdep C CXX) 
 
-include( a4cmk/macros.cmake )
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 2)
@@ -14,29 +13,18 @@ set(sbbdep_CONFIG_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/sbbdep/config.hpp"
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config.in" "${sbbdep_CONFIG_HEADER}")
 
 
-if(NOT CMAKE_BUILD_TYPE)
+# Include necessary submodules
+set(CMAKE_MODULE_PATH
+  "${sbbdep_SOURCE_DIR}/CMake"
+)
 
-  SET(CMAKE_BUILD_TYPE Release CACHE STRING
-      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-      FORCE )
-endif(NOT CMAKE_BUILD_TYPE)
-
-
-include( a4cmk/setup_compiler.cmake )
-
-
-if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
-    set (_DEFAULT_FLAGS "DEBUG")
-else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set (_DEFAULT_FLAGS "RELEASE")
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-PREFIX_COMPILER_DEFINES(_DEFAULT_FLAGS)
-add_definitions(${_DEFAULT_FLAGS})
-
-unset(_DEFAULT_FLAGS)
+include( macros )
+include( setup_compiler )
+include( setup_buildtype )
 
 
+
+# redundant in my files 2
 if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
     # for internal build dir use no LIB_SUFFIX, but might change
@@ -44,8 +32,9 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
+# redundant in my files 2
 
-include( a4cmk/setup_boost.cmake )
+include( setup_boost )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
   #in Release only add testing if explicite asked to do so
@@ -54,12 +43,40 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
   endif (NOT DEFINED ALL_A4_TESTING_DISABLED)
 endif (CMAKE_BUILD_TYPE STREQUAL "Release")  
   
-include( a4cmk/setup_testing.cmake )  
 
-include_directories( BEFORE
-include
+# needs to be done before testing is included  
+#TODO , sqlite & dl only needed  if sl3 was build with that requirement ...
+# TODO check if there is a installed libsl3, the internal one should be taken
+if(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
+  
+  MESSAGE ("USE SL3")
+  
+  set(libsl3_BUILD_TESTS OFF)
+  add_subdirectory(${PROJECT_SOURCE_DIR}/libsl3)
+  
+  include_directories(SYSTEM 
+    ${PROJECT_SOURCE_DIR}/libsl3/include
+  )
+ 
+  #SET(libsl3_LIBRARY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libsl3.a)  
+  SET(libsl3_LIBRARY sl3)  
+else(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
+#  find_library (libsl3_LIBRARY NAMES sl3 libsl3 libsl3.a)
+  SET(libsl3_LIBRARY sl3)  
+endif(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
+  
+
+include( setup_testing )    
+
+
+include_directories( 
+${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+
+  
+  
+  
 
 ##########################################################################################
 
@@ -136,12 +153,9 @@ SET ( sbbdepcli_SRC
     src/cli/featurex.cpp
 )
 
-  
-#ADD_EXECUTABLE( sbbdepcli src/dummy.cpp )
 ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
-#TODO, sqlite & dl only needed  if sl3 was build with that requirement ...
-set(sbbdep_REQURIED_LIBS sbbdep sl3  )
+set(sbbdep_REQURIED_LIBS sbbdep ${libsl3_LIBRARY}  )
 
 # disable until I have a real split
 # set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
@@ -192,13 +206,11 @@ endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
 
-
-
 #optional enable personal test/trial dir
 include(CMakeLocalOpts.cmake OPTIONAL)
-if(sbbdep_LOCAL_TRIALS)
+if(EXISTS trials)
     add_subdirectory(trials)  
-endif(sbbdep_LOCAL_TRIALS)
+endif(EXISTS trials)
 
 
 
