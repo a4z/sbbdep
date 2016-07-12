@@ -49,7 +49,7 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Release")
 # TODO check if there is a installed libsl3, the internal one should be taken
 if(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
   
-  MESSAGE ("USE SL3")
+  MESSAGE ("setup internal libsl3")
   
   set(libsl3_BUILD_TESTS OFF)
   add_subdirectory(${PROJECT_SOURCE_DIR}/libsl3)
@@ -62,7 +62,8 @@ if(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
   SET(libsl3_LIBRARY sl3)  
 else(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
 #  find_library (libsl3_LIBRARY NAMES sl3 libsl3 libsl3.a)
-  SET(libsl3_LIBRARY sl3)  
+#  TOOD write a ticket to create a find sl3.cmake file
+   SET(libsl3_LIBRARY sl3)  
 endif(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
   
 
@@ -175,7 +176,7 @@ if(NOT CMAKE_DOC_DIR)
 endif(NOT CMAKE_DOC_DIR)
 
 if(NOT CMAKE_MAN_DIR)
-  SET(CMAKE_MAN_DIR "usr/man"  CACHE STRING
+  SET(CMAKE_MAN_DIR "man"  CACHE STRING
       "Choose the target directory where man files will be installed."
       FORCE )
 endif(NOT CMAKE_MAN_DIR)
