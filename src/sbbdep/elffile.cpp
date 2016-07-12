@@ -120,7 +120,7 @@ ElfFile::load()
         {
           ELFIO::dynamic_section_accessor dynamic (elfreader, sec);
 
-          if (not dynamic.get_entries_num () > 0)
+          if (not (dynamic.get_entries_num () > 0))
             return;
 
           for (ELFIO::Elf_Xword i = 0; i < dynamic.get_entries_num (); ++i)
