@@ -243,7 +243,8 @@ printElf( const std::string& soname,
           const ElfFile& elf,
           int level,
           Cache& cache,
-          bool shortNames)
+          bool shortNames,
+		  bool cycle = false)
 {
 
   SBBASSERT (elf.isElf ()) ;
@@ -253,11 +254,11 @@ printElf( const std::string& soname,
 
   for (int i = 0; i < level -1; ++i)
     {
-      indentDep.append ("|   ");
+      indentDep.append ("|    ");
     }
   std::string indentDepPkgs = indentDep ;
-  indentDep.append ("|---" );
-  indentDepPkgs.append ("|   " );
+  indentDep.append ("|----" );
+  indentDepPkgs.append ("|    " );
 
   using namespace utils ;
 
@@ -289,6 +290,8 @@ printElf( const std::string& soname,
   if (shortNames)
     {
       LogMsg () << indentDep << soname << " (" << pkgnames << ")" ;
+      if (cycle)
+    	  LogMsg ()<< indentDepPkgs<< "" << "| !! cycle detected !!";
     }
   else
     {
@@ -306,6 +309,8 @@ printElf( const std::string& soname,
          }
       pkgnames = joinToString (pkgs, ", ") ;
       LogMsg ()<< indentDepPkgs<< "" << "| (" << pkgnames << ")";
+      if (cycle)
+    	  LogMsg ()<< indentDepPkgs<< "" << "| !! cycle detected !!";
     }
 
 
@@ -313,11 +318,16 @@ printElf( const std::string& soname,
 //------------------------------------------------------------------------------
 
 void
-printElfs(const ElfFile& elf, int level, Cache& cache, bool shortNames)
+printElfs(const ElfFile& elf,
+		int level,
+		Cache& cache,
+		bool shortNames,
+		std::set<std::string> parents = {})
 {
   SBBASSERT (elf.isElf()) ;
 
-
+  auto nextparent = parents ;
+  nextparent.insert(elf.soName()) ;
 
   for (const auto& soname : elf.getNeeded ())
     {
@@ -341,10 +351,14 @@ printElfs(const ElfFile& elf, int level, Cache& cache, bool shortNames)
         }
 
 
-      printElf(soname, soelf, level , cache, shortNames) ;
+      bool cycle = parents.find(soname) != parents.end() ;
+      printElf(soname, soelf, level , cache, shortNames, cycle) ;
+
+      if (cycle)
+    	continue ;
 
       printElfs (ElfFile (soelf.getName ().getRealPath ()),
-                 level + 1, cache, shortNames) ;
+                 level + 1, cache, shortNames, nextparent) ;
 
     }
 

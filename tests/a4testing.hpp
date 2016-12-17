@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2009-2015 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2009-2016 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,8 +41,11 @@ namespace boost { namespace unit_test {
 namespace a4test {
 
   static constexpr bool defaultOn{true} ;
-  static constexpr bool defaultOff{false} ;  
-  
+  static constexpr bool defaultOff{false} ;
+//	 static  const bool defaultOn{ true };
+//	 static  const bool defaultOff{false} ;
+
+
   // helper, base to forwared boost stuff from here to the translation unit
 class SuiteBase
 {
@@ -161,7 +164,7 @@ class Suite : public SuiteInternals<SuiteFixture>{
   using internals = SuiteInternals<SuiteFixture>;
 
   template<typename T> friend
-  Suite<T> suite(const std::string, bool onoff );
+  Suite<T> suite(const std::string&, bool onoff );
 
   Suite(const std::string name, bool onoff = defaultOn)
   : SuiteInternals<SuiteFixture>(name, onoff)
@@ -205,11 +208,16 @@ public:
 //-------------------------------------------------------------------------------------------------- 
 
 template<typename SuiteFixture = SuiteBase::NoFixtureTag>
-Suite<SuiteFixture> suite(const std::string name, bool onoff = defaultOn)
+Suite<SuiteFixture> suite(const std::string& name, bool onoff)
 {
   return Suite<SuiteFixture>(name, onoff); 
 }
  
+template<typename SuiteFixture = SuiteBase::NoFixtureTag>
+Suite<SuiteFixture> suite(const std::string& name)
+{
+  return suite<SuiteFixture>(name, true);
+}
 
 
 //--------------------------------------------------------------------------------------------------

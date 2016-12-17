@@ -5,7 +5,7 @@ project(sbbdep C CXX)
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 2)
-set(sbbdep_PATCH_VERSION 6)
+set(sbbdep_PATCH_VERSION 7)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
@@ -17,6 +17,11 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config.in" "${sbbdep_CONFIG_HEAD
 set(CMAKE_MODULE_PATH
   "${sbbdep_SOURCE_DIR}/CMake"
 )
+
+
+
+#optional enable personal test/trial dir
+include(CMakeLocalOpts.cmake OPTIONAL)
 
 include( macros )
 include( setup_compiler )
@@ -207,8 +212,6 @@ endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 
 
-#optional enable personal test/trial dir
-include(CMakeLocalOpts.cmake OPTIONAL)
 if(EXISTS trials)
     add_subdirectory(trials)  
 endif(EXISTS trials)

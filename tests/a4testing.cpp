@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2009-2015 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2009-2016 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -38,12 +38,15 @@ THE SOFTWARE.
 
 #endif
 
+#include <boost/version.hpp>
+
 
 #include "a4testing.hpp"
 
 #include <set>
 #include <map>
 #include <tuple>
+#include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -54,7 +57,7 @@ THE SOFTWARE.
 // off_suites are for the --off and the default disabled suites
 // all_suites is the list of all suites
 // xargs is for passing extra arguments to a list that can be accessed from tests.
-//-----------------------------------------------------------------------------------------
+
 
 
 namespace a4test {
@@ -103,7 +106,6 @@ FreeTests& free_tests()
 
 // testing implementation start
 
-//--------------------------------------------------------------------------------------------------
 
 SuiteBase::SuiteBase ( const std::string name, bool onoff )
   : _suite ( nullptr )
@@ -111,31 +113,42 @@ SuiteBase::SuiteBase ( const std::string name, bool onoff )
 {
   if( onoff == false )
      off_suites().insert(name) ;
-}//-------------------------------------------------------------------------------------------------
+}
 
 auto
 SuiteBase::createSuite() -> boostTestSuite*
 {  
   if ( _suite==nullptr )
     {
-      _suite = new boost::unit_test::test_suite ( _name );
+#if BOOST_VERSION >= 105900
+       _suite = new boost::unit_test::test_suite(_name, __FILE__ ,__LINE__);
+#else
+       _suite = new boost::unit_test::test_suite(_name);
+#endif
 
-      AddCaseCall acc = [=]
-          (const std::string name, TestFunction tc, unsigned expected_failures, unsigned timeout){
-          _suite->add( boost::unit_test::make_test_case( tc, name ), expected_failures, timeout );      
-      };
+       AddCaseCall acc = [=](const std::string name, 
+                            TestFunction tc, 
+                            unsigned expected_failures, 
+                            unsigned timeout){
+#if BOOST_VERSION >= 105900
+          (void)timeout;      
+          _suite->add(boost::unit_test::make_test_case(tc, name, __FILE__, __LINE__) , expected_failures, 0 );
+#else
+          _suite->add(boost::unit_test::make_test_case(tc, name), expected_failures, timeout);
+#endif
+       };
       
-      AddSubSuiteCall ass = [=]( boostTestSuite* bts, unsigned timeout)
-      {
-        _suite->add(bts, timeout);
-      };
-      
-      assambleSuite( acc, ass ); // will also add child suit if there are some so change name ? 
+       AddSubSuiteCall ass = [=]( boostTestSuite* bts, unsigned timeout)
+       {
+         _suite->add(bts, timeout);
+       };
+       
+       assambleSuite( acc, ass ); // will also add child suit if there are some so change name ? 
       
     }
 
   return _suite;
-}//-------------------------------------------------------------------------------------------------
+}
 
 
 
@@ -148,7 +161,7 @@ RegisterSuite::RegisterSuite( const std::string& name, std::function<void()> tes
 void RegisterSuite::add_global ( std::shared_ptr<SuiteBase> s )
 {
    all_suites().push_back(s);
-}//-------------------------------------------------------------------------------------------------
+}
 
 
 } // ns a4test
@@ -240,14 +253,14 @@ void buildSuites(boost::unit_test::master_test_suite_t& master)
       if( on_suites().empty() )
         {
           if( off_suites().find( s->getName() ) == std::end( off_suites() ) ){
-            std::cerr << "create suite " <<  s->getName() << "\n";
+           // std::cerr << "create suite " <<  s->getName() << "\n";
             master.add( s->createSuite() );            
           }
         }
       else
         {
           if( on_suites().find( s->getName() ) != std::end( on_suites() ) ) {
-            std::cerr << "create suite " <<  s->getName() << "\n";
+           // std::cerr << "create suite " <<  s->getName() << "\n";
             master.add( s->createSuite() );
           }
         }
@@ -256,7 +269,11 @@ void buildSuites(boost::unit_test::master_test_suite_t& master)
   
   for(auto& ft : free_tests())
   {
-    master.add(boost::unit_test::make_test_case( ft.second, ft.first ));
+#if BOOST_VERSION >= 105900
+    master.add(boost::unit_test::make_test_case( ft.second, ft.first , __FILE__, __LINE__));
+#else
+    master.add(boost::unit_test::make_test_case( ft.second, ft.first));
+#endif
   }
 }
 
@@ -271,6 +288,9 @@ main ( int argc, char* argv[] )
   bool print = false;
   bool show_help_long =  false ;
   bool show_help_short =  false ;
+
+  std::vector<char*> butargs ;
+  butargs.push_back(argv[0]);
 
   for( int i = 1; i < argc; ++i ) // move this to a setup function thtat includes all required stuff...
     {
@@ -334,6 +354,7 @@ main ( int argc, char* argv[] )
 
           continue ; 
         }
+      butargs.push_back (argv[i]) ;
 
     }
 
@@ -372,8 +393,10 @@ main ( int argc, char* argv[] )
   
   //for( auto& s : xArgs() ) std::cerr << "xa " << s.first << " = " << s.second << "\n" ;
 
-  int result = ::boost::unit_test::unit_test_main( &init_unit_test, argc, argv );;
-
+  //int result = ::boost::unit_test::unit_test_main( &init_unit_test, argc, argv);
+  
+  int  result = ::boost::unit_test::unit_test_main( &init_unit_test, butargs.size (), &butargs[0]);
+  
   if( show_help_long ) //append my help to boost help ..
     printHelp();
 

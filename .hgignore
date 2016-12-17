@@ -3,3 +3,4 @@ syntax: regexp
 ^include/sbbdep/config\.hpp$
 syntax: regexp
 \.kdev4$
+CMakeLocalOpts.cmake
