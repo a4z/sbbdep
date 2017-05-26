@@ -20,14 +20,14 @@ set(CMAKE_MODULE_PATH
 
 
 
-#optional enable personal test/trial dir
-include(CMakeLocalOpts.cmake OPTIONAL)
 
 include( macros )
 include( setup_compiler )
 include( setup_buildtype )
 
 
+#optional enable personal test/trial dir
+include(CMakeLocalOpts.cmake OPTIONAL)
 
 # redundant in my files 2
 if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
