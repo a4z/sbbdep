@@ -608,7 +608,7 @@ Cache::updateIndex(const SyncData& data)
         if(not action.rem.empty ())
           { LogInfo() << "clear " << action.rem ;
             auto& delcmd =  getCommand (sqlid::del_byfullname) ;
-            delcmd .execute ({action.rem});
+            delcmd .execute (sl3::dbvalues(action.rem));
           }
 
         if(action.inst.isLoaded ())
@@ -699,44 +699,45 @@ Cache::indexPkg(const Pkg& pkg)
       const auto pkgname = PkgName (pkg.getPath ().base ());
       const int64_t timestamp = pkg.getPath ().getLastModificationTime ();
 
-      getCommand(sqlid::insert_pkg).execute( {
-                 { pkgname.fullName() } ,
-                 { pkgname.name() } ,
-                 { pkgname.version() } ,
-                 { pkgname.arch() } ,
-                 { pkgname.build().Num() } ,
-                 { pkgname.build().Tag() } ,
-                 { timestamp }
-       });
+      getCommand(sqlid::insert_pkg).execute( 
+      sl3::dbvalues( pkgname.fullName()  ,
+                      pkgname.name()  ,
+                      pkgname.version()  ,
+                      pkgname.arch()  ,
+                      pkgname.build().Num()  ,
+                      pkgname.build().Tag()  ,
+                      timestamp 
+                      ));
 
       const auto pkgid = getLastInsertRowid() ;
 
       for (const ElfFile& elf : pkg.getElfFiles ())
         {
-          getCommand(sqlid::insert_dynlinked).execute( {
-                   { pkgid } ,
-                   { elf.getName().str() } ,
-                   { elf.getName().dir() } ,
-                   { elf.getName().base() } ,
+          getCommand(sqlid::insert_dynlinked).execute( 
+                sl3::dbvalues(      
+                   pkgid  ,
+                   elf.getName().str()  ,
+                    elf.getName().dir()  ,
+                    elf.getName().base()  ,
                    (elf.soName().size()> 0 ?
                            DbValue(elf.soName()) :
                            DbValue(sl3::Type::Null) ) ,
-                   { elf.getArch() }
-          });
+                    elf.getArch() 
+          ));
 
          const auto dynlinked_id = getLastInsertRowid() ;
 
          for(const auto& needed : elf.getNeeded())
            {
              getCommand(sqlid::insert_required).execute(
-                   { {dynlinked_id}, {needed} }
+                   sl3::dbvalues(dynlinked_id, needed)
              );
            }
 
          for(const auto& rrunpaht : elf.getRRunPaths())
            {
-             getCommand(sqlid::insert_rrunpath).execute(  {
-               {dynlinked_id}, {rrunpaht} , {elf.getName().dir()} }
+             getCommand(sqlid::insert_rrunpath).execute(
+               sl3::dbvalues(dynlinked_id, rrunpaht , elf.getName().dir())
              );
            }
         }
@@ -764,16 +765,16 @@ Cache::updateLdDirInfo()
 
 
   getCommand (sqlid::set_keyval).execute (
-      { { "ldsoconf" }, {ldinfos.getLdSoConfTime ()}});
+      sl3::dbvalues ("ldsoconf" , ldinfos.getLdSoConfTime ()));
 
   for (auto&& d : ldinfos.getLdDirs ())
     {
-      getCommand (sqlid::insert_ldDir).execute ( {{ d }});
+      getCommand (sqlid::insert_ldDir).execute (sl3::dbvalues (d));
     }
 
   for (auto&& d : ldinfos.getLdLnkDirs ())
     {
-      getCommand (sqlid::insert_ldLnkDir).execute ( {{ d }});
+      getCommand (sqlid::insert_ldLnkDir).execute (sl3::dbvalues (d));
     }
 
   transaction.commit ();

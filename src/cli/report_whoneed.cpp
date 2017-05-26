@@ -131,13 +131,13 @@ printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
     {
       auto& cmd = cache.namedCommand ("WhoNeedFileQuery",
                                       getWhoNeedFileQuery ());
-      const DbValues args = { { pkg.getElfFiles () [0].getName () } };
+      const DbValues args = sl3::dbvalues (pkg.getElfFiles () [0].getName ());
       ds = cmd.select (args);
     }
   else if (pkg.getType () == PkgType::Installed)
     {
       auto& cmd = cache.namedCommand ("WhoNeedPkgQuery", getWhoNeedPkgQuery ());
-      const DbValues args = { { pkg.getPath ().base () } };
+      const DbValues args = sl3::dbvalues (pkg.getPath ().base ());
       ds = cmd.select (args);
     }
   else
