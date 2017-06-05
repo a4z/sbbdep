@@ -70,7 +70,7 @@ getPkgsOfFile (Cache& cache,const PathName& fname, int arch)
 
   auto& cmd = cache.namedCommand(cmdname, sql) ;
 
-  return cmd.select (sl3::dbvalues (fname.str (), arch)) ;
+  return cmd.select (sl3::parameters (fname.str (), arch)) ;
 
 }
 //------------------------------------------------------------------------------

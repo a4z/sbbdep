@@ -191,14 +191,14 @@ getRequiredInfosLDD(Cache& cache, const Pkg& pkg)
         {
           for(auto f : ldsym_files.second)
           {
-            DbValues vals = sl3::dbvalues(
-              pkgval.at (0).getText (), /// is a variant so I need the type
-              DbValue (path.str ()),
-              DbValue (sym) ,
-              DbValue (f)
+            ds.merge (
+              DbValues {
+                DbValue(pkgval.at (0).getText ()), // is a variant -> to text
+                DbValue (path.str ()),
+                DbValue (sym) ,
+                DbValue (f)
+              }
             );
-
-            ds.merge (vals);
           }
         }
     }

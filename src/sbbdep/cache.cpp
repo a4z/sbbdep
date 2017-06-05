@@ -608,7 +608,7 @@ Cache::updateIndex(const SyncData& data)
         if(not action.rem.empty ())
           { LogInfo() << "clear " << action.rem ;
             auto& delcmd =  getCommand (sqlid::del_byfullname) ;
-            delcmd .execute (sl3::dbvalues(action.rem));
+            delcmd .execute (sl3::parameters(action.rem));
           }
 
         if(action.inst.isLoaded ())
@@ -700,7 +700,7 @@ Cache::indexPkg(const Pkg& pkg)
       const int64_t timestamp = pkg.getPath ().getLastModificationTime ();
 
       getCommand(sqlid::insert_pkg).execute( 
-      sl3::dbvalues( pkgname.fullName()  ,
+      sl3::parameters( pkgname.fullName()  ,
                       pkgname.name()  ,
                       pkgname.version()  ,
                       pkgname.arch()  ,
@@ -714,7 +714,7 @@ Cache::indexPkg(const Pkg& pkg)
       for (const ElfFile& elf : pkg.getElfFiles ())
         {
           getCommand(sqlid::insert_dynlinked).execute( 
-                sl3::dbvalues(      
+                sl3::parameters(      
                    pkgid  ,
                    elf.getName().str()  ,
                     elf.getName().dir()  ,
@@ -730,14 +730,14 @@ Cache::indexPkg(const Pkg& pkg)
          for(const auto& needed : elf.getNeeded())
            {
              getCommand(sqlid::insert_required).execute(
-                   sl3::dbvalues(dynlinked_id, needed)
+                   sl3::parameters(dynlinked_id, needed)
              );
            }
 
          for(const auto& rrunpaht : elf.getRRunPaths())
            {
              getCommand(sqlid::insert_rrunpath).execute(
-               sl3::dbvalues(dynlinked_id, rrunpaht , elf.getName().dir())
+               sl3::parameters(dynlinked_id, rrunpaht , elf.getName().dir())
              );
            }
         }
@@ -765,16 +765,16 @@ Cache::updateLdDirInfo()
 
 
   getCommand (sqlid::set_keyval).execute (
-      sl3::dbvalues ("ldsoconf" , ldinfos.getLdSoConfTime ()));
+      sl3::parameters ("ldsoconf" , ldinfos.getLdSoConfTime ()));
 
   for (auto&& d : ldinfos.getLdDirs ())
     {
-      getCommand (sqlid::insert_ldDir).execute (sl3::dbvalues (d));
+      getCommand (sqlid::insert_ldDir).execute (sl3::parameters (d));
     }
 
   for (auto&& d : ldinfos.getLdLnkDirs ())
     {
-      getCommand (sqlid::insert_ldLnkDir).execute (sl3::dbvalues (d));
+      getCommand (sqlid::insert_ldLnkDir).execute (sl3::parameters (d));
     }
 
   transaction.commit ();
