@@ -378,7 +378,7 @@ Cache::createUpdateSyncData()
   // get all in the database
   auto rh = [&allpkgindb](sl3::Columns cols) -> bool
         {
-          allpkgindb.insert (cols.at (0).getText ());
+          allpkgindb.insert (cols.getValue (0).getText ());
           return true ;
         } ;
 
