@@ -1,0 +1,44 @@
+# bash sbbdep(1) completion                                 -*- shell-script -*- 
+
+_sbbdep()
+{
+	local shortopts='-c -f -h -l -s -v'
+	local longopts='--file --cache --help --short --version --nosync --quiet --whoneeds --require --xdl --ldd --lookup --admdir --bdtree --ignore'
+	
+	local cur=${COMP_WORDS[COMP_CWORD]}
+    local prev=${COMP_WORDS[COMP_CWORD-1]}
+
+
+    if [[ "${prev}" == "--cache" ]] || [[ "${prev}" == "-c" ]] || [[ "${prev}" == "--admdir" ]]; then
+       
+       _filedir
+       
+    elif [[ "${prev}" == "-h" ]] || [[ "${prev}" == "--help" ]] ; then   
+       return 0
+    elif [[ "${prev}" == "-v" ]] || [[ "${prev}" == "--version" ]] ; then   
+       return 0 
+#    elif [[ "${prev}" == "--ignore" ]]  ; then
+       # maybe not, its hard to escape since ignore needs options
+       # and I would need to know when the options can be closed        
+#       return 0
+    else
+    
+        case "$cur" in
+            -h|--help|-v|--version)
+                ;;  
+                                                                                                                                
+            -*)
+               COMPREPLY=( $(compgen -W "$shortopts $longopts" -- $cur) )
+               ;;   
+            
+            *)
+                _filedir
+                ;;                  
+        esac
+    
+    fi
+    
+
+} &&
+complete -F _sbbdep sbbdep
+
