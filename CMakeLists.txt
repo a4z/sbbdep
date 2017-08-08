@@ -64,7 +64,8 @@ if(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
   )
  
   #SET(libsl3_LIBRARY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libsl3.a)  
-  SET(libsl3_LIBRARY sl3)  
+  SET(libsl3_LIBRARY sl3)
+    
 else(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
 #  find_library (libsl3_LIBRARY NAMES sl3 libsl3 libsl3.a)
 #  TOOD write a ticket to create a find sl3.cmake file
@@ -161,7 +162,7 @@ SET ( sbbdepcli_SRC
 
 ADD_EXECUTABLE( sbbdepcli ${sbbdepcli_SRC} )
 
-set(sbbdep_REQURIED_LIBS sbbdep ${libsl3_LIBRARY}  )
+set(sbbdep_REQURIED_LIBS sbbdep ${libsl3_LIBRARY} ${sl3_sqlite3LIBS})
 
 # disable until I have a real split
 # set(sbbdep_install_targets ${sbbdep_install_targets} sbbdep)
