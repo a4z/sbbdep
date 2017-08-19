@@ -61,6 +61,7 @@ namespace cli{
   void
   printWhoNeed(Cache& cache,
                const Pkg& pkg,
+               const StringVec& ignores,
                bool shortNames,
                bool xdl ) ;
 

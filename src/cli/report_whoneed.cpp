@@ -32,6 +32,7 @@ THE SOFTWARE.
 
 #include "sl3/dataset.hpp"
 
+#include <algorithm>
 
 namespace sbbdep {
 namespace cli{
@@ -119,11 +120,20 @@ AND p2.fullname  = ?
 
 
 void
-printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
+printWhoNeed (Cache& cache,
+              const Pkg& pkg,
+              const StringVec& ignores,
+              bool shortNames,
+              bool xdl)
 {
   // works for single files and installed package
 
   using namespace sl3;
+
+  auto ignore = [&ignores](const std::string& name)
+    {
+      return std::binary_search (ignores.cbegin (), ignores.cend (), name) ;
+    };
 
   Dataset ds; //{ "pkg", "filename" , "soname" , "fromfile"  }
 
@@ -151,6 +161,9 @@ printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
       utils::ReportTree reptree;
       for (const auto& row : ds)
         {
+          if (ignore(PkgName(row.at (0).getText ()).name()))
+            continue;
+
           reptree.add (
               { row.at (3).getText () + " (" + row.at (2).getText () + ")",
                   row.at (0).getText (), row.at (1).getText () });
@@ -162,20 +175,20 @@ printWhoNeed (Cache& cache, const Pkg& pkg, bool shortNames, bool xdl)
             {
               for(const auto& node: elem.node)
                 {
-                    { // scope log channel for new line
-                      LogMsg ()
-                      << std::string(level, ' ')
-                      << node.first;
-                    }
+                  { // scope for new line message formating
+                    LogMsg ()
+                    << std::string(level, ' ')
+                    << node.first;
+                  }
                   printChild(node.second, level+2);
                 }
             };
 
       for (const auto& elem : reptree.node)
         {
-            { // scope log channel for new line
-              LogMsg () << elem.first << " is used from:";
-            }
+          { // scope for new line message formating
+            LogMsg () << elem.first << " is used from:";
+          }
           printChild (elem.second, 2);
         }
 

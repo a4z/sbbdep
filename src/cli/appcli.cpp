@@ -236,6 +236,7 @@ AppCli::run(const AppArgs& args)
       try
         {
           cli::printWhoNeed (cache, pkg ,
+                             args.ingore () ,
                              args.shortNames (),
                              args.xdl ()) ;
         }
