@@ -71,6 +71,26 @@ PathName::dir () const
 }
 //------------------------------------------------------------------------------
 
+
+
+std::vector<std::string>
+PathName::splitt() const
+{
+  std::vector<std::string> retval ;
+
+  auto b = base() ;
+  auto d = dir() ;
+
+  if (b != d)
+    {
+      PathName p{d} ;
+      retval = p.splitt() ;
+    }
+
+  retval.emplace_back(b) ;
+  return retval ;
+}
+
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 }//ns

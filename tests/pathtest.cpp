@@ -124,6 +124,42 @@ void TestDirBase()
 }
 //------------------------------------------------------------------------------
 
+void splitt()
+{
+  {
+    PathName p ( "" ) ;
+    std::vector<std::string> expected{"."} ;
+    BOOST_CHECK (p.splitt() == expected) ;
+  }
+
+  {
+    PathName p ( "/" ) ;
+    std::vector<std::string> expected{ "/" } ;
+    BOOST_CHECK (p.splitt() == expected) ;
+  }
+
+  {
+    PathName p ( "/a" ) ;
+    std::vector<std::string> expected{ "/", "a" } ;
+    BOOST_CHECK (p.splitt() == expected) ;
+  }
+
+  {
+    PathName p ( "/a/b" ) ;
+    std::vector<std::string> expected{ "/", "a", "b" } ;
+    BOOST_CHECK (p.splitt() == expected) ;
+  }
+
+  {
+    PathName p ( "/a/b/c/" ) ;
+    std::vector<std::string> expected{ "/", "a", "b", "c" } ;
+    BOOST_CHECK (p.splitt() == expected) ;
+  }
+
+}
+
+
+
 void TestDiv()
 {
   
@@ -149,6 +185,7 @@ a4TestAdd(
     .addTest("TestDirBase", TestDirBase)
     .addTest("TestDiv", TestDiv)
     .addTest("TestFindInPath", TestFindInPath)
+    .addTest("split", splitt)
     );
 
 }

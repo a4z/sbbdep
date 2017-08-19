@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 
 #include <string>
-
+#include <vector>
 
 
 namespace sbbdep{
@@ -66,6 +66,9 @@ public:
   bool operator==( const std::string& other ) const 
   { return _url == other ; }
   
+
+  std::vector<std::string>
+  splitt() const;
 
 protected:
   // for encapsulation in Path,..
