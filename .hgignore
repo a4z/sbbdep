@@ -4,3 +4,8 @@ syntax: regexp
 syntax: regexp
 \.kdev4$
 CMakeLocalOpts.cmake
+.idea$
+cmake-build-*
+
+
+

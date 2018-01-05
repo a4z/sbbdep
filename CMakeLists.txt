@@ -221,6 +221,7 @@ if(EXISTS trials)
 endif(EXISTS trials)
 
 
-
+ADD_EXECUTABLE( ld_sim src/tools/ld_sim.cpp )
+TARGET_LINK_LIBRARIES( ld_sim ${sbbdep_REQURIED_LIBS} -ldl )
 
 

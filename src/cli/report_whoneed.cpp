@@ -63,7 +63,7 @@ getWhoNeedFileQuery()
     (
       d2.dirname IN 
        ( select distinct * from lddirs union select distinct * from ldlnkdirs ) 
-      AND 
+      OR
        ( 
         rrunpath.lddir IS  NULL OR rrunpath.lddir IN 
         ( select distinct * from lddirs union select distinct * from ldlnkdirs ) 
@@ -104,7 +104,7 @@ AND
   (
     d2.dirname in 
       (select distinct * from lddirs union select distinct * from ldlnkdirs ) 
-    AND 
+    OR
     (
       rrunpath.lddir IS  NULL OR 
       rrunpath.lddir IN 

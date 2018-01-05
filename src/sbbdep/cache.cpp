@@ -734,10 +734,10 @@ Cache::indexPkg(const Pkg& pkg)
              );
            }
 
-         for(const auto& rrunpaht : elf.getRRunPaths())
+         for(const auto& rrunpath : elf.getRRunPaths())
            {
              getCommand(sqlid::insert_rrunpath).execute(
-               sl3::parameters(dynlinked_id, rrunpaht , elf.getName().dir())
+               sl3::parameters(dynlinked_id, rrunpath , elf.getName().dir())
              );
            }
         }

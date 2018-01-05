@@ -181,7 +181,8 @@ ElfFile::load()
                 }
             }
 
-          if (_soName.empty ())
+          // TODO , double check this!
+          if (_type == Library and _soName.empty ())
             _soName = _name.base ();
 
           return;
