@@ -1,1 +1,31 @@
 ltilibhandling improvment for special case
+
+
+with the new views
+
+there are libs that are in subdirs
+eg  /usr/lib64/qt/lib/ whatever
+and have links in /usr/lib64
+
+they can be identified, via the new queries,
+what do they provide, who needs something,
+but not in usual dirs,
+are there links in
+mark it
+
+that's not too hard to do,
+but since I do not use Slackware that much....
+
+
+most of them are anyway via ldconfig available....
+just get the names, check which are symlinks, mark the links
+
+rpath, there could also be links,
+however
+for next version , show too much.. or estimates....
+
+
+until Slackware becomes again a usable distro
+
+PAM, multilib out of the box
+

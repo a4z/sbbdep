@@ -77,6 +77,7 @@ public:
   using StringVec = std::vector<std::string> ;
 
 
+  static std::string defaultDb;
 
 
   enum class sqlid {
@@ -107,6 +108,9 @@ public:
   bool
   isNewDb();
 
+  bool
+  compatibleVersion () ;
+
   const std::string&
   getName(){ return _name ; } //;
 
@@ -121,8 +125,6 @@ private:
   void
   createDbSchema() ;
 
-  void
-  checkDbSchemaVersion() ;
 
   SyncData
   createNewSyncData();

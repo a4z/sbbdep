@@ -80,6 +80,24 @@ namespace sbbdep {
 
 
 
+std::string
+Cache::defaultDb = []()
+{
+  const std::string default_dir =
+    std::getenv("HOME") + std::string{"/.cache"};
+
+  const char* xdg_dir = std::getenv("XDG_CACHE_HOME");
+
+  const std::string cache_dir =
+    (xdg_dir == nullptr || xdg_dir[0] == '\0') ?
+    default_dir :
+    xdg_dir ;
+
+  return cache_dir + std::string{"/sbbdep.db"};
+}();
+
+
+
 using sl3::Dataset;
 using sl3::Command;
 using sl3::DbValue;
@@ -116,131 +134,45 @@ Cache::isNewDb()
 //------------------------------------------------------------------------------
 
 
-void
+bool
+Cache::compatibleVersion ()
+{
+  // helpers to get a useful version number that can be compared
+  auto calcMajorMinor = [](int ma, int mi ) noexcept -> int
+  {
+    return (100000 + ma * 10000) + (1000 + mi * 100);
+  };
+
+  Dataset ds =  select("SELECT major, minor , patchlevel FROM version",
+                       {Type::Int, Type::Int, Type::Int});
+  SBBASSERT (ds.size () == 1);
+
+  const auto appMajorMinor = calcMajorMinor(MAJOR_VERSION, MINOR_VERSION);
+  const auto dbMajorMinor = calcMajorMinor(ds[0][0].getInt (),
+                                           ds[0][1].getInt ());
+
+  if( appMajorMinor == dbMajorMinor )
+    { // nothting to do
+      return true ;
+    }
+  else if( appMajorMinor < dbMajorMinor )
+    { // very strange
+      LogError() << "app version < db version, using an old sbbdep version?" ;
+    }
+
+  return false ;
+
+}
+
+
+
+  void
 Cache::createDbSchema()
 {
   auto transaction = beginTransaction();
   sql::createSchema(*this);
 
   transaction.commit();
-}
-//------------------------------------------------------------------------------
-
-
-/*
- * update db for the current version,
- * this code will change form time to time, old version will be dropped
- * for the future, think about, if there is an old cache if not simply
- * re-creating would be better, could be less and less complex code
- */
-void
-Cache::checkDbSchemaVersion()
-{
-
-  { // ensure there is a version table
-    // sooner or later this code will go away, no support for old db or so ...
-    const auto sql =
-        "select count(*) from sqlite_master where name='version';";
-    DbValue rc = this->selectValue(sql);
-    if(rc.getInt() == 0)
-      {
-        sql::addVersionTable(*this);
-      }
-  }
-
-  // helpers to get a useful version number that can be compared
-  auto calcMajorMinorVersion = [](int ma, int mi ) noexcept -> int
-    {
-      return (100000 + ma * 10000) + (1000 + mi * 100);
-    };
-  auto calcVersion = [](int ma, int mi, int pl ) noexcept -> int
-    {
-      return (100000 + ma * 10000) + (1000 + mi * 100) + pl;
-    };
-
-
-  auto getDbMajorMinorVersion = [calcMajorMinorVersion, this]() -> int
-    {
-      Dataset ds =
-      select ("SELECT major, minor FROM version", {Type::Int, Type::Int});
-      SBBASSERT (ds.size () == 1);
-      return calcMajorMinorVersion(ds[0][0].getInt(), ds[0][1].getInt());
-    };
-  auto getDbVersion = [calcVersion, this]() -> int
-    {
-      Dataset ds =  select("SELECT major, minor , patchlevel FROM version",
-                           {Type::Int, Type::Int, Type::Int});
-      SBBASSERT (ds.size () == 1);
-      return calcVersion(ds[0][0].getInt(),
-                         ds[0][1].getInt(),
-                         ds[0][2].getInt());
-    };
-
-  const auto app_version = calcVersion(MAJOR_VERSION,
-                                       MINOR_VERSION,
-                                       PATCH_VERSION);
-
-  const auto db_version = getDbVersion();
-
-  if( app_version == db_version )
-    { // nothting to do
-      return ;
-    }
-
-
-  if( db_version < app_version )
-    {
-      if( getDbMajorMinorVersion() ==  calcMajorMinorVersion(0, 1) )
-        {
-          LogError() << "existing cache db was build with an old version of "
-                        "sbbdep.\n"
-                        "please create a new cache by using the -c option "
-                        "or removing " << _name << ".\n"
-                        "Sorry for the inconvenience caused.\n\n" ;
-          throw ErrGeneric("old databaes version in use");
-        }
-
-      auto trans = beginTransaction();
-      if(db_version < calcVersion(0, 2, 1))
-        {
-          auto transaction = beginTransaction() ;
-          const char* sql =
-          "CREATE TABLE keyvalstore (key  NOT NULL,  value  NOT NULL); "
-          "create unique index  idx_keyvalstore_key on keyvalstore (key); "
-          "insert into keyvalstore (key, value) values ('ldsoconf', 0);" ;
-          execute(sql) ;
-          transaction.commit();
-        }
-
-
-      std::string sqcmd =
-          "UPDATE version set major = " + std::to_string(MAJOR_VERSION) +
-          ", minor = " + std::to_string(MINOR_VERSION) +
-          ", patchlevel = " + std::to_string(MINOR_VERSION) + ";" ;
-      execute(sqcmd);
-      trans.commit();
-   }
-
-
-  {
-    const std::string sql=
-      "SELECT COUNT(*) FROM keyvalstore WHERE key='ldsoconf';";
-
-    if(selectValue (sql).getInt () == 0)
-      {
-        execute("INSERT INTO keyvalstore (key, value) "
-                "VALUES ('ldsoconf', 0);");
-      }
-  }
-
-
-#ifdef DEBUG
-  const auto calcver = calcVersion(MAJOR_VERSION, MINOR_VERSION, MINOR_VERSION);
-  if( calcver != getDbVersion() )
-    throw ErrUnexpected("version update incorrect");
-#endif
-
-
 }
 //------------------------------------------------------------------------------
 
@@ -252,7 +184,6 @@ Cache::doSync()
   SyncData syncdata;
 
   auto initld = []() { getLDDirs(); } ;
-
 
   try
     {
@@ -269,7 +200,6 @@ Cache::doSync()
       else
         {
           LogInfo () << "sync cache " << getName () ;
-          checkDbSchemaVersion ();
           std::thread t (initld);
           syncdata = createUpdateSyncData ();
           waitfor (t);

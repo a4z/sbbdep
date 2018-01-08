@@ -24,15 +24,13 @@ THE SOFTWARE.
 
 #include "appargs.hpp"
 
-#include <cstdlib>
 #include <iostream>
 #include <iomanip>
-#include <vector>
-#include <string>
 #include <algorithm>
 #include <boost/tokenizer.hpp>
 
 #include <getopt.h>
+#include <sbbdep/cache.hpp>
 
 namespace sbbdep {
 
@@ -63,7 +61,7 @@ namespace sbbdep {
 
 AppArgs::AppArgs()
   : _help(0)
-  , _dbname(std::string(std::getenv("HOME") + std::string("/sbbdep.cache")))
+  , _dbname{Cache::defaultDb}
   , _query()
   , _outfile()
   , _short_names(0)

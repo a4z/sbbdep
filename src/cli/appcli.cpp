@@ -44,6 +44,8 @@
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/error.hpp>
 
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 namespace sbbdep {
@@ -63,12 +65,56 @@ AppCli::~AppCli()
 namespace
 {
 
+
+
   Cache
   openCache(const std::string& name)
   {
+
     try
       {
-        return Cache (name);
+        Path dbPath{name};
+
+        if (not dbPath.isValid () && name == Cache::defaultDb)
+          (void)mkdir(dbPath.dir ().c_str (), S_IRWXG);
+
+        { // just a scope to close if rm is needed
+          Cache c{name};
+          if (c.isNewDb ())
+            return c ;
+
+          if (c.compatibleVersion ())
+            {
+              return c ;
+            }
+          else
+            {
+              if (name == Cache::defaultDb)
+                {
+                  LogInfo () << "new major version, perform reset of cache" ;
+                  if (remove (name.c_str ()) != 0)
+                    {
+                      LogError () << "can not remove old cache: " << name
+                                  << "\nplease remove it manual and re-run "
+                                      "the application";
+                      throw ErrGeneric{"can not reset old cache"};
+                    };
+
+                }
+              else
+                { // need to ask the user to remove it
+                  LogError () << "App-version not compatible with given cache: "
+                              << name
+                              << "\nplease remove the file manual "
+                                  "or specify a different file name";
+
+                  throw ErrGeneric{"user needs to remove old cache"};
+                }
+            }
+          }
+
+        // here only in case of a total reset
+        return Cache{name};
       }
     catch (...)
       {

@@ -10,5 +10,6 @@ SELECT
   FROM pkgs
     INNER  JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
     INNER  JOIN required ON required.dynlinked_id = dynlinked.id
-    INNER  JOIN dynlinked d2 ON d2.soname = required.needed AND d2.pkg_id = dynlinked.pkg_id;
-
+    INNER  JOIN dynlinked d2 ON d2.soname = required.needed AND d2.pkg_id = dynlinked.pkg_id
+WHERE  d2.arch = dynlinked.arch
+;
