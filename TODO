@@ -1,31 +1,44 @@
-ltilibhandling improvment for special case
 
 
-with the new views
+one table with linker search path, and add the type for it
 
-there are libs that are in subdirs
-eg  /usr/lib64/qt/lib/ whatever
-and have links in /usr/lib64
+LD_LIBRARY_PATH can be added dynamically if wanted, and union selected,
+it needs just to be as a lddir_type available
 
-they can be identified, via the new queries,
-what do they provide, who needs something,
-but not in usual dirs,
-are there links in
-mark it
+the types shall come from here:
 
-that's not too hard to do,
-but since I do not use Slackware that much....
+The (colon-separated) paths in the DT_RPATH dynamic section attribute of the binary if present and the DT_RUNPATH attribute does not exist.
+The (colon-separated) paths in the environment variable LD_LIBRARY_PATH, unless the executable is a setuid/setgid binary, in which case it is ignored. LD_LIBRARY_PATH can be overridden by calling the dynamic linker with the option --library-path (e.g. /lib/ld-linux.so.2 --library-path $HOME/mylibs myprogram).
+The (colon-separated) paths in the DT_RUNPATH dynamic section attribute of the binary if present.
+Lookup based on the ldconfig cache file (often located at /etc/ld.so.cache) which contains a compiled list of candidate libraries previously found in the augmented library path (set by /etc/ld.so.conf). If, however, the binary was linked with the -z nodefaultlib linker option, libraries in the default library paths are skipped.
+In the trusted default path /lib, and then /usr/lib. If the binary was linked with the -z nodefaultlib linker option, this step is skipped.
 
 
-most of them are anyway via ldconfig available....
-just get the names, check which are symlinks, mark the links
+http://amir.rachum.com/blog/2016/09/17/shared-libraries/
+For security reasons, when running an executable with elevated privileges (such as setuid, setgid, special capabilities, etc.), the search path list is different than normal: LD_LIBRARY_PATH is ignored, as well as any path in rpath or runpath that contains $ORIGIN.
 
-rpath, there could also be links,
-however
-for next version , show too much.. or estimates....
+An important behavior to note here is that, for these kind of applications, ldd lies to our face:
+
+this is something I could utilize,
+https://accu.org/index.php/journals/1372
+and maybe make a talk, about unix linker
 
 
-until Slackware becomes again a usable distro
+this seems to be good
+https://www.lurklurk.org/linkers/linkers.html
 
-PAM, multilib out of the box
 
+indexing:
+it does not work without going throuhg the dirs,
+need links from there to other locations, these files are currently not in the whoneed
+and if I do a requires query without using the filesystem, just the db, this will also be lost
+
+
+maybe add some analytics, files in fs but not in db, this could be informative...
+
+
+did you know RTLD-AUDIT
+http://man7.org/linux/man-pages/man7/rtld-audit.7.html
+
+
+http://man7.org/linux/man-pages/man1/sprof.1.html

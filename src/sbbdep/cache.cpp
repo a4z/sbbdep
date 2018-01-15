@@ -214,6 +214,8 @@ Cache::doSync()
     }
 
 
+  // update ldds .....
+
 
   return syncdata ;
 

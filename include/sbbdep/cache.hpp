@@ -87,7 +87,7 @@ public:
     insert_rrunpath,
     insert_ldDir,
     insert_ldLnkDir,
-
+    insert_ldLinks,
     set_keyval ,  // insert or replace
     del_byfullname
 
@@ -95,6 +95,14 @@ public:
 
   };
 
+
+  enum LD_DIR_TYPE {
+    DT_RPATH = 0,
+    LD_LIBRARY_PATH = 1,
+    DT_RUNPATH = 2 ,
+    LD_SO_CACHE = 3,
+    TRUSTED_DEFAULT
+  };
 
   Cache(const std::string& dbname);
   ~Cache();

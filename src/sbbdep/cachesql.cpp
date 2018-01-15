@@ -83,6 +83,11 @@ CREATE TABLE keyvalstore (
     value  NOT NULL
 ); 
 
+CREATE TABLE ldlinks(
+    dynlinked_id INTEGER PRIMARY KEY NOT NULL,
+    dirname TEXT NOT NULL
+);
+
 CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs 
   FOR EACH ROW  BEGIN
   DELETE from dynlinked WHERE pkg_id = OLD.id;
@@ -91,6 +96,7 @@ CREATE TRIGGER on_before_delete_dynlinked BEFORE DELETE ON dynlinked
   FOR EACH ROW  BEGIN
   DELETE from required WHERE dynlinked_id = OLD.id;
   DELETE from rrunpath WHERE dynlinked_id = OLD.id;
+  DELETE from ldlinks WHERE dynlinked_id = OLD.id;
   END;
 CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);
 
@@ -102,31 +108,6 @@ CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL);
 CREATE TABLE version ( major INTEGER NOT NULL,
  minor INTEGER NOT NULL, patchlevel INTEGER NOT NULL);
 
-create view sbbdep_known_deplinks as
-select pkgs.fullname as pkg, dynlinked.filename as file , 
-required.needed as needed , d2.filename as fromfile , p2.fullname as frompkg
-from
-pkgs 
-inner join dynlinked on pkgs.id = dynlinked.pkg_id
-inner join required on dynlinked.id = required.dynlinked_id
-left join rrunpath on dynlinked.id = rrunpath.dynlinked_id 
-left join dynlinked d2 on required.needed = d2.soname 
-inner join pkgs p2 on p2.id = d2.pkg_id
-where  d2.arch = dynlinked.arch 
-AND 
-( 
-( rrunpath.lddir IS NOT NULL AND d2.dirname not in 
-    (  select distinct * from lddirs union select distinct * from ldlnkdirs )
-  and rrunpath.lddir = d2.dirname )
-OR 
-(
-d2.dirname in 
-  ( select distinct * from lddirs union select distinct * from ldlnkdirs ) 
-AND ( rrunpath.lddir IS  NULL OR rrunpath.lddir in 
-  ( select distinct * from lddirs union select distinct * from ldlnkdirs ) )
-)
-)
-;
 
 
 create index  idx_pkgs_fullname on pkgs(fullname); 
@@ -232,8 +213,13 @@ constexpr const char* insertKeyVal()
 }//-----------------------------------------------------------------------------
 
 
+  constexpr const char* insertLdLinks()
+  { // file name will be dirname + soname from dynlinks
+    return "INSERT INTO ldlinks dynlinked_id, dirname VALUES(?, ?)";
+  }
 
-constexpr const char* deletePkgByFullname()
+
+  constexpr const char* deletePkgByFullname()
 {
   return "DELETE from pkgs WHERE fullname=?" ;
 }//-----------------------------------------------------------------------------
@@ -328,6 +314,11 @@ auto makeCommand(sl3::Database& db, Cache::sqlid id)
 
     case Cache::sqlid::insert_ldLnkDir:
       return db.prepare(sql::insertLdLnkDir(), {Type::Text});
+      break;
+
+    case Cache::sqlid::insert_ldLinks:
+      return db.prepare(sql::insertLdLinks (), {Type::Int,
+                                                Type::Text});
       break;
 
     case Cache::sqlid::set_keyval:
