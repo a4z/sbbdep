@@ -1,4 +1,42 @@
 
+db layout 0.3.0
+
+packages 1 : n files 1 : n  findable links
+findable link in a ldsearchpath
+
+package:
+id
+name
+
+file:
+package.id
+filename, elfname, arch
+
+ldtype_id
+id
+type (rpath, trusted, LD_LIBRARY_PATH, ld.so,conf)
+
+ldpath:
+id
+ldtype_id
+dir
+
+findalbe
+id
+file.id
+ldpath.id
+
+
+a lib might have links in multiple dirs, 
+
+after adding everything to file
+get those that are not findable per default, 
+and add links ...
+check where they exist, first hit winns, 
+
+or , streight go through all ld dirs on the system and check the links
+
+
 
 one table with linker search path, and add the type for it
 

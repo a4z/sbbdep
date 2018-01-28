@@ -85,8 +85,8 @@ public:
     insert_dynlinked,
     insert_required,
     insert_rrunpath,
+    insert_ldDirType,
     insert_ldDir,
-    insert_ldLnkDir,
     insert_ldLinks,
     set_keyval ,  // insert or replace
     del_byfullname
@@ -101,7 +101,7 @@ public:
     LD_LIBRARY_PATH = 1,
     DT_RUNPATH = 2 ,
     LD_SO_CACHE = 3,
-    TRUSTED_DEFAULT
+    TRUSTED_DEFAULT = 4
   };
 
   Cache(const std::string& dbname);
