@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <vector>
 #include <sbbdep/path.hpp>
 
+
 namespace sbbdep {
 
 
@@ -66,7 +67,11 @@ public:
   
   const StringVec& getRRunPaths() const { return _rrunpaths ; }
   
-  bool isElf() const { return _type == Binary || _type == Library ; }
+  bool isBinary() const { return _type == Binary ; }
+
+  bool isLibrary() const { return _type == Library ; }
+
+  bool isElf() const { return isBinary () || isLibrary (); }
 
   bool hasRPath() const {return !_hasRunPath && !_rrunpaths.empty();}
 
@@ -96,6 +101,8 @@ std::string replaceORIGIN(const std::string& originstr,
                                  const std::string& fromfile);
 
 std::string replaceLIB(const std::string& str, ElfFile::Arch arch);
+
+
 
 
 }

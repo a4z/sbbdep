@@ -34,6 +34,8 @@ THE SOFTWARE.
 namespace sbbdep {
 
 class Pkg;
+class ElfFile ;
+
 
 
 struct SyncData
@@ -85,8 +87,8 @@ public:
     insert_dynlinked,
     insert_required,
     insert_rrunpath,
-    insert_ldDirType,
     insert_ldDir,
+    insert_ldLnkDir,
     insert_ldLinks,
     set_keyval ,  // insert or replace
     del_byfullname
@@ -101,7 +103,7 @@ public:
     LD_LIBRARY_PATH = 1,
     DT_RUNPATH = 2 ,
     LD_SO_CACHE = 3,
-    TRUSTED_DEFAULT = 4
+    TRUSTED_DEFAULT
   };
 
   Cache(const std::string& dbname);
@@ -126,6 +128,13 @@ public:
   sl3::Command&
   namedCommand(const std::string& name,
                const char* sql) ;
+
+
+
+  // put this here until there is a better location
+  std::string
+  findDirWithLink(const ElfFile& elf, const sl3::Dataset& ldirs) ;
+
 
 private:
 

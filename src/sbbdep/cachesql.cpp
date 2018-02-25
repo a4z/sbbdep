@@ -72,49 +72,37 @@ CREATE TABLE required (
     dynlinked_id INTEGER NOT NULL, 
     needed TEXT NOT NULL
 );      
-
-
-CREATE TABLE lddirtype (
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    type TEXT NOT NULL
-);
-
-CREATE TABLE lddir (
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    lddirtype.id INTEGER NOT NULL,
-    path TEXT NOT NULL
-);
-
-
 CREATE TABLE rrunpath(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     dynlinked_id INTEGER NOT NULL,
-    lddir_id INTEGER NOT NULL
+    ldpath TEXT NOT NULL,
+    lddir TEXT
 );
-
-
-CREATE TABLE keyvalstore ( 
-    key Text UNIQUE NOT NULL, 
+CREATE TABLE keyvalstore (
+    key Text UNIQUE NOT NULL,
     value  NOT NULL
-); 
-
-
+);
 
 CREATE TABLE ldlinks(
     dynlinked_id INTEGER PRIMARY KEY NOT NULL,
     dirname TEXT NOT NULL
 );
 
-CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs 
+CREATE TRIGGER on_before_delete_pkgs BEFORE DELETE ON pkgs
   FOR EACH ROW  BEGIN
   DELETE from dynlinked WHERE pkg_id = OLD.id;
   END;
-CREATE TRIGGER on_before_delete_dynlinked BEFORE DELETE ON dynlinked 
+CREATE TRIGGER on_before_delete_dynlinked BEFORE DELETE ON dynlinked
   FOR EACH ROW  BEGIN
   DELETE from required WHERE dynlinked_id = OLD.id;
   DELETE from rrunpath WHERE dynlinked_id = OLD.id;
   DELETE from ldlinks WHERE dynlinked_id = OLD.id;
   END;
+CREATE TABLE lddirs (dirname TEXT PRIMARY KEY NOT NULL);
+
+CREATE TABLE ldlnkdirs (dirname TEXT PRIMARY KEY NOT NULL);
+CREATE TABLE ldusrdirs (dirname TEXT PRIMARY KEY NOT NULL);
+
 
 
 CREATE TABLE version ( major INTEGER NOT NULL,

@@ -32,11 +32,11 @@ THE SOFTWARE.
 #include <sbbdep/path.hpp>
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/pkgname.hpp>
+#include <sbbdep/elffile.hpp>
 #include <sbbdep/utils/backgroundjob.hpp>
 #include <sbbdep/utils/concurrentpeek.hpp>
 
 #include "cachesql.hpp"
-
 
 #include <sl3/error.hpp>
 #include <sl3/columns.hpp>
@@ -625,6 +625,8 @@ Cache::indexPkg(const Pkg& pkg)
 
   SBBASSERT (pkg.isLoaded ()) ;
 
+  const auto dldirs = select ("SELECT DISTINCT dirname  as Prio FROM lddirs "
+                      "UNION SELECT DISTINCT dirname as Prio FROM ldlnkdirs;");
 
   try
     {
@@ -645,11 +647,19 @@ Cache::indexPkg(const Pkg& pkg)
 
       for (const ElfFile& elf : pkg.getElfFiles ())
         {
+              auto dir = elf.isLibrary ()?
+                         findDirWithLink(elf, dldirs) :
+                         elf.getName().dir()
+              ;
+
+          if (dir != elf.getName ().dir ())
+            LogInfo () << elf.getName ().dir () << " " << dir ;
+
           getCommand(sqlid::insert_dynlinked).execute( 
                 sl3::parameters(      
                    pkgid  ,
                    elf.getName().str()  ,
-                    elf.getName().dir()  ,
+                    dir  ,
                     elf.getName().base()  ,
                    (elf.soName().size()> 0 ?
                            DbValue(elf.soName()) :
@@ -732,6 +742,45 @@ Cache::namedCommand(const std::string& name,
   return f->second;
 
 }
+
+
+
+  // put this here until there is a better location
+  std::string
+  Cache::findDirWithLink(const ElfFile& elf, const sl3::Dataset& ldirs)
+  {
+
+    SBBASSERT (elf.getType () == ElfFile::Library);
+
+    // LogDebug () << "Check " << elf.getName () ;
+
+    const auto pn = elf.getName ().dir () ;
+
+    auto d = std::find_if (ldirs.begin (), ldirs.end (), [&pn](const auto& val) {
+      return val[0].getText() == pn;
+    }) ;
+
+    if (d == ldirs.end ())
+      {
+        for (const auto& dir : ldirs)
+          {
+            const std::string tocheck = dir[0].getText () + "/" + elf.soName ();
+
+            Path p{tocheck};
+
+            if (p.isValid () and p.isLink () and p.getRealPath () == elf.getName ())
+              {
+                //LogDebug () << "found " << p.dir ()  ;
+                return p.dir () ;
+              }
+          }
+      }
+
+    // LogDebug () << "no link, resolve " << pn ;
+    return pn;
+  }
+
+
 
 
 } // ns

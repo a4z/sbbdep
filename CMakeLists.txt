@@ -5,7 +5,7 @@ project(sbbdep C CXX)
 
 set(sbbdep_MAJOR_VERSION 0)
 set(sbbdep_MINOR_VERSION 3)
-set(sbbdep_PATCH_VERSION 7)
+set(sbbdep_PATCH_VERSION 0)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
@@ -59,7 +59,7 @@ if(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
   set(libsl3_BUILD_TESTS OFF)
   add_subdirectory(${PROJECT_SOURCE_DIR}/libsl3)
   
-  include_directories(SYSTEM 
+  include_directories(BEFORE
     ${PROJECT_SOURCE_DIR}/libsl3/include
   )
  

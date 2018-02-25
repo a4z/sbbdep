@@ -35,7 +35,7 @@ sbbdep will search for it in the package database and reports the package it bel
 .IP  "\fB-c, --cache=[\fIFILENAME\fB]\fR" 
 Cache file to use. The cache file must be read/writable.
 .br
-If this option is omitted \fI~/sbbdep.cache\fR is used.
+If this option is omitted \fI$XDG_CACHE_HOME/sbbdep.db\fR is used.
 
 .IP "\fB-f, --file=[\fIFILENAME\fB]\fR"
 Write output to file
@@ -123,7 +123,7 @@ Display this text.
 
 
 .SH FILES
-.I ~/.sbbdep.cache
+.I $XDG_CACHE_HOME/sbbdep.db
 .RS
 The cache sbbdep creates and uses.
 .br

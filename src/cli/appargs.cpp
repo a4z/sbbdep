@@ -111,7 +111,7 @@ usage: sbbdep [OPTION]... [QUERY]
 
   -c, --cache=[FILENAME] 
       Cache file to use. The cache file must be read/writable.
-      If this option is omitted $HOME/sbbdep.cache is used.  
+      If this option is omitted $XDG_CACHE_HOME/sbbdep.db is used.
                             
   -f, --file=[FILENAME]
       write output to file FILENAME
