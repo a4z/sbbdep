@@ -258,7 +258,8 @@ Ldconf::Ldconf ()
 
   {
     const auto lds = {"/bin", "/usr/bin", "/usr/local/bin",
-        "/sbin", "/usr/sbin", "/usr/local/sbin"};
+        "/sbin", "/usr/sbin", "/usr/local/sbin",
+        "/usr/games/" , "/usr/local/games/"};
 
     for (auto&& p : lds)
       {

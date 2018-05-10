@@ -53,7 +53,7 @@ public:
   using StringVec = std::vector<std::string> ;
   using ElfFiles = std::vector<ElfFile> ;
 
-  static Pkg create(const Path& p, PkgType type_hint = PkgType::Unknown);
+  static Pkg create(const Path& p, const PkgType type_hint = PkgType::Unknown);
 
 
   Pkg() = default;

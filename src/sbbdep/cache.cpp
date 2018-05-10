@@ -652,8 +652,8 @@ Cache::indexPkg(const Pkg& pkg)
                          elf.getName().dir()
               ;
 
-          if (dir != elf.getName ().dir ())
-            LogInfo () << elf.getName ().dir () << " " << dir ;
+//          if (dir != elf.getName ().dir ())
+//            LogDebug () << elf.getName ().dir () << " " << dir ;
 
           getCommand(sqlid::insert_dynlinked).execute( 
                 sl3::parameters(      
@@ -709,12 +709,12 @@ Cache::updateLdDirInfo()
   getCommand (sqlid::set_keyval).execute (
       sl3::parameters ("ldsoconf" , ldinfos.getLdSoConfTime ()));
 
-  for (auto&& d : ldinfos.getLdDirs ())
+  for (const auto& d : ldinfos.getLdDirs ())
     {
       getCommand (sqlid::insert_ldDir).execute (sl3::parameters (d));
     }
 
-  for (auto&& d : ldinfos.getLdLnkDirs ())
+  for (const auto& d : ldinfos.getLdLnkDirs ())
     {
       getCommand (sqlid::insert_ldLnkDir).execute (sl3::parameters (d));
     }

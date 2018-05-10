@@ -34,15 +34,12 @@ namespace sbbdep {
 
 
 Pkg
-Pkg::create(const Path& path, PkgType type_hint)
+Pkg::create(const Path& path, const PkgType type_hint)
 {
 
-  Path pkgpath = path.getRealPath ();
+  const Path pkgpath = path.getRealPath ();
 
   PkgType pkgtype = PkgType::Unknown;
-
-  pkgpath.makeRealPath ();
-
 
   if (type_hint == PkgType::Unknown)
     {
@@ -206,19 +203,19 @@ Pkg::doLoadInstalled()
 {
   //check if given path name is a bin/lib directory
   auto isToCheck = [this] (const PathName& pn) -> bool {
-      for (auto& s : getLDDirs ().getBinDirs ())
+      for (const auto& s : getLDDirs ().getBinDirs ())
         {
           if (not pn.str ().compare (0, s.size () ,s ))
             return true;
         }
-      for(auto& s : getLDDirs ().getLdDirs ())
+      for(const auto& s : getLDDirs ().getLdDirs ())
         {
           if (not pn.str ().compare(0, s.size () ,s ))
             return true;
         }
 
     // check if is in /opt, it may have some layout and we must reply yes
-    std::string opt("/opt/");
+    const std::string opt("/opt/");
     if ( not pn.str().compare( 0, opt.size() , opt ) )
       return true;
 
