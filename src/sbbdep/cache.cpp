@@ -85,10 +85,8 @@ Cache::defaultDb = []()
 {
   const std::string default_dir =
     std::getenv("HOME") + std::string{"/.cache"};
-
-  // $HOME/.local/share
-
-  const char* xdg_dir = std::getenv("XDG_DATA_HOME");
+  
+  const char* xdg_dir = std::getenv("XDG_CACHE_HOME");
 
   const std::string cache_dir =
     (xdg_dir == nullptr || xdg_dir[0] == '\0') ?
