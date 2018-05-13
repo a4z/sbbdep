@@ -85,7 +85,7 @@ Cache::defaultDb = []()
 {
   const std::string default_dir =
     std::getenv("HOME") + std::string{"/.cache"};
-  
+
   const char* xdg_dir = std::getenv("XDG_CACHE_HOME");
 
   const std::string cache_dir =
@@ -93,13 +93,17 @@ Cache::defaultDb = []()
     default_dir :
     xdg_dir ;
 
-  if (not Path{cache_dir}.isFolder ())
+  const Path cdir{cache_dir} ;
+
+  if (cdir.isFolder () or cdir.getRealPath ().isFolder ())
+    {
+      return cache_dir + std::string{"/sbbdep.db"};
+    }
+  else
     {
       throw ErrGeneric{"Data folder doesn't exist: " + cache_dir };
     }
-
-
-  return cache_dir + std::string{"/sbbdep.db"};
+  
 }();
 
 
