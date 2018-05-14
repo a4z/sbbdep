@@ -103,7 +103,6 @@ Cache::defaultDb = []()
     {
       throw ErrGeneric{"Data folder doesn't exist: " + cache_dir };
     }
-  
 }();
 
 
@@ -125,7 +124,7 @@ Cache::Cache(const std::string& dbname)
 
 Cache::~Cache()
 {
-  
+
 }
 //------------------------------------------------------------------------------
 
@@ -643,14 +642,14 @@ Cache::indexPkg(const Pkg& pkg)
       const auto pkgname = PkgName (pkg.getPath ().base ());
       const int64_t timestamp = pkg.getPath ().getLastModificationTime ();
 
-      getCommand(sqlid::insert_pkg).execute( 
+      getCommand(sqlid::insert_pkg).execute(
       sl3::parameters( pkgname.fullName()  ,
                       pkgname.name()  ,
                       pkgname.version()  ,
                       pkgname.arch()  ,
                       pkgname.build().Num()  ,
                       pkgname.build().Tag()  ,
-                      timestamp 
+                      timestamp
                       ));
 
       const auto pkgid = getLastInsertRowid() ;
@@ -665,8 +664,8 @@ Cache::indexPkg(const Pkg& pkg)
 //          if (dir != elf.getName ().dir ())
 //            LogDebug () << elf.getName ().dir () << " " << dir ;
 
-          getCommand(sqlid::insert_dynlinked).execute( 
-                sl3::parameters(      
+          getCommand(sqlid::insert_dynlinked).execute(
+                sl3::parameters(
                    pkgid  ,
                    elf.getName().str()  ,
                     dir  ,
@@ -674,7 +673,7 @@ Cache::indexPkg(const Pkg& pkg)
                    (elf.soName().size()> 0 ?
                            DbValue(elf.soName()) :
                            DbValue(sl3::Type::Null) ) ,
-                    elf.getArch() 
+                    elf.getArch()
           ));
 
          const auto dynlinked_id = getLastInsertRowid() ;
