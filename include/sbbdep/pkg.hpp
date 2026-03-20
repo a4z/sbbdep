@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,8 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEP_PKG_HPP_
 #define SBBDEP_PKG_HPP_
-
 
 #include <sbbdep/elffile.hpp>
 #include <sbbdep/path.hpp>
@@ -32,72 +30,80 @@ THE SOFTWARE.
 #include <string>
 #include <vector>
 
-
-namespace sbbdep {
-
-enum class PkgType{
-  Unknown = 0 ,
-  Installed , // var/adm/packages/.. file
-  BinLib , // on file
-  DestDir ,  // make install DESTDIR=$tmp/usr ... as used in build scripts to create dep files
-  Archive // for future
-};
-
-
-class Pkg
+namespace sbbdep
 {
 
-  
-public:  
+  enum class PkgType
+  {
+    Unknown = 0,
+    Installed, // var/adm/packages/.. file
+    BinLib,    // on file
+    DestDir,   // make install DESTDIR=$tmp/usr ... as used in build scripts to
+               // create dep files
+    Archive    // for future
+  };
 
-  using StringVec = std::vector<std::string> ;
-  using ElfFiles = std::vector<ElfFile> ;
+  class Pkg
+  {
+  public:
+    using StringVec = std::vector<std::string>;
+    using ElfFiles  = std::vector<ElfFile>;
 
-  static Pkg create(const Path& p, const PkgType type_hint = PkgType::Unknown);
+    static Pkg create (const Path&   p,
+                       const PkgType type_hint = PkgType::Unknown);
 
+    Pkg () = default;
 
-  Pkg() = default;
+    Pkg (const Pkg&)            = default;
+    Pkg& operator= (const Pkg&) = default;
+    Pkg (Pkg&&)                 = default;
+    Pkg& operator= (Pkg&&)      = default;
+    ~Pkg ()                     = default;
 
-  Pkg( const Pkg&  ) = default;
-  Pkg& operator=( const Pkg&  )= default;
-  Pkg( Pkg&&  ) = default;
-  Pkg& operator=( Pkg&& )= default;
-  ~Pkg() = default;
-  
-  const Path& getPath() const { return  _path; }
-  
-  // if ever required to have a pkg just with file info, split file and dynlink loading
-  bool Load() ;
-  bool isLoaded() const { return _loaded ; }
+    const Path&
+    getPath () const
+    {
+      return _path;
+    }
 
-  const ElfFiles& getElfFiles() const { return _elfFiles; }
-  
-  PkgType getType() const {return _type; }
-  
-  ElfFile::Arch getArch() const;
+    // if ever required to have a pkg just with file info, split file and
+    // dynlink loading
+    bool Load ();
+    bool
+    isLoaded () const
+    {
+      return _loaded;
+    }
 
-protected:
+    const ElfFiles&
+    getElfFiles () const
+    {
+      return _elfFiles;
+    }
 
-  //will see if the factory method will go into this class...
-  Pkg( Path pname , PkgType type);
+    PkgType
+    getType () const
+    {
+      return _type;
+    }
 
-  
-  //needs to be special for each pkg type
-  bool doLoadOneBinLib() ;
-  bool doLoadDestDir() ;
-  bool doLoadInstalled() ;
+    ElfFile::Arch getArch () const;
 
-  Path _path {};
-  PkgType _type {PkgType::Unknown};
-  bool _loaded  {false};
+  protected:
+    // will see if the factory method will go into this class...
+    Pkg (Path pname, PkgType type);
 
-  
-  ElfFiles _elfFiles;
-  
-  
-};
+    // needs to be special for each pkg type
+    bool doLoadOneBinLib ();
+    bool doLoadDestDir ();
+    bool doLoadInstalled ();
 
+    Path    _path{};
+    PkgType _type{PkgType::Unknown};
+    bool    _loaded{false};
 
+    ElfFiles _elfFiles;
+  };
 
 }
 

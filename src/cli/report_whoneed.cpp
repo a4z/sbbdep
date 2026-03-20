@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,11 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #include "report.hpp"
 
 #include "sbbdep/cache.hpp"
-#include "sbbdep/pkg.hpp"
 #include "sbbdep/elffile.hpp"
+#include "sbbdep/pkg.hpp"
 
 #include "sbbdep/log.hpp"
 
@@ -34,16 +33,17 @@ THE SOFTWARE.
 
 #include <algorithm>
 
-namespace sbbdep {
-namespace cli{
-
-
-//------------------------------------------------------------------------------
-constexpr const char*
-getWhoNeedFileQuery()
+namespace sbbdep
 {
-  return
-  R"~(
+  namespace cli
+  {
+
+    //------------------------------------------------------------------------------
+    constexpr const char*
+    getWhoNeedFileQuery ()
+    {
+      return
+          R"~(
   select pkgs.fullname as pkg, 
          dynlinked.filename as filename , 
          required.needed as soname , 
@@ -73,14 +73,13 @@ getWhoNeedFileQuery()
   AND d2.filename = ? 
   ;
   )~";
-}
-//------------------------------------------------------------------------------
+    }
+    //------------------------------------------------------------------------------
 
-constexpr const char*
-getWhoNeedPkgQuery()
-{
-
-  return R"~(
+    constexpr const char*
+    getWhoNeedPkgQuery ()
+    {
+      return R"~(
 select pkgs.fullname as pkg, 
        dynlinked.filename as filename , 
        required.needed as soname , 
@@ -115,104 +114,97 @@ AND
 AND p2.fullname  = ? 
 ;
 )~";
-}
-//------------------------------------------------------------------------------
-
-
-void
-printWhoNeed (Cache& cache,
-              const Pkg& pkg,
-              const StringVec& ignores,
-              bool shortNames,
-              bool xdl)
-{
-  // works for single files and installed package
-
-  using namespace sl3;
-
-  auto ignore = [&ignores](const std::string& name)
-    {
-      return std::binary_search (ignores.cbegin (), ignores.cend (), name) ;
-    };
-
-  Dataset ds; //{ "pkg", "filename" , "soname" , "fromfile"  }
-
-  if (pkg.getType () == PkgType::BinLib)
-    {
-      auto& cmd = cache.namedCommand ("WhoNeedFileQuery",
-                                      getWhoNeedFileQuery ());
-      const auto args = sl3::parameters (pkg.getElfFiles () [0].getName ());
-      ds = cmd.select (args);
     }
-  else if (pkg.getType () == PkgType::Installed)
-    {
-      auto& cmd = cache.namedCommand ("WhoNeedPkgQuery", getWhoNeedPkgQuery ());
-      const auto args = sl3::parameters (pkg.getPath ().base ());
-      ds = cmd.select (args);
-    }
-  else
-    {
-      LogInfo () << "whoneeds option for this type of query not supported";
-      return;
-    }
+    //------------------------------------------------------------------------------
 
-  if (xdl)
+    void
+    printWhoNeed (Cache&           cache,
+                  const Pkg&       pkg,
+                  const StringVec& ignores,
+                  bool             shortNames,
+                  bool             xdl)
     {
-      utils::ReportTree reptree;
-      for (const auto& row : ds)
+      // works for single files and installed package
+
+      using namespace sl3;
+
+      auto ignore = [&ignores] (const std::string& name)
         {
-          if (ignore(PkgName(row.at (0).getText ()).name()))
-            continue;
+          return std::binary_search (ignores.cbegin (), ignores.cend (), name);
+        };
 
-          reptree.add (
-              { row.at (3).getText () + " (" + row.at (2).getText () + ")",
-                  row.at (0).getText (), row.at (1).getText () });
+      Dataset ds; //{ "pkg", "filename" , "soname" , "fromfile"  }
+
+      if (pkg.getType () == PkgType::BinLib)
+        {
+          auto&      cmd  = cache.namedCommand ("WhoNeedFileQuery",
+                                                getWhoNeedFileQuery ());
+          const auto args = sl3::parameters (pkg.getElfFiles ()[0].getName ());
+          ds              = cmd.select (args);
+        }
+      else if (pkg.getType () == PkgType::Installed)
+        {
+          auto& cmd
+              = cache.namedCommand ("WhoNeedPkgQuery", getWhoNeedPkgQuery ());
+          const auto args = sl3::parameters (pkg.getPath ().base ());
+          ds              = cmd.select (args);
+        }
+      else
+        {
+          LogInfo () << "whoneeds option for this type of query not supported";
+          return;
         }
 
-      std::function<void
-      (const utils::ReportElement&, size_t)> printChild =
-          [&printChild](const utils::ReportElement& elem , size_t level )
+      if (xdl)
+        {
+          utils::ReportTree reptree;
+          for (const auto& row : ds)
             {
-              for(const auto& node: elem.node)
+              if (ignore (PkgName (row.at (0).getText ()).name ()))
+                continue;
+
+              reptree.add (
+                  {row.at (3).getText () + " (" + row.at (2).getText () + ")",
+                   row.at (0).getText (),
+                   row.at (1).getText ()});
+            }
+
+          std::function<void (const utils::ReportElement&, size_t)> printChild
+              = [&printChild] (const utils::ReportElement& elem, size_t level)
+            {
+              for (const auto& node : elem.node)
                 {
                   { // scope for new line message formating
-                    LogMsg ()
-                    << std::string(level, ' ')
-                    << node.first;
+                    LogMsg () << std::string (level, ' ') << node.first;
                   }
-                  printChild(node.second, level+2);
+                  printChild (node.second, level + 2);
                 }
             };
 
-      for (const auto& elem : reptree.node)
-        {
-          { // scope for new line message formating
-            LogMsg () << elem.first << " is used from:";
-          }
-          printChild (elem.second, 2);
+          for (const auto& elem : reptree.node)
+            {
+              { // scope for new line message formating
+                LogMsg () << elem.first << " is used from:";
+              }
+              printChild (elem.second, 2);
+            }
         }
-
-    }
-  else
-    {
-      utils::StringSet pkgnames;
-      for (auto& row : ds)
+      else
         {
-          pkgnames.insert (
-              shortNames ?
-                  PkgName (row.at (0).getText ()).name () :
-                  row.at (0).getText ());
-        }
+          utils::StringSet pkgnames;
+          for (auto& row : ds)
+            {
+              pkgnames.insert (shortNames
+                                   ? PkgName (row.at (0).getText ()).name ()
+                                   : row.at (0).getText ());
+            }
 
-      LogMsg ()
-          << utils::joinToString (pkgnames, shortNames ? ", " : "\n")
-          << std::endl;
+          LogMsg () << utils::joinToString (pkgnames, shortNames ? ", " : "\n")
+                    << std::endl;
+        }
     }
 
-
-
-}
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-}} // ns
+    //------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
+  }
+} // ns

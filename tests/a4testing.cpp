@@ -126,7 +126,7 @@ SuiteBase::createSuite() -> boostTestSuite*
        _suite = new boost::unit_test::test_suite(_name);
 #endif
 
-       AddCaseCall acc = [=](const std::string name, 
+       AddCaseCall acc = [this](const std::string name,
                             TestFunction tc, 
                             unsigned expected_failures, 
                             unsigned timeout){
@@ -138,7 +138,7 @@ SuiteBase::createSuite() -> boostTestSuite*
 #endif
        };
       
-       AddSubSuiteCall ass = [=]( boostTestSuite* bts, unsigned timeout)
+       AddSubSuiteCall ass = [this]( boostTestSuite* bts, unsigned timeout)
        {
          _suite->add(bts, timeout);
        };
@@ -403,7 +403,6 @@ main ( int argc, char* argv[] )
 
   return result;
 }
-
 
 
 

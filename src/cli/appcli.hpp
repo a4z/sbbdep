@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,31 +21,24 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEP_APPCLI_HPP_
 #define SBBDEP_APPCLI_HPP_
 
-
-
-namespace sbbdep {
-
-class AppArgs;
-
-class AppCli
+namespace sbbdep
 {
-  
-  
-public:
-  
-  AppCli();
-  ~AppCli();
-  
-  int run( const AppArgs& );
-  
-  
-private:
-  
-};
+
+  class AppArgs;
+
+  class AppCli
+  {
+  public:
+    AppCli ();
+    ~AppCli ();
+
+    int run (const AppArgs&);
+
+  private:
+  };
 
 }
 

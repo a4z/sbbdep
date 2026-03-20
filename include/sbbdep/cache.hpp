@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,174 +21,137 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
-
 #ifndef SBBDEP_CACHE_HPP_
 #define SBBDEP_CACHE_HPP_
 
 #include <sl3/database.hpp>
 
-#include <sbbdep/pkgname.hpp>
 #include <sbbdep/error.hpp>
+#include <sbbdep/pkgname.hpp>
 
-namespace sbbdep {
-
-class Pkg;
-class ElfFile ;
-
-
-
-struct SyncData
+namespace sbbdep
 {
-  using UpdateInfo = std::pair<PkgName, PkgName> ;
-  using StringVec = std::vector<std::string> ;
-  StringVec removed;
-  StringVec installed;
-  StringVec reinstalled;
-  std::vector<UpdateInfo> updated;
-  bool wasNewCache;
 
-  StringVec problemsOld;
-  StringVec problemsNew;
+  class Pkg;
+  class ElfFile;
 
-  bool empty() const
+  struct SyncData
   {
-    if(updated.empty() and installed.empty() and
-        removed.empty() and reinstalled.empty())
-      {
-        return true;
-      }
+    using UpdateInfo = std::pair<PkgName, PkgName>;
+    using StringVec  = std::vector<std::string>;
+    StringVec               removed;
+    StringVec               installed;
+    StringVec               reinstalled;
+    std::vector<UpdateInfo> updated;
+    bool                    wasNewCache;
 
-    return false ;
-  }
+    StringVec problemsOld;
+    StringVec problemsNew;
 
+    bool
+    empty () const
+    {
+      if (updated.empty () and installed.empty () and removed.empty ()
+          and reinstalled.empty ())
+        {
+          return true;
+        }
 
-  static StringVec pkgNameDiff(const StringVec& a, const StringVec& b) ;
+      return false;
+    }
 
-};
-
-
-
-
-
-class Cache : public sl3::Database
-{
-
-public:
-
-  using StringVec = std::vector<std::string> ;
-
-
-  static std::string defaultDb;
-
-
-  enum class sqlid {
-    insert_pkg,
-    insert_dynlinked,
-    insert_required,
-    insert_rrunpath,
-    insert_ldDir,
-    insert_ldLnkDir,
-    insert_ldLinks,
-    set_keyval ,  // insert or replace
-    del_byfullname
-
-    // report stuff
-
+    static StringVec pkgNameDiff (const StringVec& a, const StringVec& b);
   };
 
+  class Cache : public sl3::Database
+  {
+  public:
+    using StringVec = std::vector<std::string>;
 
-  enum LD_DIR_TYPE {
-    DT_RPATH = 0,
-    LD_LIBRARY_PATH = 1,
-    DT_RUNPATH = 2 ,
-    LD_SO_CACHE = 3,
-    TRUSTED_DEFAULT
+    static std::string defaultDb;
+
+    enum class sqlid
+    {
+      insert_pkg,
+      insert_dynlinked,
+      insert_required,
+      insert_rrunpath,
+      insert_ldDir,
+      insert_ldLnkDir,
+      insert_ldLinks,
+      set_keyval, // insert or replace
+      del_byfullname
+
+      // report stuff
+
+    };
+
+    enum LD_DIR_TYPE
+    {
+      DT_RPATH        = 0,
+      LD_LIBRARY_PATH = 1,
+      DT_RUNPATH      = 2,
+      LD_SO_CACHE     = 3,
+      TRUSTED_DEFAULT
+    };
+
+    Cache (const std::string& dbname);
+    ~Cache ();
+
+    Cache (Cache&&) = default;
+
+    SyncData doSync ();
+
+    bool isNewDb ();
+
+    bool compatibleVersion ();
+
+    const std::string&
+    getName ()
+    {
+      return _name;
+    } //;
+
+    // will create the command if it does not exist
+    sl3::Command& namedCommand (const std::string& name, const char* sql);
+
+    // put this here until there is a better location
+    std::string findDirWithLink (const ElfFile&      elf,
+                                 const sl3::Dataset& ldirs);
+
+  private:
+    void createDbSchema ();
+
+    SyncData createNewSyncData ();
+
+    SyncData createUpdateSyncData ();
+
+    // for new cache, create db data
+    void createIndex (const SyncData& data);
+
+    // for existing cache, update db data
+    void updateIndex (const SyncData& data);
+
+    // get stored command, if it does not exist, its created
+    sl3::Command& getCommand (sqlid id);
+
+    // stores package in the db
+    void indexPkg (const Pkg& pkg);
+
+    void updateLdDirInfo (); // do not forget to implements this here
+                             // persistLdSoTime
+
+    // stored sql commands
+    using commandMap = std::map<sqlid, sl3::Command>;
+    commandMap _commands;
+
+    // give user(report system) a way to store a command
+    using nameCommandMap = std::map<std::string, sl3::Command>;
+    nameCommandMap _nameCommands;
+
+    // when I update sqlite I can remove this and use function
+    const std::string _name;
   };
-
-  Cache(const std::string& dbname);
-  ~Cache();
-
-  Cache(Cache&&)   = default ;
-
-
-  SyncData
-  doSync();
-
-  bool
-  isNewDb();
-
-  bool
-  compatibleVersion () ;
-
-  const std::string&
-  getName(){ return _name ; } //;
-
-  // will create the command if it does not exist
-  sl3::Command&
-  namedCommand(const std::string& name,
-               const char* sql) ;
-
-
-
-  // put this here until there is a better location
-  std::string
-  findDirWithLink(const ElfFile& elf, const sl3::Dataset& ldirs) ;
-
-
-private:
-
-
-  void
-  createDbSchema() ;
-
-
-  SyncData
-  createNewSyncData();
-
-  SyncData
-  createUpdateSyncData();
-
-  // for new cache, create db data
-  void
-  createIndex(const SyncData& data);
-
-  // for existing cache, update db data
-  void
-  updateIndex(const SyncData& data);
-
-
-
-  // get stored command, if it does not exist, its created
-  sl3::Command&
-  getCommand(sqlid id) ;
-
-  // stores package in the db
-  void
-  indexPkg(const Pkg& pkg);
-
-  void
-  updateLdDirInfo();  // do not forget to implements this here persistLdSoTime
-
-
-  // stored sql commands
-  using commandMap = std::map<sqlid,sl3::Command> ;
-  commandMap _commands;
-
-  //give user(report system) a way to store a command
-  using nameCommandMap = std::map<std::string,sl3::Command> ;
-  nameCommandMap _nameCommands;
-
-// when I update sqlite I can remove this and use function
-  const std::string _name;
-
-
-
-  
-
-};
-
-
 
 } // ns
 

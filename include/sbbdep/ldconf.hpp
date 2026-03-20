@@ -21,60 +21,65 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEP_LDDIRS_HPP_
 #define SBBDEP_LDDIRS_HPP_
 
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 namespace sbbdep
 {
 
-class PathName;
+  class PathName;
 
-class Ldconf
-{
-  using StringVec = std::vector<std::string> ;
+  class Ldconf
+  {
+    using StringVec = std::vector<std::string>;
 
+    friend const Ldconf& getLDDirs ();
 
-  friend const Ldconf& getLDDirs() ;
+    Ldconf ();
 
+  public:
+    ~Ldconf () = default;
 
-  Ldconf();
-public:
+    int64_t
+    getLdSoConfTime () const
+    {
+      return _ldSoConfTime;
+    }
+    const StringVec&
+    getLdDirs () const
+    {
+      return _lddirs;
+    }
+    const StringVec&
+    getLdLnkDirs () const
+    {
+      return _ldlnkdirs;
+    }
+    const StringVec&
+    getBinDirs () const
+    {
+      return _binDirs;
+    }
 
-  ~Ldconf() = default ;
-  
-  int64_t getLdSoConfTime() const { return _ldSoConfTime;}
-  const StringVec& getLdDirs() const  { return _lddirs;}
-  const StringVec& getLdLnkDirs() const {  return _ldlnkdirs;}
-  const StringVec& getBinDirs() const {  return _binDirs;}
+    using CacheType = std::multimap<std::string, std::string>;
+    static CacheType cache ();
 
-  using CacheType =std::multimap<std::string, std::string> ;
-  static CacheType cache() ;
+    using LddMap = std::map<std::string, std::string>;
+    static LddMap lddMap (const PathName&);
 
-  using LddMap = std::map<std::string, std::string> ;
-  static LddMap lddMap(const PathName&) ;
+  private:
+    int64_t   _ldSoConfTime{0};
+    StringVec _lddirs;
+    StringVec _ldlnkdirs;
+    StringVec _binDirs;
+  };
 
-private:
-
-  int64_t _ldSoConfTime {0};
-  StringVec _lddirs;
-  StringVec _ldlnkdirs;
-  StringVec _binDirs ;
-};
-
-
-const Ldconf& getLDDirs() ;
-
-
+  const Ldconf& getLDDirs ();
 
 }
 
-
 #endif /* LDDIRS_HPP_ */
-
-
-

@@ -1,29 +1,28 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 4.0)
 
 project(sbbdep C CXX) 
 
 
-set(sbbdep_MAJOR_VERSION 0)
-set(sbbdep_MINOR_VERSION 3)
-set(sbbdep_PATCH_VERSION 2)
+set(sbbdep_MAJOR_VERSION 1)
+set(sbbdep_MINOR_VERSION 0)
+set(sbbdep_PATCH_VERSION 0)
 
 set(sbbdep_VERSION ${sbbdep_MAJOR_VERSION}.${sbbdep_MINOR_VERSION}.${sbbdep_PATCH_VERSION})
 
 set(sbbdep_CONFIG_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/include/sbbdep/config.hpp")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config.in" "${sbbdep_CONFIG_HEADER}")
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# since gcc linux only, do it like this
+add_compile_options(-Wall -Wextra -Wpedantic)
 
 # Include necessary submodules
 set(CMAKE_MODULE_PATH
   "${sbbdep_SOURCE_DIR}/CMake"
 )
 
-
-
-
-include( macros )
-include( setup_compiler )
-include( setup_buildtype )
 
 
 #optional enable personal test/trial dir
@@ -37,9 +36,6 @@ if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
-# redundant in my files 2
-
-include( setup_boost )
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
   #in Release only add testing if explicite asked to do so
@@ -50,13 +46,14 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Release")
   
 
 # needs to be done before testing is included  
-#TODO , sqlite & dl only needed  if sl3 was build with that requirement ...
-# TODO check if there is a installed libsl3, the internal one should be taken
+set(sl3_USE_INTERNAL_SQLITE3 OFF)
+set(sl3_USE_COMMON_COMPILER_WARNINGS OFF)
+set(libsl3_BUILD_TESTS OFF)
+
 if(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
   
   MESSAGE ("setup internal libsl3")
   
-  set(libsl3_BUILD_TESTS OFF)
   add_subdirectory(${PROJECT_SOURCE_DIR}/libsl3)
   
   include_directories(BEFORE
@@ -67,14 +64,24 @@ if(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
   SET(libsl3_LIBRARY sl3)
     
 else(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
-#  find_library (libsl3_LIBRARY NAMES sl3 libsl3 libsl3.a)
-#  TOOD write a ticket to create a find sl3.cmake file
-   SET(libsl3_LIBRARY sl3)  
+  include(FetchContent)
+
+  FetchContent_Declare(
+    libsl3
+    GIT_REPOSITORY https://github.com/a4z/libsl3.git
+    GIT_TAG "v1.2.51003"
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(libsl3)
+
+  include_directories(BEFORE
+    ${libsl3_SOURCE_DIR}/include
+  )
+
+  SET(libsl3_LIBRARY sl3)
+
 endif(EXISTS ${PROJECT_SOURCE_DIR}/libsl3)
   
-
-include( setup_testing )    
-
 
 include_directories( 
 ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -190,7 +197,7 @@ endif(NOT CMAKE_MAN_DIR)
 include(GNUInstallDirs)
 
 set(sbbdep_DOC_FILES 
-  README.txt README_db.txt AUTHORS COPYING
+  README.md README_db.txt AUTHORS COPYING
 )
 
 set(sbbdep_MAN_PAGE "${CMAKE_BINARY_DIR}/share/man/man1/sbbdep.1")
@@ -201,15 +208,19 @@ set(sbbdep_COMPLETION "${CMAKE_CURRENT_SOURCE_DIR}/sbbdep-completition")
 #only add install target if this is the top level project
 if( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
   #    INSTALL(FILES ${sbbdep_HDR} DESTINATION include/sbbdep)
-    INSTALL(TARGETS ${sbbdep_install_targets} 
+    INSTALL(TARGETS ${sbbdep_install_targets}
       RUNTIME DESTINATION bin
   #    LIBRARY DESTINATION lib${LIB_SUFFIX}
   #    ARCHIVE DESTINATION lib${LIB_SUFFIX}
+      COMPONENT sbbdep
     )
-  INSTALL(FILES ${sbbdep_DOC_FILES} DESTINATION  ${CMAKE_DOC_DIR})
-  INSTALL(FILES ${sbbdep_MAN_PAGE} DESTINATION  ${CMAKE_MAN_DIR}/man1)
+  INSTALL(FILES ${sbbdep_DOC_FILES} DESTINATION  ${CMAKE_DOC_DIR}        COMPONENT sbbdep)
+  INSTALL(FILES ${sbbdep_MAN_PAGE}  DESTINATION  ${CMAKE_MAN_DIR}/man1   COMPONENT sbbdep)
 
-  INSTALL(FILES ${sbbdep_COMPLETION} DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions)
+  INSTALL(FILES ${sbbdep_COMPLETION}
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
+    RENAME sbbdep
+    COMPONENT sbbdep)
 
 endif( ${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
@@ -221,7 +232,14 @@ if(EXISTS trials)
 endif(EXISTS trials)
 
 
+include(CTest)
+
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
+
+
+
 ADD_EXECUTABLE( ld_sim src/tools/ld_sim.cpp )
 TARGET_LINK_LIBRARIES( ld_sim ${sbbdep_REQURIED_LIBS} -ldl )
-
 

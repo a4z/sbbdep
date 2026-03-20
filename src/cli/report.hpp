@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,149 +21,132 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEP_CLI_REPORT_HPP_
 #define SBBDEP_CLI_REPORT_HPP_
 
 #include <sl3/dataset.hpp>
 
-#include<functional>
-#include<map>
-#include<set>
-#include<string>
-#include<vector>
+#include <functional>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
-namespace sbbdep{
+namespace sbbdep
+{
 
   class Cache;
-  class Path ;
-  class PathName ;
+  class Path;
+  class PathName;
   class Pkg;
   struct SyncData;
 
-namespace cli{
-
-  using StringVec = std::vector<std::string> ;
-
-  void
-  printSyncReport(Cache& cache,
-                  const SyncData& syncdata);
-
-  void
-  printRequired(Cache& cache,
-                const Pkg& pkg,
-                const StringVec& ignores,
-                bool shortNames,
-                bool xdl ,
-                bool ldd) ;
-
-
-  void
-  printWhoNeed(Cache& cache,
-               const Pkg& pkg,
-               const StringVec& ignores,
-               bool shortNames,
-               bool xdl ) ;
-
-
-  void
-  bdTree (Cache& cache, const Pkg& pkg, bool shortNames) ;
-
-
-
-  bool
-  fileInPackages (const sbbdep::Path& filepath);
-
-  void
-  lookupInPackages (const std::string& serach);
-
-
-
-  namespace utils
+  namespace cli
   {
-    using StringVec = std::vector<std::string> ;
-    using StringSet = std::set<std::string> ;
 
+    using StringVec = std::vector<std::string>;
 
-    //--------------------------------------------------------------------------
+    void printSyncReport (Cache& cache, const SyncData& syncdata);
 
-    using convert_function = std::function<std::string(const std::string&)> ;
+    void printRequired (Cache&           cache,
+                        const Pkg&       pkg,
+                        const StringVec& ignores,
+                        bool             shortNames,
+                        bool             xdl,
+                        bool             ldd);
 
+    void printWhoNeed (Cache&           cache,
+                       const Pkg&       pkg,
+                       const StringVec& ignores,
+                       bool             shortNames,
+                       bool             xdl);
 
-    template<typename T>
-    std::string joinToString(const T& container,
-                             const std::string join = ", ",
-                             convert_function convert = // do nothing default
-                                 [](const std::string& val) -> std::string
-                                 { return val;} )
+    void bdTree (Cache& cache, const Pkg& pkg, bool shortNames);
+
+    bool fileInPackages (const sbbdep::Path& filepath);
+
+    void lookupInPackages (const std::string& serach);
+
+    namespace utils
     {
+      using StringVec = std::vector<std::string>;
+      using StringSet = std::set<std::string>;
 
-      std::string retval;
+      //--------------------------------------------------------------------------
 
-      if (container.empty ())
+      using convert_function = std::function<std::string (const std::string&)>;
+
+      template <typename T>
+      std::string
+      joinToString (
+          const T&          container,
+          const std::string join    = ", ",
+          convert_function  convert = // do nothing default
+          [] (const std::string& val) -> std::string { return val; })
+      {
+        std::string retval;
+
+        if (container.empty ())
+          return retval;
+
+        auto pos = container.begin ();
+        retval += convert (*pos);
+
+        while (++pos != container.end ())
+          {
+            retval += join + convert (*pos);
+          }
+
         return retval;
+      }
+      //--------------------------------------------------------------------------
 
-      auto pos = container.begin ();
-      retval+=convert(*pos);
+      template <typename T>
+      StringSet
+      getKeySet (const T& keyvalmap)
+      {
+        StringSet retval;
+        for (auto& val : keyvalmap)
+          retval.insert (val.first);
+        return retval;
+      }
 
-      while (++pos != container.end ())
-        {
-          retval += join  + convert (*pos) ;
-        }
+      //--------------------------------------------------------------------------
+      //--------------------------------------------------------------------------
+      struct ReportElement
+      {
+        using Node = std::map<std::string, ReportElement>;
 
-      return retval;
+        Node node;
 
-    }
-    //--------------------------------------------------------------------------
+        ReportElement () = default;
 
-    template<typename T>
-    StringSet getKeySet(const T& keyvalmap){
-      StringSet retval;
-      for(auto& val: keyvalmap)
-        retval.insert(val.first);
-      return retval;
-    }
+        ReportElement (std::string s, ReportElement e);
 
-    //--------------------------------------------------------------------------
-    //--------------------------------------------------------------------------
-    struct ReportElement{
+        void add (const StringVec& path);
+      };
+      //--------------------------------------------------------------------------
 
-      using Node =  std::map< std::string, ReportElement >  ;
+      struct ReportTree
+      {
+        ReportElement::Node node;
 
-      Node node ;
+        void add (const StringVec& path);
+      };
+      //--------------------------------------------------------------------------
 
-      ReportElement() = default;
+      sl3::Dataset
+      getPkgsOfFile (Cache& cache, const PathName& fname, int arch);
 
-      ReportElement( std::string s, ReportElement e );
-
-      void add(const StringVec& path);
-    };
-    //--------------------------------------------------------------------------
-
-    struct ReportTree
-    {
-      ReportElement::Node node ;
-
-      void add(const StringVec& path) ;
-    };
-    //--------------------------------------------------------------------------
-
-    sl3::Dataset
-    getPkgsOfFile (Cache& cache,const PathName& fname, int arch);
-
-    //--------------------------------------------------------------------------
+      //--------------------------------------------------------------------------
 
 #ifdef DEBUG
-    void printTree(const ReportTree& tree) ;
+      void printTree (const ReportTree& tree);
 #endif // DEBUG
 
+    } // ns utils
 
-  } // ns utils
-
-
-
+  }
 }
-}
-
 
 #endif

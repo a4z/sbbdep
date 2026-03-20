@@ -1,0 +1,103 @@
+= sbbdep options
+:toc:
+
+The help text of sbbdep gives a first overview of available options.
+For detailed information follow the links in the <<option-overview,option overview>>.
+
+== sbbdep help text
+
+----
+$ sbbdep --help
+usage: sbbdep [OPTION]... [QUERY]
+
+ QUERY can be a single binary/library file
+              a file from /var/adm/packages
+              a package DESTDIR of a slackbuild
+              some existing file
+
+ If QUERY is omitted sbbdep runs only the cache synchronisation.
+ The default behavior is to find dependencies of QUERY.
+ If QUERY is not a binary file or an installed package but a valid file name
+ sbbdep will search for the file in the package database.
+
+ available options:
+
+  -c, --cache=[FILENAME]
+      Cache file to use. The cache file must be read/writable.
+      If this option is omitted $HOME/.cache/sbbdep.db is used.
+
+  -f, --file=[FILENAME]
+      write output to file FILENAME
+      If this option is omitted the output will go to stdout.
+
+  -s, --short
+      Report package name without version
+
+  --nosync
+      Skip synchronise the cache. Only useful if cache is up to date.
+      If the cache is out of date wrong results might be reported.
+
+  --quiet
+      Suppress status information during sync
+
+  --require
+      this is the default option if not --whoneeds is used.
+      If this option is explicit given and QUERY is not a binary file
+      the search in the package database will be skipped.
+
+  --whoneeds
+      Instead of printing the requirements of the given QUERY, packages that
+      depend on QUERY are reported.
+
+  --xdl
+      explain dynamic linked file. Reports detailed information,
+      works with require and whoneeds queries.
+
+  --ldd
+      Per default sbbdep uses the ELF information from files for the search
+      of required libraries. Using this option sbbdep will use the ldd command.
+      This will not only print direct requirements of a given file but also pull
+      in the dependencies of the requirements.
+      This option is useless for a --whoneeds query.
+
+  --bdtree
+      Prints a hierarchical dependency tree of QUERY.
+      This can produce very long output for some binaries or libraries,
+      and extremely long output for some packages.
+
+  -l, --lookup
+      Search for QUERY in the package database and skip all other operations
+
+  --admdir=[DIRNAME]
+      Use DIRNAME as package database. Default is /var/adm/packages
+      Usually you do not want to use this option
+
+  -v,  --version
+      display sbbdep version
+
+  -h,  --help
+      display this text
+----
+
+[[option-overview]]
+== Option overview
+
+The cache::
+About the cache and how sbbdep works. +
+Covers: `-c` / `--cache`, `--nosync` +
+xref:options_cache.adoc[cache options]
+
+Search and query::
+About searching with sbbdep. +
+Covers: `QUERY`, `--ldd`, `--whoneeds`, `--xdl`, `-s` / `--short` +
+xref:options_search.adoc[search options]
+
+Output and control::
+Covers: `-v` / `--version`, `-h` / `--help`, `-f` / `--file`, `--quiet` +
+xref:options_other.adoc[other options]
+
+Misc options::
+Covers: `-l` / `--lookup`, `--bdtree` +
+xref:options_misc.adoc[misc options]
+
+xref:index.adoc[Back to index]

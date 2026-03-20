@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,78 +21,70 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #include "appargs.hpp"
 
-#include <iostream>
-#include <iomanip>
 #include <algorithm>
 #include <boost/tokenizer.hpp>
+#include <iomanip>
+#include <iostream>
 
 #include <getopt.h>
 #include <sbbdep/cache.hpp>
 
-namespace sbbdep {
-
+namespace sbbdep
+{
 
   namespace
   {
     std::vector<std::string>
-    ignoreList(const std::string& list)
+    ignoreList (const std::string& list)
     {
       using namespace std;
 
-      if (list.empty())
-        return vector<string>() ;
+      if (list.empty ())
+        return vector<string> ();
 
       using tokenizer = boost::tokenizer<boost::char_separator<char>>;
-      boost::char_separator<char> sep(", ");
-      tokenizer tokens(list, sep);
+      boost::char_separator<char> sep (", ");
+      tokenizer                   tokens (list, sep);
 
-      vector<string> vec {begin (tokens), end (tokens)} ;
+      vector<string> vec{begin (tokens), end (tokens)};
       sort (begin (vec), end (vec));
 
-      return vec ;
+      return vec;
     }
 
   }
 
-
-
-AppArgs::AppArgs()
-  : _help(0)
+  AppArgs::AppArgs ()
+  : _help (0)
   , _dbname{Cache::defaultDb}
-  , _query()
-  , _outfile()
-  , _short_names(0)
-  , _sbbdep_version(0)
-  , _nosync(0)
-  , _require(0)
-  , _whoneeds(0)
-  , _explain_dynlinked(0)
-  , _quiet(0)
-  , _ldd(0)
-  , _lookup(0)
-  , _featureX(0)
+  , _query ()
+  , _outfile ()
+  , _short_names (0)
+  , _sbbdep_version (0)
+  , _nosync (0)
+  , _require (0)
+  , _whoneeds (0)
+  , _explain_dynlinked (0)
+  , _quiet (0)
+  , _ldd (0)
+  , _lookup (0)
+  , _featureX (0)
   , _featureXArgs{""}
   , _varAdmDir{"/var/adm/packages"}
-  , _bdtree(0)
-{
-  
-}
-//------------------------------------------------------------------------------
+  , _bdtree (0)
+  {
+  }
+  //------------------------------------------------------------------------------
 
-AppArgs::~AppArgs()
-{
-  
-}
-//------------------------------------------------------------------------------
+  AppArgs::~AppArgs () {}
+  //------------------------------------------------------------------------------
 
-void
-AppArgs::printHelp()
-{
-
-std::cout << R"~(
+  void
+  AppArgs::printHelp ()
+  {
+    std::cout << R"~(
  a tool to query binary dependencies of files from installed packages. 
 
 usage: sbbdep [OPTION]... [QUERY]
@@ -175,157 +167,144 @@ For more information visit the sbbdep wiki.
                https://bitbucket.org/a4z/sbbdep/wiki/Home
 
 )~";
+  }
+  //------------------------------------------------------------------------------
 
+  bool
+  AppArgs::parse (int argc, char** argv)
+  {
+    bool retVal = true; // default
 
-}
-//------------------------------------------------------------------------------
+    if (argc == 1)
+      { // sync only
+        return true;
+      }
 
-bool
-AppArgs::parse( int argc, char** argv )
-{
-  
-  bool retVal = true; // default
+    const char* const short_options = "hlf:c:sv";
 
-  if (argc == 1)
-    { //sync only
-      return true;
-    }
-
-  const char* const short_options = "hlf:c:sv";
-
-  const struct option long_options[] =
-    {
-      { "file", required_argument, 0, 1 },
-      { "cache", required_argument, 0, 1 },
-      { "help", no_argument, &_help, 1 },
-      { "short", no_argument, &_short_names, 1 },
-      { "version", no_argument, &_sbbdep_version, 1 },
-      { "nosync", no_argument, &_nosync, 1 },
-      { "quiet", no_argument, &_quiet, 1 },
-      { "whoneeds", no_argument, &_whoneeds, 1 },
-      { "require", no_argument, &_require, 1 },
-      { "xdl", no_argument, &_explain_dynlinked, 1 },
-      { "ldd", no_argument, &_ldd, 1 },
-      { "lookup", no_argument, &_lookup, 1 },
-      { "fx", optional_argument, 0, 1 }, // undocumented option for  test...
-      { "admdir", required_argument, 0, 1 },
-      { "bdtree", no_argument, &_bdtree, 1 },
-      { "ignore", required_argument, 0, 1 },
-      { 0, 0, 0, 0 } // Required end   
+    const struct option long_options[] = {
+        {"file", required_argument, 0, 1},
+        {"cache", required_argument, 0, 1},
+        {"help", no_argument, &_help, 1},
+        {"short", no_argument, &_short_names, 1},
+        {"version", no_argument, &_sbbdep_version, 1},
+        {"nosync", no_argument, &_nosync, 1},
+        {"quiet", no_argument, &_quiet, 1},
+        {"whoneeds", no_argument, &_whoneeds, 1},
+        {"require", no_argument, &_require, 1},
+        {"xdl", no_argument, &_explain_dynlinked, 1},
+        {"ldd", no_argument, &_ldd, 1},
+        {"lookup", no_argument, &_lookup, 1},
+        {"fx", optional_argument, 0, 1}, // undocumented option for  test...
+        {"admdir", required_argument, 0, 1},
+        {"bdtree", no_argument, &_bdtree, 1},
+        {"ignore", required_argument, 0, 1},
+        {0, 0, 0, 0} // Required end
     };
-  
-  int optionIdx = 0;
-  int optionVal = 0;
 
-  while (optionVal > -1)
-    {
-      optionVal = getopt_long (argc, argv,
-                               short_options,
-                               long_options,
-                               &optionIdx);
-      std::string optionName;
-      switch (optionVal)
-        {
+    int optionIdx = 0;
+    int optionVal = 0;
 
-        case 1 :
-          optionName = long_options [optionIdx].name;
-          if (optionName == "file")
-            {
-              _outfile = optarg ? optarg : "";
-            }
-          else if (optionName == "cache")
-            {
-              _dbname = optarg ? optarg : "";
-            }
-          else if (optionName == "fx")
-            {
-              _featureX = 1;
-              _featureXArgs = optarg ? optarg : "";
-            }
-          else if (optionName == "admdir")
-            {
-              _varAdmDir = optarg ? optarg : "";
-            }
-          else if (optionName == "ignore")
-            {
-              const std::string l = optarg ? optarg : "";
-              if (not l.empty ())
-                _ignore  = ignoreList (l) ;
-            }
-          break;
+    while (optionVal > -1)
+      {
+        optionVal = getopt_long (
+            argc, argv, short_options, long_options, &optionIdx);
+        std::string optionName;
+        switch (optionVal)
+          {
+          case 1:
+            optionName = long_options[optionIdx].name;
+            if (optionName == "file")
+              {
+                _outfile = optarg ? optarg : "";
+              }
+            else if (optionName == "cache")
+              {
+                _dbname = optarg ? optarg : "";
+              }
+            else if (optionName == "fx")
+              {
+                _featureX     = 1;
+                _featureXArgs = optarg ? optarg : "";
+              }
+            else if (optionName == "admdir")
+              {
+                _varAdmDir = optarg ? optarg : "";
+              }
+            else if (optionName == "ignore")
+              {
+                const std::string l = optarg ? optarg : "";
+                if (not l.empty ())
+                  _ignore = ignoreList (l);
+              }
+            break;
 
-        case 'c' :
-          _dbname = optarg ? optarg : "";
-          break;
+          case 'c':
+            _dbname = optarg ? optarg : "";
+            break;
 
-        case 'f' :
-          _outfile = optarg ? optarg : "";
-          break;
+          case 'f':
+            _outfile = optarg ? optarg : "";
+            break;
 
-        case 'h' :
-          optionVal = -1; //exit from here
-          _help = true;
-          break;
+          case 'h':
+            optionVal = -1; // exit from here
+            _help     = true;
+            break;
 
-        case 'l' :
-          _lookup = true;
-          break;
+          case 'l':
+            _lookup = true;
+            break;
 
-        case 's' :
-          _short_names = true;
-          break;
+          case 's':
+            _short_names = true;
+            break;
 
-        case 'v' :
-          optionVal = -1;
-          _sbbdep_version = true;
-          break;
+          case 'v':
+            optionVal       = -1;
+            _sbbdep_version = true;
+            break;
 
-        case '?' : //unknown param
-        case ':' : //missing arg
-          //std::cerr  << "unknown option -" << optionVal << "\n" ;
-          return false;
+          case '?': // unknown param
+          case ':': // missing arg
+            // std::cerr  << "unknown option -" << optionVal << "\n" ;
+            return false;
 
-        default :
-          break;
+          default:
+            break;
+          }
+      }
 
-        }
+    // if help was submitted, ignore following cause only helptext is to show
+    if (!_help && !_sbbdep_version)
+      {
+        std::vector<std::string> ignores;
+        for (int argidx = optind; argidx < argc; ++argidx)
+          {
+            if (_query.empty ())
+              {
+                _query = argv[argidx];
+              }
+            else
+              {
+                ignores.push_back (argv[argidx]);
+              }
+          }
+        if (not ignores.empty ())
+          {
+            std::cerr << "too much args, ignore";
+            for (auto& ignore : ignores)
+              {
+                std::cerr << " " << ignore;
+              }
+            std::cerr << "\n handle only query: " << _query << "\n\n";
+          }
+      }
 
-    }
+    return retVal;
+  }
+  //------------------------------------------------------------------------------
 
-  // if help was submitted, ignore following cause only helptext is to show
-  if (!_help && !_sbbdep_version)
-    {
-      std::vector<std::string> ignores;
-      for (int argidx = optind; argidx < argc; ++argidx)
-        {
-          if (_query.empty ())
-            {
-              _query = argv [argidx];
-            }
-          else
-            {
-              ignores.push_back (argv [argidx]);
-            }
-        }
-      if (not ignores.empty ())
-        {
-          std::cerr << "too much args, ignore";
-          for (auto& ignore : ignores)
-            {
-              std::cerr << " " << ignore;
-            }
-          std::cerr << "\n handle only query: " << _query << "\n\n";
-        }
-
-    }
-  
-  return retVal;
-  
-}
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------
 }

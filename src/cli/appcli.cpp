@@ -1,5 +1,5 @@
 /*
- --------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+ --------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
  -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -24,302 +24,275 @@
 #include "appcli.hpp"
 #include "appargs.hpp"
 
-
 #include "report.hpp"
 
 #include "featurex.hpp"
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 
-
-#include <sbbdep/config.hpp> // generated 
 #include <sbbdep/cache.hpp>
+#include <sbbdep/config.hpp> // generated
 #include <sbbdep/dircontent.hpp>
-#include <sbbdep/path.hpp>
 #include <sbbdep/log.hpp>
+#include <sbbdep/path.hpp>
 
 // should possible not be required here
-#include <sbbdep/pkg.hpp>
 #include <sbbdep/error.hpp>
+#include <sbbdep/pkg.hpp>
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
-
-namespace sbbdep {
-
-AppCli::AppCli()
+namespace sbbdep
 {
 
-}
-//------------------------------------------------------------------------------
+  AppCli::AppCli () {}
+  //------------------------------------------------------------------------------
 
-AppCli::~AppCli()
-{
+  AppCli::~AppCli () {}
+  //------------------------------------------------------------------------------
 
-}
-//------------------------------------------------------------------------------
-
-namespace
-{
-
-
-
-  Cache
-  openCache(const std::string& name)
+  namespace
   {
+
+    Cache
+    openCache (const std::string& name)
+    {
+      try
+        {
+          Path dbPath{name};
+
+          if (not dbPath.isValid () && name == Cache::defaultDb)
+            (void)mkdir (dbPath.dir ().c_str (), S_IRWXG);
+
+          { // just a scope to close if rm is needed
+            Cache c{name};
+            if (c.isNewDb ())
+              return c;
+
+            if (c.compatibleVersion ())
+              {
+                return c;
+              }
+            else
+              {
+                if (name == Cache::defaultDb)
+                  {
+                    LogInfo () << "new major version, perform reset of cache";
+                    if (remove (name.c_str ()) != 0)
+                      {
+                        LogError () << "can not remove old cache: " << name
+                                    << "\nplease remove it manual and re-run "
+                                       "the application";
+                        throw ErrGeneric{"can not reset old cache"};
+                      };
+                  }
+                else
+                  { // need to ask the user to remove it
+                    LogError ()
+                        << "App-version not compatible with given cache: "
+                        << name
+                        << "\nplease remove the file manual "
+                           "or specify a different file name";
+
+                    throw ErrGeneric{"user needs to remove old cache"};
+                  }
+              }
+          }
+
+          // here only in case of a total reset
+          return Cache{name};
+        }
+      catch (...)
+        {
+          LogError () << "can not open cache " << name;
+          throw;
+        }
+    } //--------------------------------------------------------------------------
+
+  } // ns
+    // ------------------------------------------------------------------------
+
+  int
+  AppCli::run (const AppArgs& args)
+  {
+    if (args.versions ())
+      {
+        std::cout << "sbbdep version " << sbbdep::MAJOR_VERSION << "."
+                  << sbbdep::MINOR_VERSION << "." << sbbdep::PATCH_VERSION
+                  << std::endl;
+        return 0;
+      }
+
+    std::ofstream outfile;
+    if (args.getOutFile ().size ())
+      {
+        outfile.open (args.getOutFile ().c_str (),
+                      std::ofstream::out | std::ofstream::trunc);
+
+        if (not outfile.good ())
+          {
+            std::cerr << "can not open logfile " << args.getOutFile () << '\n';
+            return 1;
+          }
+
+        LogSetup::create (outfile, args.quiet ());
+      }
+    else
+      {
+        LogSetup::create (std::cout, args.quiet ());
+      }
+
+    PkgAdmDir::set (args.varAdmDir ());
+
+    if (args.lookup ())
+      {
+        if (args.query ().empty ())
+          {
+            LogInfo () << "error: lookup query missing, no argument provided";
+            return 1;
+          }
+        cli::lookupInPackages (args.query ());
+
+        return 0;
+      }
+
+    Path dbpath (args.dbname ());
+
+    if (not dbpath.isRegularFile () and args.noSync ())
+      {
+        LogInfo ()
+            << args.dbname ()
+            << " does not exist and need to "
+               "be created. nosync makes therefore no sense. I exit now.";
+        return 2;
+      }
+
+    Cache cache = openCache (args.dbname ());
+    if (cache.isNewDb () and args.noSync ())
+      { // could also have an empty db ...
+        LogInfo ()
+            << args.dbname ()
+            << " db is empty and needs to "
+               "be created. nosync makes therefore no sense. I exit now.";
+        return 2;
+      }
+
+    if (args.featureX ())
+      {
+        cli::runFx (args.featureXArgs ());
+        return 0;
+      }
+
+    Path querypath (args.query ());
+    if (not args.query ().empty ())
+      {
+        querypath.makeRealPath ();
+      }
+    Pkg pkg = args.query ().empty () ? Pkg () : Pkg::create (querypath);
+
+    if (not args.query ().empty () and pkg.getType () == PkgType::Unknown)
+      {
+        try
+          {
+            if (querypath.isValid ())
+              {
+                LogInfo () << "not a file with binary dependencies: "
+                           << querypath
+                           << "\n try to find information in package list:";
+                cli::fileInPackages (querypath);
+                return 0;
+              }
+            else
+              {
+                LogInfo () << "not a file path: '" << args.query ();
+                LogInfo () << "you might want to use the lookup option (-l)"
+                              " to search for "
+                           << args.query () << " in the package database";
+                return 33;
+              }
+          }
+        catch (const Error& e)
+          {
+            LogError () << e;
+            return 3;
+          }
+        catch (...)
+          {
+            LogError () << "Unknown error";
+            return 3;
+          }
+      }
+
+    if (not args.noSync ())
+      {
+        auto syncdata = cache.doSync ();
+        cli::printSyncReport (cache, syncdata);
+      }
+
+    if (args.query ().empty ())
+      { // was a sync only call ....
+        return 0;
+      }
 
     try
       {
-        Path dbPath{name};
-
-        if (not dbPath.isValid () && name == Cache::defaultDb)
-          (void)mkdir(dbPath.dir ().c_str (), S_IRWXG);
-
-        { // just a scope to close if rm is needed
-          Cache c{name};
-          if (c.isNewDb ())
-            return c ;
-
-          if (c.compatibleVersion ())
-            {
-              return c ;
-            }
-          else
-            {
-              if (name == Cache::defaultDb)
-                {
-                  LogInfo () << "new major version, perform reset of cache" ;
-                  if (remove (name.c_str ()) != 0)
-                    {
-                      LogError () << "can not remove old cache: " << name
-                                  << "\nplease remove it manual and re-run "
-                                      "the application";
-                      throw ErrGeneric{"can not reset old cache"};
-                    };
-
-                }
-              else
-                { // need to ask the user to remove it
-                  LogError () << "App-version not compatible with given cache: "
-                              << name
-                              << "\nplease remove the file manual "
-                                  "or specify a different file name";
-
-                  throw ErrGeneric{"user needs to remove old cache"};
-                }
-            }
-          }
-
-        // here only in case of a total reset
-        return Cache{name};
+        SBBASSERT (pkg.Load ());
+      }
+    catch (const Error& e)
+      {
+        LogError () << e;
+        return 4;
       }
     catch (...)
       {
-        LogError () << "can not open cache " << name;
-        throw;
+        LogError () << "Unknown error";
+        return 4;
       }
-   }//--------------------------------------------------------------------------
 
-} // ns ------------------------------------------------------------------------
+    if (args.whoNeeds ())
+      {
+        try
+          {
+            cli::printWhoNeed (
+                cache, pkg, args.ingore (), args.shortNames (), args.xdl ());
+          }
+        catch (const Error& e)
+          {
+            LogError () << e;
+            return 5;
+          }
+        catch (...)
+          {
+            LogError () << "Unknown error";
+            return 5;
+          }
+      }
+    else if (args.bdtree ())
+      {
+        cli::bdTree (cache, pkg, args.shortNames ());
+      }
+    else // if no other option, than it is required...
+      {
+        cli::printRequired (cache,
+                            pkg,
+                            args.ingore (),
+                            args.shortNames (),
+                            args.xdl (),
+                            args.ldd ());
+      }
+    //  else
+    //    {
+    //      LogError () << "Can not run given combination of arguments";
+    //      LogError () << "(could possible, but I do not want)";
+    //      LogError () << "Please run just one QUERY." << std::endl;
+    //      return 6;
+    //    }
 
-int
-AppCli::run(const AppArgs& args)
-{
-
-  if (args.versions ())
-    {
-      std::cout << "sbbdep version "
-          << sbbdep::MAJOR_VERSION << "."
-          << sbbdep::MINOR_VERSION << "."
-          << sbbdep::PATCH_VERSION << std::endl;
-      return 0;
-    }
-
-  std::ofstream outfile;
-  if (args.getOutFile ().size ())
-    {
-      outfile.open(args.getOutFile ().c_str (),
-                   std::ofstream::out | std::ofstream::trunc);
-
-      if (not outfile.good ())
-        {
-          std::cerr << "can not open logfile " << args.getOutFile () << '\n';
-          return 1;
-        }
-
-      LogSetup::create (outfile, args.quiet ()) ;
-    }
-  else
-    {
-      LogSetup::create (std::cout, args.quiet ()) ;
-    }
-
-
-  PkgAdmDir::set (args.varAdmDir ()) ;
-
-
-  if (args.lookup ())
-    {
-      if (args.query ().empty ())
-        {
-          LogInfo () << "error: lookup query missing, no argument provided" ;
-          return  1;
-        }
-       cli::lookupInPackages(args.query ()) ;
-
-       return 0;
-
-    }
-
-  Path dbpath (args.dbname ()) ;
-
-  if (not dbpath.isRegularFile () and args.noSync ())
-    {
-      LogInfo () << args.dbname () << " does not exist and need to "
-          "be created. nosync makes therefore no sense. I exit now." ;
-      return 2 ;
-    }
-
-
-
-  Cache cache = openCache (args.dbname ()) ;
-  if (cache.isNewDb () and args.noSync ())
-    { // could also have an empty db ...
-      LogInfo () << args.dbname () << " db is empty and needs to "
-          "be created. nosync makes therefore no sense. I exit now." ;
-      return 2 ;
-    }
-
-
-  if (args.featureX ())
-    {
-      cli::runFx (args.featureXArgs ()) ;
-      return 0  ;
-    }
-
-
-
-  Path querypath (args.query ());
-  if (not args.query ().empty())
-    {
-      querypath.makeRealPath ();
-    }
-  Pkg pkg = args.query ().empty() ?
-      Pkg() : Pkg::create (querypath) ;
-
-  if(not args.query ().empty() and pkg.getType () == PkgType::Unknown)
-    {
-      try
-        {
-          if(querypath.isValid ())
-            {
-              LogInfo () << "not a file with binary dependencies: "
-                  << querypath
-                  << "\n try to find information in package list:";
-              cli::fileInPackages (querypath);
-              return 0;
-            }
-          else
-            {
-              LogInfo () << "not a file path: '" << args.query () ;
-              LogInfo () << "you might want to use the lookup option (-l)"
-                        " to search for " << args.query ()
-                         << " in the package database" ;
-              return 33;
-            }
-
-
-        }
-      catch (const Error& e)
-        {
-          LogError () << e ;
-          return 3;
-        }
-      catch (...)
-        {
-          LogError () << "Unknown error" ;
-          return 3;
-        }
-    }
-
-
-
-  if (not args.noSync ())
-    {
-      auto syncdata = cache.doSync () ;
-      cli::printSyncReport (cache, syncdata) ;
-    }
-
-
-  if (args.query ().empty ())
-    { // was a sync only call ....
-      return 0;
-    }
-
-
-
-  try
-    {
-      SBBASSERT (pkg.Load ()) ;
-    }
-  catch (const Error& e)
-    {
-      LogError () << e ;
-      return 4;
-    }
-  catch (...)
-    {
-      LogError () << "Unknown error" ;
-      return 4;
-    }
-
-
-  if (args.whoNeeds ())
-    {
-      try
-        {
-          cli::printWhoNeed (cache, pkg ,
-                             args.ingore () ,
-                             args.shortNames (),
-                             args.xdl ()) ;
-        }
-      catch (const Error& e)
-        {
-          LogError () << e ;
-          return 5;
-        }
-      catch (...)
-        {
-          LogError () << "Unknown error";
-          return 5;
-        }
-    }
-  else if (args.bdtree ())
-    {
-      cli::bdTree(cache, pkg, args.shortNames ()) ;
-    }
-  else // if no other option, than it is required...
-    {
-      cli::printRequired (cache, pkg ,
-                          args.ingore () ,
-                          args.shortNames  (),
-                          args.xdl (),
-                          args.ldd ()) ;
-    }
-//  else
-//    {
-//      LogError () << "Can not run given combination of arguments";
-//      LogError () << "(could possible, but I do not want)";
-//      LogError () << "Please run just one QUERY." << std::endl;
-//      return 6;
-//    }
-
-
-  return 0;
-}
-//------------------------------------------------------------------------------
+    return 0;
+  }
+  //------------------------------------------------------------------------------
 
 }

@@ -1,0 +1,27 @@
+= sbbdep
+:toc:
+
+Slack Build Binary Dependencies
+
+The tool for exploring binary runtime dependencies on Slackware and
+Slackware based systems.
+
+sbbdep has been around since 2010. After a quiet period from 2018 it is back
+in maintenance mode as of 2026. Since the tool is feature complete, this
+revival is released as version 1.0.0.
+
+Tested on Slackware current as of March 2026.
+
+== Documentation
+
+xref:overview.adoc[Overview]::
+What sbbdep does
+
+xref:install.adoc[Installation]::
+How to install sbbdep
+
+xref:examples.adoc[Examples]::
+Some examples showing how sbbdep works
+
+xref:options.adoc[Help]::
+Detailed reference for sbbdep and its options

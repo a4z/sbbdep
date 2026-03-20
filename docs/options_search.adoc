@@ -1,0 +1,80 @@
+= sbbdep — search options
+:toc:
+
+== The QUERY argument
+
+If QUERY is omitted, sbbdep will only run the cache synchronisation
+(unless `--nosync` is set). sbbdep accepts exactly one QUERY value.
+
+The query value can be:
+
+* *A file name* +
+  If the argument is a package file from `/var/adm/packages` or a dynamic
+  linked binary or library, sbbdep runs its query on that file. +
+  If the argument is some other regular file, sbbdep performs a lookup in all
+  installed packages and reports where the file is from.
+
+* *A folder name* +
+  sbbdep interprets the given folder as the `$DESTDIR` of a
+  `make install DESTDIR=/some/where` command. +
+  It scans for dynamic linked files in the usual directories relative to
+  DESTDIR and reports dependencies on libraries that are not within the
+  DESTDIR itself — i.e. external package dependencies.
+
+* *Just a string* +
+  If the argument is not a file or folder, sbbdep looks up the string in the
+  file lists of all installed packages and reports matches.
+
+xref:examples.adoc[See the examples] to see how it works.
+
+== Dependency search
+
+=== Default dependency search
+
+sbbdep uses the ELF information found in dynamic linked files and searches for
+the required sonames in the standard library search paths. +
+If a dependency is found in more than one package, sbbdep combines them with
+an `|` (or). +
+By default sbbdep reports only direct dependencies: for a file A that needs
+file B which needs file C, only B is reported.
+
+xref:examples.adoc[See the examples] to see how it works.
+
+=== --ldd dependency search
+
+With `--ldd`, sbbdep searches like the `ldd` command — it reports the full
+transitive dependency tree, so for a file A that needs B which needs C,
+both B and C are reported. +
+This option is useless for a `--whoneeds` query.
+
+xref:examples.adoc[See the examples] to see how it works.
+
+== The --whoneeds query
+
+Instead of reporting what a file or package requires, `--whoneeds` reports
+which other packages depend on it.
+
+This is mostly accurate, however the nature of alternative dependencies means
+a reported package may not strictly depend on the queried one — it may have
+an alternative. Cross-checking with a normal dependency query confirms this.
+
+xref:examples.adoc[See the examples] to see how it works.
+
+== --xdl — explain dynamic linkage
+
+With `--xdl` sbbdep reports dependencies at the individual file level,
+showing exactly which file provides each required library. +
+Works with both dependency and `--whoneeds` queries.
+
+xref:examples.adoc[See the examples] to see how it works.
+
+== -s / --short — short output format
+
+By default sbbdep prints package names with version numbers. With `--short`
+only the package name is printed, and in some cases names are separated by
+commas on a single line instead of one per line.
+
+xref:examples.adoc[See the examples] to see how it works.
+
+xref:options.adoc[Back to options]
+xref:index.adoc[Back to index]

@@ -30,226 +30,217 @@
 #include <sbbdep/pkg.hpp>
 #include <sbbdep/utils/concurrentpeek.hpp>
 
-#include <future>
 #include <fstream>
+#include <future>
 #include <thread>
 #include <vector>
 
-
-namespace sbbdep {
-namespace cli {
-
-namespace {
-
-// check pkgfile line for line if search exist
-bool
-process (const std::string& pkgfile, const Path& search)
+namespace sbbdep
 {
+  namespace cli
+  {
 
-  std::ifstream ins (pkgfile.c_str ());
-  if (!ins.good ())
+    namespace
     {
-      LogError () << "Waring: can not read " << pkgfile ;
-      return false;
-    }
 
+      // check pkgfile line for line if search exist
+      bool
+      process (const std::string& pkgfile, const Path& search)
+      {
+        std::ifstream ins (pkgfile.c_str ());
+        if (!ins.good ())
+          {
+            LogError () << "Waring: can not read " << pkgfile;
+            return false;
+          }
 
-  // helper to check if search exists in given line
-  // and respecting some specials pkg-files can contain
-  auto file_name_match_in =
-      [&search](const std::string& line) -> bool
-        {
+        // helper to check if search exists in given line
+        // and respecting some specials pkg-files can contain
+        auto file_name_match_in = [&search] (const std::string& line) -> bool
+          {
+            std::string filename = "/" + search.base ();
+            if (line.find (filename, line.size () - filename.size ())
+                != std::string::npos)
+              {
+                return true;
+              }
 
-          std::string filename = "/"+ search.base();
-          if (line.find( filename,
-                        line.size ()-filename.size ()) != std::string::npos)
-            {
-              return true;
-            }
+            if ((line.find (".new", line.size () - 4) != std::string::npos))
+              {
+                if (line.find (filename.c_str (),
+                               line.size () - filename.size () - 4,
+                               filename.size ())
+                    != std::string::npos)
+                  return true;
+              }
 
+            return false;
+          }; //----------------------------------
 
-          if((line.find( ".new" , line.size()-4 ) != std::string::npos))
-            {
-              if ( line.find( filename.c_str() ,
-                              line.size()-filename.size() -4,
-                              filename.size() ) != std::string::npos)
-              return true;
-            }
+        // helper to check if found name is exact match
+        auto path_is_same_or_incoming = [&search] (const Path match) -> bool
+          {
+            if (search.dir () == match.dir ())
+              {
+                return true;
+              }
 
-          return false;
-        }; //----------------------------------
+            PathName p (match.dir ());
+            if (p.base () == "incoming" && p.dir () == search.dir ())
+              {
+                return true;
+              }
 
-  // helper to check if found name is exact match
-  auto path_is_same_or_incoming = [&search](const Path match)-> bool
+            return false;
+          }; //----------------------------------
+
+        std::string line;
+        int         cnt = 0; // for skipping the first lines..
+        while (not ins.eof ())
+          {
+            std::getline (ins, line);
+            // skip the first lines in file, they contain no info for the
+            // search
+            if (++cnt < 6)
+              {
+                continue;
+              }
+
+            if (file_name_match_in (line))
+              {
+                PathName match ("/" + line);
+
+                if (path_is_same_or_incoming (match))
+                  {
+                    LogMsg () << "absolute match in " << pkgfile << ": "
+                              << search << "\n"
+                              << "    -> " << line;
+                  }
+
+                else
+                  {
+                    LogMsg () << " filename found in " << pkgfile << ": "
+                              << search.base () << "\n"
+                              << " -> line was :" << line;
+                  }
+
+                // if there was a match, no need to proceed
+                return true;
+              }
+          }
+        return false;
+      }
+      //------------------------------------------------------------------------------
+
+      std::vector<std::string>
+      VarAdmPkgNames ()
+      {
+        auto                     admdir = pkgAdmDir ();
+        std::vector<std::string> retval;
+
+        admdir.forEach (
+            [&retval] (const std::string& d, const std::string& f) -> bool
+              {
+                retval.push_back (d + "/" + f);
+                return true;
+              });
+
+        return retval;
+      }
+      //------------------------------------------------------------------------------
+
+    } // ns
+
+    // _findInPackages
+
+    bool
+    fileInPackages (const sbbdep::Path& filepath)
     {
-      if (search.dir () == match.dir ())
+      ConcurrentPeek<std::string> pkglist (VarAdmPkgNames ());
+      auto                        search = [&pkglist, &filepath] () -> bool
         {
-          return true;
+          bool        hadMatch = false;
+          std::string pkgfile  = pkglist.pop ();
+          while (not pkgfile.empty ())
+            {
+              if (process (pkgfile, filepath))
+                {
+                  hadMatch = true;
+                }
+              pkgfile = pkglist.pop ();
+            }
+          return hadMatch;
+        };
+
+      auto match1 = std::async (std::launch::async, search);
+      auto match2 = search ();
+
+      if (not match2 and not match1.get ())
+        {
+          LogInfo () << "nothing found\n";
         }
 
-      PathName p (match.dir ());
-      if( p.base ()=="incoming" && p.dir () == search.dir ())
-        {
-          return true;
-        }
+      LogInfo () << ""; // just make a new line
 
-      return false;
-    }; //----------------------------------
-
-
-  std::string line;
-  int cnt = 0; // for skipping the first lines..
-  while (not ins.eof ())
-    {
-      std::getline (ins, line);
-      //skip the first lines in file, they contain no info for the search
-      if (++cnt < 6)
-        {
-          continue;
-        }
-
-      if (file_name_match_in (line))
-        {
-          PathName match ("/" + line);
-
-          if (path_is_same_or_incoming (match))
-            {
-              LogMsg () << "absolute match in "
-                  << pkgfile  << ": " << search  << "\n"
-                  << "    -> " << line   ;
-            }
-
-          else
-            {
-              LogMsg () << " filename found in " << pkgfile << ": "
-                  << search.base () << "\n" << " -> line was :" << line ;
-            }
-
-
-          // if there was a match, no need to proceed
-          return true;
-        }
-    }
-  return false;
-}
-//------------------------------------------------------------------------------
-
-std::vector<std::string>
-VarAdmPkgNames()
-{
-  auto admdir = pkgAdmDir();
-  std::vector<std::string> retval;
-
-  admdir.forEach ([&retval](const std::string& d,const std::string& f) -> bool
-    {
-      retval.push_back (d+"/"+f);
       return true;
-    });
+    }
+    //------------------------------------------------------------------------------
 
-  return retval ;
-}
-//------------------------------------------------------------------------------
-
-} // ns
-
-// _findInPackages
-
-bool
-fileInPackages (const sbbdep::Path& filepath)
-{
-
-  ConcurrentPeek<std::string> pkglist (VarAdmPkgNames ()) ;
-  auto search = [&pkglist, &filepath] () -> bool
+    void
+    lookupInPackages (const std::string& what)
     {
-      bool hadMatch = false ;
-      std::string pkgfile = pkglist.pop ();
-      while(not pkgfile.empty  ())
+      ConcurrentPeek<std::string> pkglist (VarAdmPkgNames ());
+
+      auto search = [&pkglist, &what] ()
         {
-          if (process (pkgfile, filepath))
+          std::string pkgfile = pkglist.pop ();
+          while (not pkgfile.empty ())
             {
-              hadMatch = true;
+              // collet all info in this pkg to write it at onece at the end
+              std::ifstream ins (pkgfile.c_str ());
+              if (!ins.good ())
+                {
+                  LogError () << "Waring: can not read " << pkgfile;
+                }
+              else
+                {
+                  int         cnt = 0;
+                  std::string results;
+                  while (not ins.eof ())
+                    {
+                      std::string line;
+                      std::getline (ins, line);
+                      // first lines in file,  contain no info for the search
+                      if (++cnt < 6)
+                        {
+                          continue;
+                        }
+
+                      if (line.find (what) != std::string::npos)
+                        {
+                          results += "\n " + PathName (pkgfile).base () + ": "
+                                     + line;
+                        }
+                    }
+                  if (not results.empty ())
+                    {
+                      LogMsg () << results;
+                    }
+                }
+
+              pkgfile = pkglist.pop ();
             }
-          pkgfile = pkglist.pop ();
-        }
-      return hadMatch ;
-    };
+        };
 
+      std::thread t1 (search);
+      search ();
+      if (t1.joinable ())
+        {
+          t1.join ();
+        };
 
-  auto match1 = std::async (std::launch::async, search) ;
-  auto match2 = search () ;
-
-  if( not match2 and not match1.get())
-    {
-      LogInfo() << "nothing found\n" ;
+      LogInfo () << ""; // just make a new line
     }
 
-  LogInfo() << "" ; // just make a new line
-
-  return true;
-}
-//------------------------------------------------------------------------------
-
-
-void
-lookupInPackages(const std::string& what)
-{
-
-  ConcurrentPeek<std::string> pkglist (VarAdmPkgNames ()) ;
-
-  auto search = [&pkglist, &what] ()
-    {
-      std::string pkgfile = pkglist.pop ();
-      while(not pkgfile.empty  ())
-        {
-          // collet all info in this pkg to write it at onece at the end
-          std::ifstream ins (pkgfile.c_str ());
-          if (!ins.good ())
-            {
-              LogError () << "Waring: can not read " << pkgfile ;
-            }
-          else
-            {
-              int cnt = 0 ;
-              std::string results ;
-              while (not ins.eof ())
-                {
-                  std::string line;
-                  std::getline (ins, line);
-                  //first lines in file,  contain no info for the search
-                  if (++cnt < 6)
-                    {
-                      continue;
-                    }
-
-                  if(line.find (what) != std::string::npos)
-                    {
-                      results += "\n " +
-                          PathName (pkgfile).base () + ": "  + line ;
-                    }
-                }
-              if (not results.empty ())
-                {
-                  LogMsg () << results ;
-                }
-            }
-
-          pkgfile = pkglist.pop ();
-        }
-    };
-
-  std::thread t1(search) ;
-  search() ;
-  if(t1.joinable())
-    {
-      t1.join();
-    };
-
-  LogInfo() << "" ; // just make a new line
-
-}
-
-
-
-
-}
+  }
 } // ns

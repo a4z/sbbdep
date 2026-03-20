@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,48 +21,37 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEP_CACHESQL_HPP_
 #define SBBDEP_CACHESQL_HPP_
 
-
 #include <string>
 
-#include <sl3/database.hpp>
-#include <sl3/command.hpp>
-#include <sl3/types.hpp>
 #include <sbbdep/cache.hpp>
+#include <sl3/command.hpp>
+#include <sl3/database.hpp>
+#include <sl3/types.hpp>
 
+namespace sbbdep
+{
 
-
-namespace sbbdep {
-
-
-namespace sql {
-
-  sl3::Command makeCommand(sl3::Database& db, Cache::sqlid id);
-  
-  void createSchema(sl3::Database& db);
-  
-  void addVersionTable(sl3::Database& db);
-  
-  void register_own_functions(sqlite3* db);
-
-  constexpr const char* maxPkgTimeStamp()
+  namespace sql
   {
-    return "SELECT MAX(timestamp) FROM pkgs;"
-    ;
-  }//-----------------------------------------------------------------------------
 
+    sl3::Command makeCommand (sl3::Database& db, Cache::sqlid id);
 
+    void createSchema (sl3::Database& db);
 
-} // ns sql
+    void addVersionTable (sl3::Database& db);
 
+    void register_own_functions (sqlite3* db);
 
+    constexpr const char*
+    maxPkgTimeStamp ()
+    {
+      return "SELECT MAX(timestamp) FROM pkgs;";
+    } //-----------------------------------------------------------------------------
 
-
-
-
+  } // ns sql
 
 }
 

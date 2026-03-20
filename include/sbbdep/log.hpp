@@ -21,10 +21,8 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEB_LOGSYSTEM_HPP_
 #define SBBDEB_LOGSYSTEM_HPP_
-
 
 #include <memory>
 #include <ostream>
@@ -32,96 +30,82 @@ THE SOFTWARE.
 namespace sbbdep
 {
 
-  
-typedef std::basic_ostream<char, typename std::char_traits<char>>  log_stream_type;
+  typedef std::basic_ostream<char, typename std::char_traits<char>>
+      log_stream_type;
 
-//the whole thing is a kind of hack, but for now it has to replace the former a4z::LogSystem
-  
-class LogChannel
-{
+  // the whole thing is a kind of hack, but for now it has to replace the
+  // former a4z::LogSystem
 
-
-  LogChannel(std::shared_ptr<log_stream_type> stm) 
-  : _stm(stm)
+  class LogChannel
   {
-  }
+    LogChannel (std::shared_ptr<log_stream_type> stm)
+    : _stm (stm)
+    {
+    }
 
-  friend LogChannel LogDebug() ;
-  friend LogChannel LogError() ;
-  friend LogChannel LogInfo() ;
-  friend LogChannel LogMsg() ;
-public:
+    friend LogChannel LogDebug ();
+    friend LogChannel LogError ();
+    friend LogChannel LogInfo ();
+    friend LogChannel LogMsg ();
 
+  public:
+    ~LogChannel () { *_stm << '\n'; }
 
-  
-  ~LogChannel()
+    template <typename T>
+    LogChannel&
+    operator<< (const T& val)
+    {
+      *_stm << val;
+      return *this;
+    } //---------------------------------------------------------------------------------------------
+
+    LogChannel&
+    operator<< (log_stream_type& (*pf) (log_stream_type&))
+    {
+      *_stm << pf;
+      return *this;
+    } //---------------------------------------------------------------------------------------------
+
+    LogChannel&
+    operator<< (std::ios& (*pf) (std::ios&))
+    {
+      *_stm << pf;
+      return *this;
+    } //---------------------------------------------------------------------------------------------
+
+    LogChannel&
+    operator<< (std::ios_base& (*pf) (std::ios_base&))
+    {
+      *_stm << pf;
+      return *this;
+    } //---------------------------------------------------------------------------------------------
+
+  private:
+    std::shared_ptr<log_stream_type> _stm;
+  };
+  //--------------------------------------------------------------------------------------------------
+
+  class LogSetup
   {
-    *_stm << '\n' ;
-  }
+    struct Setup
+    {
+      std::ostream& appstm;
+      bool          quiet;
+    };
+    static std::unique_ptr<Setup> _setup;
 
+  public:
+    static void create (std::ostream& appstm, bool quiet);
 
-  template< typename T >
-  LogChannel&
-  operator<<( const T& val )
-  {
-    *_stm << val;
-    return *this;
-  }//---------------------------------------------------------------------------------------------
+    static bool          Quiet ();
+    static std::ostream& AppStream ();
+  };
 
-  LogChannel&
-  operator<<( log_stream_type& (*pf)( log_stream_type& ) )
-  {
-    *_stm << pf;
-    return *this;
-  }//---------------------------------------------------------------------------------------------
+  LogChannel LogDebug ();
+  LogChannel LogError ();
+  LogChannel LogInfo ();
+  LogChannel LogMsg ();
 
-  LogChannel&
-  operator<<( std::ios& (*pf)( std::ios& ) )
-  {
-    *_stm << pf;
-    return *this;
-  }//---------------------------------------------------------------------------------------------
+} // ns
 
-  LogChannel&
-  operator<<( std::ios_base& (*pf)( std::ios_base& ) )
-  {
-    *_stm << pf;
-    return *this;
-  }//---------------------------------------------------------------------------------------------
-  
-  
-private:
-  std::shared_ptr<log_stream_type> _stm;
-  
-};
-//--------------------------------------------------------------------------------------------------
-
-
-
-class LogSetup
-{
-  struct Setup{std::ostream& appstm ; bool quiet;};
-  static std::unique_ptr<Setup> _setup; 
-  
-  
-public:
-  static void create(std::ostream& appstm, bool quiet);
-  
-  static bool Quiet() ; 
-  static std::ostream& AppStream() ; 
-  
-};
-
-
-LogChannel LogDebug();
-LogChannel LogError();
-LogChannel LogInfo();
-LogChannel LogMsg();
-
-
-
-}// ns
-
-
-
-#endif 
+#endif

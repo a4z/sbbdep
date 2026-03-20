@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,92 +21,88 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #include "report.hpp"
 
 #include "sbbdep/cache.hpp"
 #include "sbbdep/log.hpp"
 #include "sbbdep/path.hpp"
 
-
-namespace sbbdep {
-namespace cli{
-namespace utils{
-
-ReportElement::ReportElement( std::string s, ReportElement e )
-: node {{std::move(s),std::move(e)}}
+namespace sbbdep
 {
-}
-//------------------------------------------------------------------------------
+  namespace cli
+  {
+    namespace utils
+    {
 
-void
-ReportElement::add(const StringVec& path)
-{
-  if(not path.empty())
-    node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
-}
-//------------------------------------------------------------------------------
+      ReportElement::ReportElement (std::string s, ReportElement e)
+      : node{{std::move (s), std::move (e)}}
+      {
+      }
+      //------------------------------------------------------------------------------
 
+      void
+      ReportElement::add (const StringVec& path)
+      {
+        if (not path.empty ())
+          node[*(path.begin ())].add (
+              StringVec (++(path.begin ()), path.end ()));
+      }
+      //------------------------------------------------------------------------------
 
-void
-ReportTree::add(const StringVec& path)
-{
-  if(not path.empty())
-    node[*(path.begin())].add( StringVec(  ++(path.begin()), path.end() ) ) ;
-}
-//------------------------------------------------------------------------------
+      void
+      ReportTree::add (const StringVec& path)
+      {
+        if (not path.empty ())
+          node[*(path.begin ())].add (
+              StringVec (++(path.begin ()), path.end ()));
+      }
+      //------------------------------------------------------------------------------
 
-sl3::Dataset
-getPkgsOfFile (Cache& cache,const PathName& fname, int arch)
-{
-
-  const char* sql = R"~(
+      sl3::Dataset
+      getPkgsOfFile (Cache& cache, const PathName& fname, int arch)
+      {
+        const char* sql = R"~(
   SELECT fullname 
   FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
   WHERE dynlinked.filename=?  AND dynlinked.arch=? ; 
   )~";
 
-  const std::string cmdname = "getPkgsOfFilebyFile" ;
+        const std::string cmdname = "getPkgsOfFilebyFile";
 
-  auto& cmd = cache.namedCommand(cmdname, sql) ;
+        auto& cmd = cache.namedCommand (cmdname, sql);
 
-  return cmd.select (sl3::parameters (fname.str (), arch)) ;
-
-}
-//------------------------------------------------------------------------------
-
-
-
+        return cmd.select (sl3::parameters (fname.str (), arch));
+      }
+      //------------------------------------------------------------------------------
 
 #ifdef DEBUG
-void printTree(const ReportTree& tree)
-{
+      void
+      printTree (const ReportTree& tree)
+      {
+        std::function<void (ReportElement, int)> printChild
+            = [&printChild] (ReportElement elem, int level)
+          {
+            for (auto node : elem.node)
+              {
+                for (int i = 0; i < level; ++i)
+                  LogInfo () << " ";
 
-  std::function<void(ReportElement, int)> printChild =
-      [&printChild]( ReportElement elem , int level )
-        {
-          for(auto node: elem.node){
-             for(int i = 0; i < level; ++i)
-                  LogInfo() << " " ;
+                LogDebug () << node.first << "\n";
+                printChild (node.second, level + 2);
+              }
+          };
 
-            LogDebug() << node.first << "\n";
-            printChild(node.second, level+2);
+        for (auto elem : tree.node)
+          {
+            LogDebug () << elem.first;
+            printChild (elem.second, 2);
           }
-
-        };
-
-  for( auto elem : tree.node )
-  {
-      LogDebug() << elem.first ;
-    printChild(elem.second, 2) ;
-  }
-}
+      }
 #endif // DEBUG
-//------------------------------------------------------------------------------
+      //------------------------------------------------------------------------------
 
-
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-}
-}} // ns
+      //------------------------------------------------------------------------------
+      //------------------------------------------------------------------------------
+    }
+  }
+} // ns

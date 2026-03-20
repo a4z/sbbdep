@@ -24,76 +24,71 @@ THE SOFTWARE.
 #ifndef SBBDEP_ERROR_HPP_
 #define SBBDEP_ERROR_HPP_
 
-
 #include <exception>
 #include <stdexcept>
 #include <string>
 
 #include <iosfwd>
 
-namespace sbbdep{
-
+namespace sbbdep
+{
 
   /// map error reason to enum value
   enum class ErrCode
   {
-     GENERIC    = 1 ,
-     ASSERT ,
-     TODO       = 98 ,
-     UNEXPECTED = 99 
+    GENERIC = 1,
+    ASSERT,
+    TODO       = 98,
+    UNEXPECTED = 99
   };
-  
 
-
-  class Error :  public std::runtime_error
+  class Error : public std::runtime_error
   {
-
   public:
+    using std::runtime_error::runtime_error;
 
-    using std::runtime_error::runtime_error ;
-
-    virtual ErrCode id() const = 0 ;
-
+    virtual ErrCode id () const = 0;
   };
 
   std::ostream& operator<< (std::ostream& os, const Error& e);
 
-
-  template<ErrCode ec>
-  class ErrType: public Error
+  template <ErrCode ec> class ErrType : public Error
   {
-
   public:
-    ErrType( std::string msg = "" )
-      : Error( std::move(msg) )
+    ErrType (std::string msg = "")
+    : Error (std::move (msg))
     {
     }
 
-    virtual ~ErrType() noexcept {}
+    virtual ~ErrType () noexcept {}
 
-    ErrCode id() const override  { return ec ; }
-
+    ErrCode
+    id () const override
+    {
+      return ec;
+    }
   };
-  
-  using ErrGeneric      =  ErrType<ErrCode::GENERIC>;
-  using ErrAssert       =  ErrType<ErrCode::ASSERT>;
-  using ErrToDo         =  ErrType<ErrCode::TODO>;
-  using ErrUnexpected   =  ErrType<ErrCode::UNEXPECTED>;
 
+  using ErrGeneric    = ErrType<ErrCode::GENERIC>;
+  using ErrAssert     = ErrType<ErrCode::ASSERT>;
+  using ErrToDo       = ErrType<ErrCode::TODO>;
+  using ErrUnexpected = ErrType<ErrCode::UNEXPECTED>;
 
-} // ns 
+} // ns
 
 #ifdef DEBUG
-#define SBBASSERT( exp ) if ( !( exp ) ) \
-  throw  sbbdep::ErrAssert( std::string(" assertion in ")\
-            + sbbdep::PathName ( __FILE__ ).base() + ":" \
-            +  __PRETTY_FUNCTION__ + ": " + #exp )
+#define SBBASSERT(exp)                                                 \
+  if (!(exp))                                                          \
+  throw sbbdep::ErrAssert (std::string (" assertion in ")              \
+                           + sbbdep::PathName (__FILE__).base () + ":" \
+                           + __PRETTY_FUNCTION__ + ": " + #exp)
 #else
 
-#define SBBASSERT( exp ) if ( !( exp ) ) \
-  LogError () << "assertion  failed: " \
-              << sbbdep::PathName ( __FILE__ ).base() << ":" \
-              << __PRETTY_FUNCTION__ << ":" <<  #exp  ;
+#define SBBASSERT(exp)                                        \
+  if (!(exp))                                                 \
+    LogError () << "assertion  failed: "                      \
+                << sbbdep::PathName (__FILE__).base () << ":" \
+                << __PRETTY_FUNCTION__ << ":" << #exp;
 #endif
 
 #endif /* ...ERROR_HPP_ */

@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,69 +21,112 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEP_PKGNAME_HPP_
 #define SBBDEP_PKGNAME_HPP_
 
-#include <string>
 #include <iosfwd>
+#include <string>
 
-namespace sbbdep {
-
-
-class PkgName
+namespace sbbdep
 {
-  
-public:
 
-  class BuildTag
+  class PkgName
   {
-    int _num;
-    std::string _tag;
-
   public:
-    BuildTag(): _num(0), _tag() {}
-    
-    BuildTag(const std::string& buildtag) ; 
-    
-    ~BuildTag() = default;
-    
-    const std::string& Tag() const  { return _tag; }
-    int Num() const { return _num; }
+    class BuildTag
+    {
+      int         _num;
+      std::string _tag;
+
+    public:
+      BuildTag ()
+      : _num (0)
+      , _tag ()
+      {
+      }
+
+      BuildTag (const std::string& buildtag);
+
+      ~BuildTag () = default;
+
+      const std::string&
+      Tag () const
+      {
+        return _tag;
+      }
+      int
+      Num () const
+      {
+        return _num;
+      }
+    };
+
+    PkgName (std::string name)
+    : _fullname (std::move (name))
+    {
+      makeDetails ();
+    }
+    PkgName (const char* name)
+    : _fullname (name)
+    {
+      makeDetails ();
+    }
+    ~PkgName () = default;
+
+    const BuildTag&
+    build () const
+    {
+      return _build;
+    }
+    const std::string&
+    buildStr () const
+    {
+      return _buildstr;
+    }
+    const std::string&
+    arch () const
+    {
+      return _arch;
+    }
+    const std::string&
+    version () const
+    {
+      return _version;
+    }
+    const std::string&
+    name () const
+    {
+      return _name;
+    }
+    const std::string&
+    fullName () const
+    {
+      return _fullname;
+    }
+
+    bool
+    operator< (const PkgName& rhs) const
+    {
+      return _fullname < rhs._fullname;
+    }
+    bool
+    operator== (const PkgName& rhs) const
+    {
+      return _fullname == rhs._fullname;
+    }
+
+    friend std::ostream& operator<< (std::ostream& os, const PkgName& pkg);
+
+  private:
+    std::string _fullname;
+    BuildTag    _build;
+    std::string _buildstr;
+    std::string _arch;
+    std::string _version;
+    std::string _name;
+
+    void makeDetails ();
   };
-
-  
-  
-  PkgName(std::string name): _fullname(std::move(name)) {makeDetails();}
-  PkgName(const char* name): _fullname(name) {makeDetails();}
-  ~PkgName() = default;
-
-  const BuildTag& build() const { return _build; }
-  const std::string& buildStr() const { return _buildstr ; }
-  const std::string& arch() const { return _arch; }
-  const std::string& version() const { return _version; }
-  const std::string& name() const { return _name; }
-  const std::string& fullName() const { return _fullname; }
-  
-  
-  
-  bool operator<(const PkgName& rhs) const { return _fullname < rhs._fullname; }
-  bool operator==(const PkgName& rhs) const { return _fullname == rhs._fullname; }
-  
-  friend std::ostream& operator<<(std::ostream& os, const PkgName& pkg);
-  
-private:
-
-  std::string _fullname ; 
-  BuildTag _build; 
-  std::string _buildstr;
-  std::string _arch;
-  std::string _version;
-  std::string _name;
-  
-  void makeDetails();
-  
-};
 
 } // ns
 

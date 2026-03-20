@@ -21,8 +21,8 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-#include <sbbdep/log.hpp>
 #include <sbbdep/error.hpp>
+#include <sbbdep/log.hpp>
 
 #include <boost/iostreams/stream.hpp>
 
@@ -30,181 +30,170 @@ THE SOFTWARE.
 
 #include <iostream>
 
-
 namespace sbbdep
 {
 
-  
-class LogWriter
-{
-
-public:
-  
-
-  LogWriter( log_stream_type& stm )
-    : _stm( stm )
+  class LogWriter
   {
-  }
-
-  std::streamsize
-  flush( const char* c, std::streamsize n )
-  {
-    std::lock_guard<std::mutex> lock(_mtx);  
-    typedef std::ostream_iterator<char,char> iter_type;
-    std::copy( c, c + n, iter_type( _stm ) );
-    return n;
-  }//---------------------------------------------------------------------------
-
-private:
-  log_stream_type& _stm;
-  std::mutex _mtx;
-};
-  
-//------------------------------------------------------------------------------
-  
-
-
-class LogSink
-{
-  std::shared_ptr<class LogWriter> _writer ;
-  
-public:
-  typedef char char_type;
-  typedef boost::iostreams::sink_tag category;
-
-  
-  LogSink( std::shared_ptr<class LogWriter> writer )
-    : _writer( writer )
-  {
-  }  
- 
-  std::streamsize
-  write( const char_type* c, std::streamsize n )
-  {
-    return _writer->flush(c,n);
-  }
-
-};
-//------------------------------------------------------------------------------
-
-class LogStream : public boost::iostreams::stream<LogSink>
-{
-  LogSink _sink;
-public:
-  LogStream(std::shared_ptr<class LogWriter> writer) :
-      _sink (writer)
-  {
-    open (_sink);
-  }
-};  
-//------------------------------------------------------------------------------
-
-
-
-struct DevNullSink
-{
-  typedef char char_type;
-  typedef boost::iostreams::sink_tag category;
-
-  std::streamsize
-  write( const char_type* c, std::streamsize n )
-  {
-    (void)(c);
-    return n;
-  }
-};
-//------------------------------------------------------------------------------
-
-
-class  DevNullStream : public boost::iostreams::stream< DevNullSink >
-{
-  DevNullSink _sink;
-public:
-  DevNullStream(): _sink(){ open(_sink); }
-};
-//------------------------------------------------------------------------------
-
-
-
-
-std::unique_ptr<LogSetup::Setup> LogSetup::_setup{nullptr}; 
-
-//------------------------------------------------------------------------------
-void LogSetup::create(std::ostream& appstm, bool quiet)
-{
-  if( _setup != nullptr )
+  public:
+    LogWriter (log_stream_type& stm)
+    : _stm (stm)
     {
-      throw ErrUnexpected("Log already created");
     }
 
-  _setup.reset(new Setup{appstm, quiet});
-}
-//------------------------------------------------------------------------------
-bool LogSetup::Quiet()
-{
-  return _setup->quiet ; 
-}
-//------------------------------------------------------------------------------
-std::ostream& LogSetup::AppStream()
-{
-  return _setup->appstm ; 
-}
-//------------------------------------------------------------------------------
-LogChannel LogDebug()
-{
-  using std::shared_ptr;
-  using std::make_shared;
+    std::streamsize
+    flush (const char* c, std::streamsize n)
+    {
+      std::lock_guard<std::mutex>               lock (_mtx);
+      typedef std::ostream_iterator<char, char> iter_type;
+      std::copy (c, c + n, iter_type (_stm));
+      return n;
+    } //---------------------------------------------------------------------------
+
+  private:
+    log_stream_type& _stm;
+    std::mutex       _mtx;
+  };
+
+  //------------------------------------------------------------------------------
+
+  class LogSink
+  {
+    std::shared_ptr<class LogWriter> _writer;
+
+  public:
+    typedef char                       char_type;
+    typedef boost::iostreams::sink_tag category;
+
+    LogSink (std::shared_ptr<class LogWriter> writer)
+    : _writer (writer)
+    {
+    }
+
+    std::streamsize
+    write (const char_type* c, std::streamsize n)
+    {
+      return _writer->flush (c, n);
+    }
+  };
+  //------------------------------------------------------------------------------
+
+  class LogStream : public boost::iostreams::stream<LogSink>
+  {
+    LogSink _sink;
+
+  public:
+    LogStream (std::shared_ptr<class LogWriter> writer)
+    : _sink (writer)
+    {
+      open (_sink);
+    }
+  };
+  //------------------------------------------------------------------------------
+
+  struct DevNullSink
+  {
+    typedef char                       char_type;
+    typedef boost::iostreams::sink_tag category;
+
+    std::streamsize
+    write (const char_type* c, std::streamsize n)
+    {
+      (void)(c);
+      return n;
+    }
+  };
+  //------------------------------------------------------------------------------
+
+  class DevNullStream : public boost::iostreams::stream<DevNullSink>
+  {
+    DevNullSink _sink;
+
+  public:
+    DevNullStream ()
+    : _sink ()
+    {
+      open (_sink);
+    }
+  };
+  //------------------------------------------------------------------------------
+
+  std::unique_ptr<LogSetup::Setup> LogSetup::_setup{nullptr};
+
+  //------------------------------------------------------------------------------
+  void
+  LogSetup::create (std::ostream& appstm, bool quiet)
+  {
+    if (_setup != nullptr)
+      {
+        throw ErrUnexpected ("Log already created");
+      }
+
+    _setup.reset (new Setup{appstm, quiet});
+  }
+  //------------------------------------------------------------------------------
+  bool
+  LogSetup::Quiet ()
+  {
+    return _setup->quiet;
+  }
+  //------------------------------------------------------------------------------
+  std::ostream&
+  LogSetup::AppStream ()
+  {
+    return _setup->appstm;
+  }
+  //------------------------------------------------------------------------------
+  LogChannel
+  LogDebug ()
+  {
+    using std::make_shared;
+    using std::shared_ptr;
 
 #ifdef DEBUG
-  static shared_ptr<LogWriter> writer = make_shared<LogWriter> (std::cerr);
-  return LogChannel (make_shared<LogStream> (writer));
+    static shared_ptr<LogWriter> writer = make_shared<LogWriter> (std::cerr);
+    return LogChannel (make_shared<LogStream> (writer));
 #else
-  return LogChannel (make_shared<DevNullStream> ());
+    return LogChannel (make_shared<DevNullStream> ());
 #endif
+  }
+  //------------------------------------------------------------------------------
+  LogChannel
+  LogError ()
+  {
+    using std::make_shared;
+    using std::shared_ptr;
 
-}
-//------------------------------------------------------------------------------
-LogChannel LogError()
-{
-  using std::shared_ptr;
-  using std::make_shared;
-  
-  static shared_ptr<LogWriter> writer = make_shared<LogWriter> (std::cerr);
-  
-  return LogChannel (make_shared<LogStream> (writer));
-}
-//------------------------------------------------------------------------------
-LogChannel LogInfo()
-{
-  using std::shared_ptr;
-  using std::make_shared;
-  
-  if ( LogSetup::Quiet () )
-    return LogChannel (make_shared<DevNullStream>()) ;
-  
-  
-  static shared_ptr<LogWriter> writer = make_shared<LogWriter> (std::cout);
-  return LogChannel (make_shared<LogStream> (writer));
-  
-}
-//------------------------------------------------------------------------------
+    static shared_ptr<LogWriter> writer = make_shared<LogWriter> (std::cerr);
 
-LogChannel LogMsg()
-{
-  using std::shared_ptr;
-  using std::make_shared;
+    return LogChannel (make_shared<LogStream> (writer));
+  }
+  //------------------------------------------------------------------------------
+  LogChannel
+  LogInfo ()
+  {
+    using std::make_shared;
+    using std::shared_ptr;
 
-  static shared_ptr<LogWriter> writer =
-      make_shared<LogWriter> (LogSetup::AppStream ());
+    if (LogSetup::Quiet ())
+      return LogChannel (make_shared<DevNullStream> ());
 
-  return LogChannel (make_shared<LogStream> (writer));
-  
-}
-//------------------------------------------------------------------------------
+    static shared_ptr<LogWriter> writer = make_shared<LogWriter> (std::cout);
+    return LogChannel (make_shared<LogStream> (writer));
+  }
+  //------------------------------------------------------------------------------
 
+  LogChannel
+  LogMsg ()
+  {
+    using std::make_shared;
+    using std::shared_ptr;
 
+    static shared_ptr<LogWriter> writer
+        = make_shared<LogWriter> (LogSetup::AppStream ());
 
-}// ns
+    return LogChannel (make_shared<LogStream> (writer));
+  }
+  //------------------------------------------------------------------------------
 
-
-
+} // ns

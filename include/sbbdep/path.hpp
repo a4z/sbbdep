@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,6 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
-
 #ifndef SBBDEP_PATH_HPP_
 #define SBBDEP_PATH_HPP_
 
@@ -31,105 +29,140 @@ THE SOFTWARE.
 
 #include <sbbdep/pathname.hpp>
 
-namespace sbbdep{
-
-class Path : public PathName
+namespace sbbdep
 {
 
-public:
-
-  enum Type
+  class Path : public PathName
+  {
+  public:
+    enum Type
     {
-      INVALID = 0 ,
-      ISDIR ,
-      ISCHR ,
-      ISBLK  ,
-      ISREG ,
-      ISFIFO ,
-      ISLNK ,
-      ISSOCK 
+      INVALID = 0,
+      ISDIR,
+      ISCHR,
+      ISBLK,
+      ISREG,
+      ISFIFO,
+      ISLNK,
+      ISSOCK
     };
 
-  Path();
-  Path(const std::string& url);
-  Path(const char* url);
-  
+    Path ();
+    Path (const std::string& url);
+    Path (const char* url);
 
-  Path(Path&& other);
-  Path& operator=(Path&& rhs);
+    Path (Path&& other);
+    Path& operator= (Path&& rhs);
 
-  Path(const Path& other);
-  Path(const PathName& other);
-  
-  Path& operator=(const Path& rhs);
+    Path (const Path& other);
+    Path (const PathName& other);
 
+    Path& operator= (const Path& rhs);
 
+    Path& operator= (const std::string& rhs);
+    Path& operator= (const char* rhs);
+    Path& operator= (const PathName& rhs);
 
-  Path& operator=(const std::string& rhs);
-  Path& operator=(const char* rhs);
-  Path& operator=(const PathName& rhs);
-  
-  Path& operator+=(const std::string& p);
+    Path& operator+= (const std::string& p);
 
-  bool operator==( const Path& other ) const 
-  { return str() == other.str() ; }
+    bool
+    operator== (const Path& other) const
+    {
+      return str () == other.str ();
+    }
 
-  bool operator<( const Path& other ) const 
-  { return str() < other.str() ; }  
-  
-  /// d'tor
-  virtual ~Path();
-  
-  /// returns if path exists
-  bool isValid() const { return m_type ; } 
-  
-  /// returns if path is a regular file
-  bool isRegularFile() const { return m_type == ISREG ; } //;
-  
-  /// returns if path is a folder
-  bool isFolder() const { return m_type == ISDIR ; } // ;
-  
-  /// returns if path is a link
-  bool isLink() const { return m_type == ISLNK ; } //;
-  
-  bool isCharacterSpecial() const { return m_type == ISCHR ; } //;
-  
-  bool isBlockSpecial() const { return m_type == ISBLK ; } //;
-  
-  /// returns the Type enum val
-  Type getType() const { return m_type; }
+    bool
+    operator== (const PathName& other) const
+    {
+      return str () == other.str ();
+    }
 
-  /// returns the Type enum val name as string 
-  std::string getTypeString() const ;
-  
-  /// is user executable
-  bool isUserX() const;
-  
-  const timespec& getLastAccessTime() const ;
-  const time_t& getLastModificationTime() const ;
-  const time_t& getLastStatusChangeTime() const ;
-  
-  bool makeRealPath()  ;
+    bool
+    operator< (const Path& other) const
+    {
+      return str () < other.str ();
+    }
 
-  Path getRealPath() const ;
+    /// d'tor
+    virtual ~Path ();
 
-  friend std::ostream& operator<<(std::ostream& os, const Path& p);  
-  
-private:
-  
-  Type m_type; 
-  struct stat m_stat;
-  
-  void doStat(); 
-  
-  void setURL(const std::string& url){ PathName::setURL(url); doStat();}
-  
-};
+    /// returns if path exists
+    bool
+    isValid () const
+    {
+      return m_type;
+    }
 
+    /// returns if path is a regular file
+    bool
+    isRegularFile () const
+    {
+      return m_type == ISREG;
+    } //;
 
+    /// returns if path is a folder
+    bool
+    isFolder () const
+    {
+      return m_type == ISDIR;
+    } // ;
 
+    /// returns if path is a link
+    bool
+    isLink () const
+    {
+      return m_type == ISLNK;
+    } //;
 
-}//ns
+    bool
+    isCharacterSpecial () const
+    {
+      return m_type == ISCHR;
+    } //;
 
+    bool
+    isBlockSpecial () const
+    {
+      return m_type == ISBLK;
+    } //;
+
+    /// returns the Type enum val
+    Type
+    getType () const
+    {
+      return m_type;
+    }
+
+    /// returns the Type enum val name as string
+    std::string getTypeString () const;
+
+    /// is user executable
+    bool isUserX () const;
+
+    const timespec& getLastAccessTime () const;
+    const time_t&   getLastModificationTime () const;
+    const time_t&   getLastStatusChangeTime () const;
+
+    bool makeRealPath ();
+
+    Path getRealPath () const;
+
+    friend std::ostream& operator<< (std::ostream& os, const Path& p);
+
+  private:
+    Type        m_type;
+    struct stat m_stat;
+
+    void doStat ();
+
+    void
+    setURL (const std::string& url)
+    {
+      PathName::setURL (url);
+      doStat ();
+    }
+  };
+
+} // ns
 
 #endif /* ...PATH_HPP_ */

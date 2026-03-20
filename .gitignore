@@ -1,0 +1,12 @@
+build/
+libsl3/
+.vscode/
+
+include/sbbdep/config.hpp
+sbbdep.db
+sbbdep.db.back
+zcheck_update.sh
+
+tmp/
+_site
+.claude

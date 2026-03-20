@@ -1,5 +1,5 @@
 /*
- --------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+ --------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
  -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -25,251 +25,239 @@
 
 #include <climits>
 #include <cstdlib>
-#include <unistd.h>
 #include <iostream>
+#include <unistd.h>
 
-namespace sbbdep {
-
-Path::Path () :
-    PathName (),
-    m_type (INVALID)
+namespace sbbdep
 {
 
-}
+  Path::Path ()
+  : PathName ()
+  , m_type (INVALID)
+  {
+  }
 
-//------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------
 
-Path::Path (const std::string& url) :
-    PathName (url),
-    m_type (INVALID)
-{
+  Path::Path (const std::string& url)
+  : PathName (url)
+  , m_type (INVALID)
+  {
+    doStat ();
+  }
+  //------------------------------------------------------------------------------
 
-  doStat ();
+  Path::Path (const char* url)
+  : PathName (url)
+  , m_type (INVALID)
+  {
+    doStat ();
+  }
+  //------------------------------------------------------------------------------
 
-}
-//------------------------------------------------------------------------------
+  Path::Path (const PathName& other)
+  : PathName (other)
+  , m_type (INVALID)
+  {
+    doStat ();
+  }
+  //------------------------------------------------------------------------------
 
-Path::Path (const char* url) :
-    PathName (url),
-    m_type (INVALID)
-{
-  doStat ();
-}
-//------------------------------------------------------------------------------
+  Path::Path (const Path& other)
+  : PathName (other.str ())
+  , m_type (INVALID)
+  {
+    doStat ();
+  }
+  //------------------------------------------------------------------------------
 
-Path::Path (const PathName& other) :
-    PathName (other),
-    m_type (INVALID)
-{
-  doStat ();
-}
-//------------------------------------------------------------------------------
+  Path&
+  Path::operator= (const Path& rhs)
+  {
+    if (&rhs != this)
+      setURL (rhs.str ());
 
-Path::Path (const Path& other) :
-    PathName (other.str ()),
-    m_type (INVALID)
-{
-  doStat ();
-}
-//------------------------------------------------------------------------------
+    return *this;
+  }
+  //------------------------------------------------------------------------------
 
-Path&
-Path::operator= (const Path& rhs)
-{
-  if (&rhs != this)
-    setURL (rhs.str ());
+  Path::Path (Path&& other)
+  : PathName (other.str ())
+  , m_type (std::move (other.m_type))
+  , m_stat (std::move (other.m_stat))
+  {
+  }
+  //------------------------------------------------------------------------------
 
-  return *this;
-}
-//------------------------------------------------------------------------------
+  Path&
+  Path::operator= (Path&& rhs)
+  {
+    if (this != &rhs)
+      {
+        m_type = std::move (rhs.m_type);
+        m_stat = std::move (rhs.m_stat);
+        PathName::operator= (rhs);
+      }
 
-Path::Path (Path&& other) :
-    PathName (std::move (other.str ())),
-    m_type (std::move (other.m_type)),
-    m_stat (std::move (other.m_stat))
-{
+    return *this;
+  }
 
-}
-//------------------------------------------------------------------------------
+  Path&
+  Path::operator= (const std::string& rhs)
+  {
+    setURL (rhs);
+    return *this;
+  }
+  //------------------------------------------------------------------------------
 
-Path&
-Path::operator= (Path&& rhs)
-{
-  if (this != &rhs)
-    {
-      m_type = std::move (rhs.m_type);
-      m_stat = std::move (rhs.m_stat);
-      PathName::operator =(rhs) ;
-    }
+  Path&
+  Path::operator= (const char* rhs)
+  {
+    setURL (rhs);
+    return *this;
+  }
+  //------------------------------------------------------------------------------
 
-  return *this;
-}
+  Path&
+  Path::operator= (const PathName& rhs)
+  {
+    if (&rhs != this)
+      setURL (rhs.str ());
 
-Path&
-Path::operator= (const std::string& rhs)
-{
-  setURL (rhs);
-  return *this;
-}
-//------------------------------------------------------------------------------
+    return *this;
+  }
+  //------------------------------------------------------------------------------
 
-Path&
-Path::operator= (const char* rhs)
-{
-  setURL (rhs);
-  return *this;
-}
-//------------------------------------------------------------------------------
+  Path&
+  Path::operator+= (const std::string& p)
+  {
+    setURL (str () + p);
+    return *this;
+  }
+  //------------------------------------------------------------------------------
 
-Path&
-Path::operator= (const PathName& rhs)
-{
-  if (&rhs != this)
-    setURL (rhs.str ());
+  Path::~Path () {}
 
-  return *this;
-}
-//------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------
 
-Path&
-Path::operator+= (const std::string& p)
-{
-  setURL (str() + p);
-  return *this;
-}
-//------------------------------------------------------------------------------
+  void
+  Path::doStat ()
+  {
+    // use lstat wege links..
+    if (lstat (str ().c_str (), &m_stat) == -1)
+      {
+        m_type = INVALID;
+        return;
+      }
 
-Path::~Path ()
-{
-}
+    if (S_ISREG (m_stat.st_mode))
+      m_type = Path::ISREG;
+    else if (S_ISDIR (m_stat.st_mode))
+      m_type = Path::ISDIR;
+    else if (S_ISLNK (m_stat.st_mode))
+      m_type = Path::ISLNK;
+    else if (S_ISCHR (m_stat.st_mode))
+      m_type = Path::ISCHR;
+    else if (S_ISBLK (m_stat.st_mode))
+      m_type = Path::ISBLK;
+    else if (S_ISSOCK (m_stat.st_mode))
+      m_type = Path::ISSOCK;
+    else if (S_ISFIFO (m_stat.st_mode))
+      m_type = Path::ISFIFO;
+    else
+      m_type = INVALID; // just to be sure ..
+  }
+  //------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
+  std::string
+  Path::getTypeString () const
+  {
+    // just a debug function
 
-void
-Path::doStat ()
-{
+    if (m_type == Path::ISREG)
+      return "ISREG";
+    else if (m_type == Path::ISDIR)
+      return "ISDIR";
+    else if (m_type == Path::ISLNK)
+      return "ISLNK";
+    else if (m_type == Path::ISCHR)
+      return "ISCHR";
+    else if (m_type == Path::ISBLK)
+      return "ISBLK";
+    else if (m_type == Path::ISSOCK)
+      return "ISSOCK";
+    else if (m_type == Path::ISFIFO)
+      return "ISFIFO";
+    else
+      /*if ( m_type == Path::INVALID )*/ return "INVALID";
+  }
+  //------------------------------------------------------------------------------
 
-  //use lstat wege links..
-  if (lstat (str ().c_str (), &m_stat) == -1)
-    {
-      m_type = INVALID;
-      return;
-    }
+  bool
+  Path::isUserX () const
+  {
+    // if ( m_type == INVALID  ) return false;
+    return (m_stat.st_mode & S_IXUSR) ? true : false;
+  }
+  //------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------
 
-  if (S_ISREG(m_stat.st_mode))
-    m_type = Path::ISREG;
-  else if (S_ISDIR(m_stat.st_mode))
-    m_type = Path::ISDIR;
-  else if (S_ISLNK(m_stat.st_mode))
-    m_type = Path::ISLNK;
-  else if (S_ISCHR(m_stat.st_mode))
-    m_type = Path::ISCHR;
-  else if (S_ISBLK(m_stat.st_mode))
-    m_type = Path::ISBLK;
-  else if (S_ISSOCK(m_stat.st_mode))
-    m_type = Path::ISSOCK;
-  else if (S_ISFIFO(m_stat.st_mode))
-    m_type = Path::ISFIFO;
-  else
-    m_type = INVALID; // just to be sure ..
+  const timespec&
+  Path::getLastAccessTime () const
+  {
+    return m_stat.st_atim;
+  }
+  //------------------------------------------------------------------------------
 
-}
-//------------------------------------------------------------------------------
+  const time_t&
+  Path::getLastModificationTime () const
+  {
+    return m_stat.st_mtime;
+  }
+  //------------------------------------------------------------------------------
 
-std::string
-Path::getTypeString () const
-{
+  const time_t&
+  Path::getLastStatusChangeTime () const
+  {
+    return m_stat.st_ctime;
+  }
+  //------------------------------------------------------------------------------
 
-  //just a debug function
+  bool
+  Path::makeRealPath ()
+  {
+    char buf[PATH_MAX];
 
-  if (m_type == Path::ISREG)
-    return "ISREG";
-  else if (m_type == Path::ISDIR)
-    return "ISDIR";
-  else if (m_type == Path::ISLNK)
-    return "ISLNK";
-  else if (m_type == Path::ISCHR)
-    return "ISCHR";
-  else if (m_type == Path::ISBLK)
-    return "ISBLK";
-  else if (m_type == Path::ISSOCK)
-    return "ISSOCK";
-  else if (m_type == Path::ISFIFO)
-    return "ISFIFO";
-  else
-    /*if ( m_type == Path::INVALID )*/return "INVALID";
+    char* c = realpath (str ().c_str (), buf);
 
-}
-//------------------------------------------------------------------------------
+    if (!c)
+      return false;
 
-bool
-Path::isUserX () const
-{
-  //if ( m_type == INVALID  ) return false; 
-  return (m_stat.st_mode & S_IXUSR) ? true : false;
-}
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+    setURL (buf);
 
-const timespec&
-Path::getLastAccessTime () const
-{
-  return m_stat.st_atim;
-}
-//------------------------------------------------------------------------------
+    return isValid ();
+  }
+  //------------------------------------------------------------------------------
 
-const time_t&
-Path::getLastModificationTime () const
-{
-  return m_stat.st_mtime;
-}
-//------------------------------------------------------------------------------
+  Path
+  Path::getRealPath () const
+  {
+    Path ret = *this;
+    ret.makeRealPath ();
+    return ret;
+  }
+  //------------------------------------------------------------------------------
 
-const time_t&
-Path::getLastStatusChangeTime () const
-{
-  return m_stat.st_ctime;
-}
-//------------------------------------------------------------------------------
+  std::ostream&
+  operator<< (std::ostream& os, const Path& p)
+  {
+    os << p.str ();
+    return os;
+  }
 
-bool
-Path::makeRealPath ()
-{
-
-  char buf [PATH_MAX];
-
-  char* c = realpath (str ().c_str (), buf);
-
-  if (!c)
-    return false;
-
-  setURL (buf);
-
-  return isValid ();
-
-}
-//------------------------------------------------------------------------------
-
-Path
-Path::getRealPath() const
-{
-  Path ret = *this ;
-  ret.makeRealPath() ;
-  return ret ;
-
-}
-//------------------------------------------------------------------------------
-
-std::ostream&
-operator<< (std::ostream& os, const Path& p)
-{
-  os << p.str ();
-  return os;
-}
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-}//ns
+  //------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------
+} // ns
 
 /*
 

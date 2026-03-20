@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,106 +21,96 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEP_DIRCONTENT_HPP_
 #define SBBDEP_DIRCONTENT_HPP_
 
-#include <vector>
-#include <string>
 #include <functional>
+#include <string>
+#include <vector>
 
-namespace sbbdep {
-
-
-/**
- * \brief Helper to get or iterate over entries in a directory
- *
- */
-class Dir
+namespace sbbdep
 {
-public:
-
-  ///Callback functor, taking the directory and the file name.
-  using ContentCall  = std::function< bool(const std::string&,
-                                             const std::string&)> ;
-
-  /// filter function.
-  /// returns true it the given name shall be ignored, false otherwise
-  using IgnorFilter = std::function<bool(const std::string&)> ;
 
   /**
-   * \brief c'tor.
+   * \brief Helper to get or iterate over entries in a directory
    *
    */
-  Dir(std::string name);
+  class Dir
+  {
+  public:
+    /// Callback functor, taking the directory and the file name.
+    using ContentCall
+        = std::function<bool (const std::string&, const std::string&)>;
 
-  /// property access
-  const std::string&
-  getName() const ;
+    /// filter function.
+    /// returns true it the given name shall be ignored, false otherwise
+    using IgnoreFilter = std::function<bool (const std::string&)>;
 
+    /**
+     * \brief c'tor.
+     *
+     */
+    Dir (std::string name);
 
-  /**
-   * \brief A default filter function
-   *
-   * ignores
-   *    - hidden files/dirs .*  \n
-   *    - backup files *~ \n
-   *    - emacs backup files #*# \n
-   *
-   * \sa getContent \sa apply
-   */
-  static bool
-  defaultFilter(const std::string& f) ;
+    /// property access
+    const std::string& getName () const;
 
+    /**
+     * \brief A default filter function
+     *
+     * ignores
+     *    - hidden files/dirs .*  \n
+     *    - backup files *~ \n
+     *    - emacs backup files #*# \n
+     *
+     * \sa getContent \sa apply
+     */
+    static bool defaultFilter (const std::string& f);
 
-  /**
-   * \brief get a list of all entries in a directory.
-   *
-   * \throw ErrGeneric if the directory can not be opened
-   *
-   * \return list of names within the direcotry
-   */
-  std::vector<std::string>
-  getContent(IgnorFilter = defaultFilter ) const ;
+    /**
+     * \brief get a list of all entries in a directory.
+     *
+     * \throw ErrGeneric if the directory can not be opened
+     *
+     * \return list of names within the directory
+     */
+    std::vector<std::string> getContent (IgnoreFilter = defaultFilter) const;
 
-  /**
-   * \brief apply a function to all entries.
-   *
-   * \throw ErrGeneric if the directory can not be opened
-   * \throw whatever ContentCall might throw
-   *
-   * \param cb, if of the callback is false, function exits
-   */
-  void
-  forEach(ContentCall cb, IgnorFilter = defaultFilter) const ;
+    /**
+     * \brief apply a function to all entries.
+     *
+     * \throw ErrGeneric if the directory can not be opened
+     * \throw whatever ContentCall might throw
+     *
+     * \param cb, if of the callback is false, function exits
+     */
+    void forEach (ContentCall cb, IgnoreFilter = defaultFilter) const;
 
+  private:
+    std::string _name;
+  };
 
-private:
-  
-   std::string _name;
+  class PkgAdmDir
+  {
+    static std::string name;
+    PkgAdmDir () = default;
 
-   
-};
+  public:
+    /// requires that it was set
+    static Dir get ();
 
-class PkgAdmDir
-{
-  static std::string name ;
-  PkgAdmDir() = default;
-public:
+    // I know I use this possible from different thread, but
+    // but set may be only called in AppCli.
 
-  /// requires that it was set
-  static Dir get();
+    /// needs to be set on startup and then never again
+    static void set (const std::string& n);
+  };
 
-  // I know I use this possible from different thread, but
-  // but set may be only called in AppCli.
-
-  /// needs to be set on startup and then never again
-  static void set(const std::string& n);
-
-};
-
-inline Dir
-pkgAdmDir() { return PkgAdmDir::get() ; }
+  inline Dir
+  pkgAdmDir ()
+  {
+    return PkgAdmDir::get ();
+  }
 
 }
 

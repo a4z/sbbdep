@@ -1,0 +1,29 @@
+= sbbdep — the cache
+:toc:
+
+sbbdep takes a snapshot of installed packages, extracts information about
+binary runtime dependencies and stores it in a sqlite3 database which is
+kept in sync.
+
+On its first run sbbdep indexes all installed packages, scans for binary and
+library files, and stores the found information in a cache. +
+The cache file location can be specified with the `-c` or `--cache` option;
+the default is `$HOME/.cache/sbbdep.db`. +
+The cache file must be readable and writable.
+
+Each time sbbdep is executed it scans the system for changes.
+If changes are found the cache is updated.
+This is normally very fast, but when changes are found there is an additional
+constant-time step where sbbdep resolves symbolic links in the file system. +
+Synchronisation can be skipped with `--nosync`, however, if packages have been
+installed or removed since the last sync the query results may be stale.
+
+During synchronisation sbbdep reports its activity to standard output. +
+This can be suppressed with the `--quiet` option.
+
+Since the dependency info is stored in a sqlite3 database it can be accessed
+directly with any sqlite3 client. +
+The schema is documented in `README_db.txt` in the source tree.
+
+xref:options.adoc[Back to options]
+xref:index.adoc[Back to index]

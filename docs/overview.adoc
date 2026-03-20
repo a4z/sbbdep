@@ -1,0 +1,31 @@
+= sbbdep overview
+:toc:
+
+sbbdep is a command line tool that analyses the system for binary runtime
+dependencies of dynamic linked files.
+
+sbbdep provides the following main functionality:
+
+* Dependency queries for
+  - installed packages
+  - single binary files
+  - package folders (DESTDIR targets)
+
+* Different query modes
+  - what are the dependencies of the given file or package
+  - what depends on a given file or package
+
+* Different report formats
+  - a summary list of package names, or a
+  - detailed report with file-to-file dependency information
+  - short report to produce *.dep files as used by some build tools
+
+* Fast +
+  For a complex and large package like gimp,
+  sbbdep can report all binary dependencies in less than one second.
+
+* Can be used to generate a dependency file in a build script +
+  sbbdep works also on directories, which is useful for
+  `make install DESTDIR=...` targets.
+
+xref:index.adoc[Back to index]

@@ -1,5 +1,5 @@
 /*
- --------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+ --------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
  -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
  -----------------------------------------------------------------------------
  */
 
-#include <sbbdep/pathname.hpp>
 #include <sbbdep/error.hpp>
 #include <sbbdep/log.hpp>
 #include <sbbdep/pathname.hpp>
@@ -31,67 +30,63 @@
 
 #include <libgen.h>
 
-namespace sbbdep {
-
-PathName::PathName () noexcept
-: _url()
+namespace sbbdep
 {
 
-}
-//------------------------------------------------------------------------------
+  PathName::PathName () noexcept
+  : _url ()
+  {
+  }
+  //------------------------------------------------------------------------------
 
-PathName::PathName (std::string url) noexcept
-: _url(std::move(url))
-{
+  PathName::PathName (std::string url) noexcept
+  : _url (std::move (url))
+  {
+  }
+  //------------------------------------------------------------------------------
 
-}
-//------------------------------------------------------------------------------
+  std::string
+  PathName::base () const
+  {
+    SBBASSERT (_url.size () < PATH_MAX);
 
-std::string
-PathName::base () const
-{
-  SBBASSERT (_url.size () < PATH_MAX) ;
+    char path[PATH_MAX];
+    std::copy (_url.begin (), _url.end (), std::begin (path));
+    path[_url.size ()] = '\0';
+    return basename (path);
+  }
 
-  char path [PATH_MAX];
-  std::copy (_url.begin (), _url.end (), std::begin (path));
-  path [_url.size ()] = '\0';
-  return basename (path);
-}
+  //------------------------------------------------------------------------------
+  std::string
+  PathName::dir () const
+  {
+    SBBASSERT (_url.size () < PATH_MAX);
 
-//------------------------------------------------------------------------------
-std::string
-PathName::dir () const
-{
-  SBBASSERT (_url.size () < PATH_MAX) ;
+    char path[PATH_MAX];
+    std::copy (_url.begin (), _url.end (), std::begin (path));
+    path[_url.size ()] = '\0';
+    return dirname (path);
+  }
+  //------------------------------------------------------------------------------
 
-  char path [PATH_MAX];
-  std::copy (_url.begin (), _url.end (), std::begin (path));
-  path [_url.size ()] = '\0';
-  return dirname (path);
-}
-//------------------------------------------------------------------------------
+  std::vector<std::string>
+  PathName::split () const
+  {
+    std::vector<std::string> retval;
 
+    auto b = base ();
+    auto d = dir ();
 
+    if (b != d)
+      {
+        PathName p{d};
+        retval = p.split ();
+      }
 
-std::vector<std::string>
-PathName::splitt() const
-{
-  std::vector<std::string> retval ;
+    retval.emplace_back (b);
+    return retval;
+  }
 
-  auto b = base() ;
-  auto d = dir() ;
-
-  if (b != d)
-    {
-      PathName p{d} ;
-      retval = p.splitt() ;
-    }
-
-  retval.emplace_back(b) ;
-  return retval ;
-}
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-}//ns
-
+  //------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------
+} // ns

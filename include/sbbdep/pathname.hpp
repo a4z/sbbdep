@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,67 +21,73 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #ifndef SBBDEP_PATHNAME_HPP_
 #define SBBDEP_PATHNAME_HPP_
-
 
 #include <string>
 #include <vector>
 
-
-namespace sbbdep{
-
-
-class PathName
+namespace sbbdep
 {
 
-public:
-  
-  PathName() noexcept ;
-  PathName(std::string url) noexcept ;
-  
-  
-  PathName(const PathName& ) = default ;
-  PathName& operator=(const PathName& ) = default ;
-  
-  PathName(PathName&&) noexcept  = default ;
-  PathName& operator=(PathName&&) = default ;
+  class PathName
+  {
+  public:
+    PathName () noexcept;
+    PathName (std::string url) noexcept;
 
-  virtual ~PathName() noexcept = default;
-  
-  const std::string& str() const { return _url; }
-  
-  std::string base() const ;
-  std::string dir() const ;
+    PathName (const PathName&)            = default;
+    PathName& operator= (const PathName&) = default;
 
-  bool empty() const { return _url.empty() ;}
+    PathName (PathName&&) noexcept   = default;
+    PathName& operator= (PathName&&) = default;
 
-  operator const char*() const { return _url.c_str() ; }
-  operator const std::string&() const { return _url ; }
-  
-  bool operator==( const PathName& other ) const 
-  { return _url == other._url ; }
+    virtual ~PathName () noexcept = default;
 
-  bool operator==( const std::string& other ) const 
-  { return _url == other ; }
-  
+    const std::string&
+    str () const
+    {
+      return _url;
+    }
 
-  std::vector<std::string>
-  splitt() const;
+    std::string base () const;
+    std::string dir () const;
 
-protected:
-  // for encapsulation in Path,..
-  virtual void setURL(const std::string& url){_url=url;}
-  
-private:
-  std::string _url; 
-  
-};
+    bool
+    empty () const
+    {
+      return _url.empty ();
+    }
 
+    operator const char*() const { return _url.c_str (); }
+    operator const std::string&() const { return _url; }
 
+    bool
+    operator== (const PathName& other) const
+    {
+      return _url == other._url;
+    }
 
-}//ns
+    bool
+    operator== (const std::string& other) const
+    {
+      return _url == other;
+    }
 
+    std::vector<std::string> split () const;
+
+  protected:
+    // for encapsulation in Path,..
+    virtual void
+    setURL (const std::string& url)
+    {
+      _url = url;
+    }
+
+  private:
+    std::string _url;
+  };
+
+} // ns
 
 #endif /* ...PATHNAME_HPP_ */

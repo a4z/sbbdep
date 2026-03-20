@@ -1,0 +1,31 @@
+= sbbdep — other options
+:toc:
+
+== Controlling the output
+
+sbbdep has two types of output:
+
+* *Information messages* — e.g. cache synchronisation status
+* *Result messages* — query results
+
+By default both go to standard output.
+
+=== --quiet
+
+Suppresses information messages. Query results are still printed.
+
+=== -f / --file
+
+Writes query results to the specified file instead of standard output. +
+The file is created if it does not exist.
+
+== -v / --version
+
+Prints the version of sbbdep and exits.
+
+== -h / --help
+
+Prints the help text and exits.
+
+xref:options.adoc[Back to options]
+xref:index.adoc[Back to index]

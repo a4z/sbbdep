@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,85 +21,68 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
 #include <sbbdep/pkgname.hpp>
 
-#include <utility>
 #include <sstream>
+#include <utility>
 
 #include <iostream>
 
-namespace sbbdep {
-
-PkgName::BuildTag::BuildTag(const std::string& buildtag)
-: _num(0)
-, _tag()
-{
-  
-  static const std::string nums = "0123456789";
-  std::string::size_type splittpos = buildtag.find_first_not_of(nums) ;
-
-  
-  if ( splittpos == std::string::npos )
-    {
-      std::istringstream istm(buildtag);
-      istm >> _num;        
-    }
-  else 
-    {
-      std::istringstream istm(buildtag.substr(0, splittpos));
-      istm >> _num;
-      _tag = buildtag.substr(splittpos);
-    }
-  
-
-}
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-
-
-
-//------------------------------------------------------------------------------
-
-
-void 
-PkgName::makeDetails()
+namespace sbbdep
 {
 
-  using namespace std;
-  pair< string::size_type, string::size_type > 
-          range(_fullname.rfind('-', string::npos), string::npos);
+  PkgName::BuildTag::BuildTag (const std::string& buildtag)
+  : _num (0)
+  , _tag ()
+  {
+    static const std::string nums      = "0123456789";
+    std::string::size_type   splittpos = buildtag.find_first_not_of (nums);
 
-  _buildstr = _fullname.substr(range.first + 1, range.second);
+    if (splittpos == std::string::npos)
+      {
+        std::istringstream istm (buildtag);
+        istm >> _num;
+      }
+    else
+      {
+        std::istringstream istm (buildtag.substr (0, splittpos));
+        istm >> _num;
+        _tag = buildtag.substr (splittpos);
+      }
+  }
+  //------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------
 
-  _build = BuildTag(_buildstr); 
-  
-  range.second = range.first - 1;
-  range.first = _fullname.rfind('-', range.second);
-  _arch = _fullname.substr(range.first + 1, range.second - range.first);
-  
+  //------------------------------------------------------------------------------
 
-  range.second = range.first - 1;
-  range.first = _fullname.rfind('-', range.second);
-  _version = _fullname.substr(range.first + 1, range.second - range.first);
+  void
+  PkgName::makeDetails ()
+  {
+    using namespace std;
+    pair<string::size_type, string::size_type> range (
+        _fullname.rfind ('-', string::npos), string::npos);
 
-  _name = _fullname.substr(0, range.first);
-  
-  
-}
-//------------------------------------------------------------------------------
+    _buildstr = _fullname.substr (range.first + 1, range.second);
 
+    _build = BuildTag (_buildstr);
 
+    range.second = range.first - 1;
+    range.first  = _fullname.rfind ('-', range.second);
+    _arch = _fullname.substr (range.first + 1, range.second - range.first);
 
-std::ostream& operator<<(std::ostream& os, const PkgName& pkg)
-{
-  os << pkg.name();
-  return os; 
-}
+    range.second = range.first - 1;
+    range.first  = _fullname.rfind ('-', range.second);
+    _version = _fullname.substr (range.first + 1, range.second - range.first);
 
+    _name = _fullname.substr (0, range.first);
+  }
+  //------------------------------------------------------------------------------
 
-
-
-
+  std::ostream&
+  operator<< (std::ostream& os, const PkgName& pkg)
+  {
+    os << pkg.name ();
+    return os;
+  }
 
 } // ns

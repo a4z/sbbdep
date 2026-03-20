@@ -23,36 +23,34 @@ THE SOFTWARE.
 
 #include <sbbdep/error.hpp>
 
-#include <ostream>
 #include <map>
+#include <ostream>
 
-namespace sbbdep{
-
-
-namespace {
-  constexpr const char* ErrCodeName(ErrCode ec)
-  {
-
-    return ec == ErrCode::GENERIC      ? "GENERIC" :
-           ec == ErrCode::ASSERT       ?  "ASSERT" :
-           ec == ErrCode::TODO         ?  "TODO" :
-           ec == ErrCode::UNEXPECTED   ?  "UNEXPECTED" :
-               "NA" ;
-
-  }
-}//------------------------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------------------------
-
-
-
-//--------------------------------------------------------------------------------------------------
-
-std::ostream& operator<< (std::ostream& os, const Error& e)
+namespace sbbdep
 {
-  os << "sbbdep::" << ErrCodeName(e.id()) << ":" << e.what();
-  return os;
-}
-//--------------------------------------------------------------------------------------------------
 
+  namespace
+  {
+    constexpr const char*
+    ErrCodeName (ErrCode ec)
+    {
+      return ec == ErrCode::GENERIC      ? "GENERIC"
+             : ec == ErrCode::ASSERT     ? "ASSERT"
+             : ec == ErrCode::TODO       ? "TODO"
+             : ec == ErrCode::UNEXPECTED ? "UNEXPECTED"
+                                         : "NA";
+    }
+  } //------------------------------------------------------------------------------------------------
+  //--------------------------------------------------------------------------------------------------
+
+  //--------------------------------------------------------------------------------------------------
+
+  std::ostream&
+  operator<< (std::ostream& os, const Error& e)
+  {
+    os << "sbbdep::" << ErrCodeName (e.id ()) << ":" << e.what ();
+    return os;
+  }
+  //--------------------------------------------------------------------------------------------------
 
 }

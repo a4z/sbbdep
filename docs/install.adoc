@@ -1,0 +1,58 @@
+= sbbdep installation
+:toc:
+
+== Current version
+
+Version 1.0.0 of sbbdep runs on Slackware current.
+
+=== Install via SBo
+
+sbbdep might be available on SlackBuilds.org, but probably not in the latest version:
+
+http://slackbuilds.org/repository/15.0/system/sbbdep/
+
+It is easy to build a package for source, see below.
+
+=== Build from source
+
+==== Requirements
+
+* CMake 4.0 or newer
+* A C++17 capable compiler (GCC 15 is available on Slackware current)
+* Ninja (recommended, available on Slackware current)
+
+libsl3 and sqlite3 are fetched automatically by CMake if not present locally.
+
+==== Build
+
+----
+git clone https://github.com/a4z/sbbdep.git
+cd sbbdep
+cmake --workflow --preset release
+----
+
+==== Create a Slackware package
+
+----
+slackbuild/create-pkg.sh
+----
+
+This produces `tmp/sbbdep-1.0.0-x86_64-1.tgz`.
+
+==== Install
+
+----
+sudo upgradepkg --install-new tmp/sbbdep-*.tgz
+----
+
+=== Shell completion
+
+Shell completion requires the `bash-completion` package. On Slackware it is
+tagged optional and may not be installed even on a full install:
+
+----
+slackpkg install bash-completion
+----
+
+
+xref:index.adoc[Back to index]

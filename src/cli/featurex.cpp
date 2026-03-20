@@ -26,35 +26,29 @@
 #include <sbbdep/log.hpp>
 
 #include <iterator>
-#include <string>
 #include <regex>
-
+#include <string>
 
 namespace sbbdep
 {
-namespace cli
-{
+  namespace cli
+  {
 
-
-void
-runFx(const std::string& args)
-{
-
-  LogInfo() << " internal test function " << __PRETTY_FUNCTION__  ;
+    void
+    runFx (const std::string& args)
+    {
+      LogInfo () << " internal test function " << __PRETTY_FUNCTION__;
 
 #ifndef DEBUG
-  LogInfo() << "not enabled in non debug builds\n" ;
-  return ;
+      LogInfo () << "not enabled in non debug builds\n";
+      return;
 #endif
 
-  if (!args.empty())
-	LogInfo() << ", args: " << args  ;
+      if (!args.empty ())
+        LogInfo () << ", args: " << args;
 
-  LogInfo() <<  "\n" ;
+      LogInfo () << "\n";
+    }
 
-
-
-}
-
-}
+  }
 } // ns

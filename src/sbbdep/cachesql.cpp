@@ -1,5 +1,5 @@
 /*
---------------Copyright (c) 2010-2018 H a r a l d  A c h i t z---------------
+--------------Copyright (c) 2010-2026 H a r a l d  A c h i t z---------------
 -----------< h a r a l d dot a c h i t z at g m a i l dot c o m >------------
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,33 +21,28 @@ THE SOFTWARE.
 -----------------------------------------------------------------------------
 */
 
-
-
 #include "cachesql.hpp"
 #include "conststr.hpp"
 
 #include <sbbdep/config.hpp>
 #include <sbbdep/elffile.hpp>
-#include <sbbdep/path.hpp>
 #include <sbbdep/log.hpp>
+#include <sbbdep/path.hpp>
 #include <sqlite3.h>
-
-
 
 #define STRINGIZE(A) #A
 #define AS_STR(A) STRINGIZE(A)
 
-
-
-namespace sbbdep {
-
-namespace sql {
-
-constexpr const char*
-createSchema()
+namespace sbbdep
 {
 
-return R"~( 
+  namespace sql
+  {
+
+    constexpr const char*
+    createSchema ()
+    {
+      return R"~( 
 CREATE TABLE pkgs (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
     fullname TEXT NOT NULL, 
@@ -127,288 +122,279 @@ INSERT INTO keyvalstore (key , value) VALUES ('ldsoconf', 0);
 
 
 )~"
-"INSERT INTO VERSION (major, minor, patchlevel) "
-"VALUES('" AS_STR(SBBDEP_MAJOR_VERSION) "', '"
- AS_STR(SBBDEP_MINOR_VERSION) "', '"
- AS_STR(SBBDEP_PATCH_VERSION) "');"
+             "INSERT INTO VERSION (major, minor, patchlevel) "
+             "VALUES('" AS_STR (SBBDEP_MAJOR_VERSION) "', '" AS_STR (
+                 SBBDEP_MINOR_VERSION) "', '" AS_STR (SBBDEP_PATCH_VERSION) "'"
+                                                                            ")"
+                                                                            ";"
 
-;
+          ;
 
-}//-----------------------------------------------------------------------------
+    } //-----------------------------------------------------------------------------
 
-
-constexpr const char*
-selectVersion()
-{
-  return R"~(
+    constexpr const char*
+    selectVersion ()
+    {
+      return R"~(
 SELECT * FROM version WHERE
 major = ? AND minor = ? AND patchlevel = ? ;
-)~" ;
+)~";
 
-}//-----------------------------------------------------------------------------
+    } //-----------------------------------------------------------------------------
 
-
-constexpr const char*
-createVersion()
-{
-  return R"~(
+    constexpr const char*
+    createVersion ()
+    {
+      return R"~(
 CREATE TABLE version ( major INTEGER NOT NULL,
  minor INTEGER NOT NULL, patchlevel INTEGER NOT NULL); )~"
-"INSERT INTO VERSION (major, minor, patchlevel) "
-"VALUES('" AS_STR(SBBDEP_MAJOR_VERSION) "','" AS_STR(SBBDEP_MINOR_VERSION) "','"
- AS_STR(SBBDEP_PATCH_VERSION) "');"
- ;
+             "INSERT INTO VERSION (major, minor, patchlevel) "
+             "VALUES('" AS_STR (SBBDEP_MAJOR_VERSION) "','" AS_STR (
+                 SBBDEP_MINOR_VERSION) "','" AS_STR (SBBDEP_PATCH_VERSION) "')"
+                                                                           ";";
 
-}//-----------------------------------------------------------------------------
+    } //-----------------------------------------------------------------------------
 
+    constexpr const char*
+    insertPkg ()
+    {
+      return "INSERT INTO pkgs "
+             " (fullname, name, version, arch, build, tag, timestamp) "
+             " VALUES( ?, ?,?,?,?,?,? ) ; ";
+    } //-----------------------------------------------------------------------------
 
-constexpr const char* insertPkg()
-{
-  return "INSERT INTO pkgs "
-      " (fullname, name, version, arch, build, tag, timestamp) "
-            " VALUES( ?, ?,?,?,?,?,? ) ; "
-  ;
-}//-----------------------------------------------------------------------------
+    constexpr const char*
+    insertDynLinked ()
+    {
+      return "INSERT INTO dynlinked "
+             "( pkg_id, filename, dirname, basename, soname, arch) "
+             " VALUES( ?,?,?,?,?,? ) ; ";
+    } //-----------------------------------------------------------------------------
 
+    constexpr const char*
+    insertRequired ()
+    {
+      return "INSERT INTO required ( dynlinked_id, needed )"
+             " VALUES( ?,? ) ; ";
+    } //-----------------------------------------------------------------------------
 
-constexpr const char* insertDynLinked()
-{
-  return "INSERT INTO dynlinked "
-      "( pkg_id, filename, dirname, basename, soname, arch) "
-         " VALUES( ?,?,?,?,?,? ) ; "
-  ;
-}//-----------------------------------------------------------------------------
+    constexpr const char*
+    insertRRunPath ()
+    {
+      return "INSERT INTO rrunpath ( dynlinked_id, ldpath, lddir )"
+             " VALUES( ?1,?2, mkRealPath( replaceOrigin(?2, ?3) ) ) ; ";
+    } //-----------------------------------------------------------------------------
 
+    constexpr const char*
+    insertLdDir ()
+    {
+      return "INSERT OR IGNORE INTO lddirs ( dirname ) VALUES(?)";
+    } //-----------------------------------------------------------------------------
 
-constexpr const char* insertRequired()
-{
-  return "INSERT INTO required ( dynlinked_id, needed )"
-           " VALUES( ?,? ) ; "
-    ;
-}//-----------------------------------------------------------------------------
+    constexpr const char*
+    insertLdLnkDir ()
+    {
+      return "INSERT OR IGNORE INTO ldlnkdirs ( dirname ) VALUES(?)";
+    } //-----------------------------------------------------------------------------
 
+    constexpr const char*
+    insertKeyVal ()
+    {
+      return "INSERT INTO ldlnkdirs ( dirname ) VALUES(?)";
+    } //-----------------------------------------------------------------------------
 
-constexpr const char* insertRRunPath()
-{
-  return "INSERT INTO rrunpath ( dynlinked_id, ldpath, lddir )"
-           " VALUES( ?1,?2, mkRealPath( replaceOrigin(?2, ?3) ) ) ; "
-    ;
-}//-----------------------------------------------------------------------------
+    constexpr const char*
+    insertLdLinks ()
+    { // file name will be dirname + soname from dynlinks
+      return "INSERT INTO ldlinks dynlinked_id, dirname VALUES(?, ?)";
+    }
 
+    constexpr const char*
+    deletePkgByFullname ()
+    {
+      return "DELETE from pkgs WHERE fullname=?";
+    } //-----------------------------------------------------------------------------
 
-constexpr const char* insertLdDir()
-{
-  return "INSERT OR IGNORE INTO lddirs ( dirname ) VALUES(?)" ;
-}//-----------------------------------------------------------------------------
-
-
-constexpr const char* insertLdLnkDir()
-{
-  return "INSERT OR IGNORE INTO ldlnkdirs ( dirname ) VALUES(?)" ;
-}//-----------------------------------------------------------------------------
-
-constexpr const char* insertKeyVal()
-{
-  return "INSERT INTO ldlnkdirs ( dirname ) VALUES(?)" ;
-}//-----------------------------------------------------------------------------
-
-
-  constexpr const char* insertLdLinks()
-  { // file name will be dirname + soname from dynlinks
-    return "INSERT INTO ldlinks dynlinked_id, dirname VALUES(?, ?)";
-  }
-
-
-  constexpr const char* deletePkgByFullname()
-{
-  return "DELETE from pkgs WHERE fullname=?" ;
-}//-----------------------------------------------------------------------------
-
-
-
-
-constexpr const char* SearchPgkOfFile()
-{
-  return R"~(
+    constexpr const char*
+    SearchPgkOfFile ()
+    {
+      return R"~(
 SELECT fullname FROM pkgs INNER JOIN dynlinked ON pkgs.id = dynlinked.pkg_id
  WHERE dynlinked.dirname=? AND dynlinked.basename=? AND dynlinked.arch=? ; 
 )~";
-}//-----------------------------------------------------------------------------
+    } //-----------------------------------------------------------------------------
 
-// note used
-constexpr const char* insertKeyValStore()
-{
-  return "INSERT INTO keyvalstore (key, value) VALUES ( ?1, ?2);" ;
-}//-----------------------------------------------------------------------------
-// note used
-constexpr const char* updateKeyValStore()
-{
-  return "UPDATE keyvalstore SET value = ?2 WHERE key = ?1;" ;
-}//-----------------------------------------------------------------------------
+    // note used
+    constexpr const char*
+    insertKeyValStore ()
+    {
+      return "INSERT INTO keyvalstore (key, value) VALUES ( ?1, ?2);";
+    } //-----------------------------------------------------------------------------
+    // note used
+    constexpr const char*
+    updateKeyValStore ()
+    {
+      return "UPDATE keyvalstore SET value = ?2 WHERE key = ?1;";
+    } //-----------------------------------------------------------------------------
 
+    constexpr const char*
+    setKeyVal ()
+    {
+      return "INSERT OR REPLACE INTO keyvalstore (key, value) VALUES ( ?1, "
+             "?2)";
 
-constexpr const char* setKeyVal()
-{
-  return "INSERT OR REPLACE INTO keyvalstore (key, value) VALUES ( ?1, ?2)";
+    } //-----------------------------------------------------------------------------
 
-}//-----------------------------------------------------------------------------
+    void
+    createSchema (sl3::Database& db)
+    { // LogDebug() << createSchema() ;
+      db.execute (createSchema ());
 
+    } //-----------------------------------------------------------------------------
 
+    void
+    addVersionTable (sl3::Database& db)
+    {
+      db.execute (createVersion ());
+    } //-----------------------------------------------------------------------------
 
+    auto
+    makeCommand (sl3::Database& db, Cache::sqlid id) -> sl3::Command
+    {
+      using sl3::Type;
 
-void createSchema(sl3::Database& db)
-{ //LogDebug() << createSchema() ;
-  db.execute(createSchema()) ;
+      switch (id)
+        {
+        case Cache::sqlid::insert_pkg:
+          return db.prepare (sql::insertPkg (),
+                             {Type::Text,
+                              Type::Text,
+                              Type::Text,
+                              Type::Text,
+                              Type::Int,
+                              Type::Text,
+                              Type::Int});
+          break;
 
-}//-----------------------------------------------------------------------------
+        case Cache::sqlid::insert_dynlinked:
+          return db.prepare (sql::insertDynLinked (),
+                             {Type::Int,
+                              Type::Text,
+                              Type::Text,
+                              Type::Text,
+                              Type::Text,
+                              Type::Int});
 
-void addVersionTable(sl3::Database& db)
-{
-  db.execute(createVersion()) ;
-}//-----------------------------------------------------------------------------
+          break;
 
+        case Cache::sqlid::insert_required:
+          return db.prepare (sql::insertRequired (), {Type::Int, Type::Text});
+          break;
 
-auto makeCommand(sl3::Database& db, Cache::sqlid id)
-  ->sl3::Command
-{
+        case Cache::sqlid::insert_rrunpath:
+          return db.prepare (sql::insertRRunPath (),
+                             {Type::Int, Type::Text, Type::Text});
+          break;
 
-  using sl3::Type ;
+        case Cache::sqlid::insert_ldDir:
+          return db.prepare (sql::insertLdDir (), {Type::Text});
+          break;
 
-  switch (id)
-  {
-    case Cache::sqlid::insert_pkg:
-      return db.prepare(sql::insertPkg(),{ Type::Text,
-                                           Type::Text,
-                                           Type::Text,
-                                           Type::Text,
-                                           Type::Int,
-                                           Type::Text,
-                                           Type::Int } );
-      break;
+        case Cache::sqlid::insert_ldLnkDir:
+          return db.prepare (sql::insertLdLnkDir (), {Type::Text});
+          break;
 
-    case Cache::sqlid::insert_dynlinked:
-      return db.prepare(sql::insertDynLinked(), {Type::Int,
-                                                Type::Text,
-                                                Type::Text,
-                                                Type::Text,
-                                                Type::Text,
-                                                Type::Int });
+        case Cache::sqlid::insert_ldLinks:
+          return db.prepare (sql::insertLdLinks (), {Type::Int, Type::Text});
+          break;
 
+        case Cache::sqlid::set_keyval:
+          return db.prepare (sql::setKeyVal (), {Type::Text, Type::Variant});
+          break;
 
-      break;
+        case Cache::sqlid::del_byfullname:
+          return db.prepare (sql::deletePkgByFullname (), {Type::Text});
+          break;
 
-    case Cache::sqlid::insert_required:
-      return db.prepare(sql::insertRequired(), { Type::Int,
-                                                  Type::Text } );
-      break;
+        default:
+          throw ErrUnexpected ("should never happen :-)");
+        }
 
-    case Cache::sqlid::insert_rrunpath:
-      return db.prepare(sql::insertRRunPath(),{ Type::Int,
-                                                  Type::Text,
-                                                  Type::Text });
-      break;
+    } //-----------------------------------------------------------------------------
 
-    case Cache::sqlid::insert_ldDir:
-      return db.prepare(sql::insertLdDir(), {Type::Text});
-      break;
+    namespace
+    {
 
-    case Cache::sqlid::insert_ldLnkDir:
-      return db.prepare(sql::insertLdLnkDir(), {Type::Text});
-      break;
+      void
+      replace_origin_func (sqlite3_context* context,
+                           int              argc,
+                           sqlite3_value**  argv)
+      {
+        if (argc != 2)
+          {
+            conststr errmsg{"incorrect count of arguments, should be 2"};
+            sqlite3_result_error (context, errmsg.c_str (), errmsg.size ());
+          }
 
-    case Cache::sqlid::insert_ldLinks:
-      return db.prepare(sql::insertLdLinks (), {Type::Int,
-                                                Type::Text});
-      break;
+        std::string filepath = (const char*)sqlite3_value_text (argv[0]);
+        std::string homepath = (const char*)sqlite3_value_text (argv[1]);
 
-    case Cache::sqlid::set_keyval:
-      return db.prepare(sql::setKeyVal(), {Type::Text,
-                                           Type::Variant});
-      break;
+        std::string result = replaceORIGIN (filepath, homepath);
 
-    case Cache::sqlid::del_byfullname :
-      return  db.prepare(sql::deletePkgByFullname(),{ Type::Text });
-      break;
+        sqlite3_result_text (context, result.c_str (), -1, SQLITE_TRANSIENT);
 
-    default:
-      throw ErrUnexpected("should never happen :-)");
+      } //---------------------------------------------------------------------------
+
+      void
+      make_realpath_func (sqlite3_context* context,
+                          int              argc,
+                          sqlite3_value**  argv)
+      {
+        if (argc != 1)
+          {
+            conststr errmsg{"incorrect count of arguments, should be 1"};
+            sqlite3_result_error (context, errmsg.c_str (), errmsg.size ());
+          }
+
+        Path p ((const char*)sqlite3_value_text (argv[0]));
+        p.makeRealPath ();
+
+        if (p.isValid ())
+          sqlite3_result_text (
+              context, p.str ().c_str (), -1, SQLITE_TRANSIENT);
+        else
+          sqlite3_result_null (context);
+      } //---------------------------------------------------------------------------
+
+    } // anno ns
+
+    void
+    register_own_functions (sqlite3* db)
+    {
+      // parameter 4 , this is only in newer version
+      // possible I should force using the internal db ...
+
+      sqlite3_create_function (db,
+                               "replaceOrigin",
+                               2,
+                               SQLITE_UTF8 /*| SQLITE_DETERMINISTIC*/,
+                               0,
+                               &replace_origin_func,
+                               0,
+                               0);
+
+      sqlite3_create_function (db,
+                               "mkRealPath",
+                               1,
+                               SQLITE_UTF8 /*| SQLITE_DETERMINISTIC*/,
+                               0,
+                               &make_realpath_func,
+                               0,
+                               0);
+      // mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
+
+    } //-----------------------------------------------------------------------------
+
+    //------------------------------------------------------------------------------
   }
-
-}//-----------------------------------------------------------------------------
-
-
-
-namespace {
-
-  void
-  replace_origin_func(sqlite3_context* context,
-                      int              argc,
-                      sqlite3_value**  argv)
-  {
-    if (argc != 2)
-      {
-        conststr errmsg { "incorrect count of arguments, should be 2" };
-        sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
-      }
-
-    std::string filepath = (const char*)sqlite3_value_text(argv[0]);
-    std::string homepath = (const char*)sqlite3_value_text(argv[1]);
-
-    std::string result= replaceORIGIN(filepath, homepath);
-
-    sqlite3_result_text(context, result.c_str(), -1, SQLITE_TRANSIENT);
-
-  }//---------------------------------------------------------------------------
-
-
-  void
-  make_realpath_func(sqlite3_context* context,
-                     int              argc,
-                     sqlite3_value**  argv)
-  {
-    if (argc != 1)
-      {
-        conststr errmsg {"incorrect count of arguments, should be 1"} ;
-        sqlite3_result_error(context,errmsg.c_str(), errmsg.size() ) ;
-      }
-
-    Path p((const char*)sqlite3_value_text(argv[0]));
-    p.makeRealPath();
-
-    if ( p.isValid() )
-      sqlite3_result_text(context, p.str().c_str(), -1, SQLITE_TRANSIENT);
-    else
-      sqlite3_result_null(context);
-  }//---------------------------------------------------------------------------
-
-} // anno ns
-
-void register_own_functions(sqlite3* db)
-{
-  // parameter 4 , this is only in newer version
-  // possible I should force using the internal db ...
-
-  sqlite3_create_function(db,
-                          "replaceOrigin",
-                          2,
-                          SQLITE_UTF8 /*| SQLITE_DETERMINISTIC*/,
-                          0,
-                          &replace_origin_func , 0 , 0 );
-
-  sqlite3_create_function(db,
-                          "mkRealPath",
-                          1,
-                          SQLITE_UTF8 /*| SQLITE_DETERMINISTIC*/,
-                          0,
-                          &make_realpath_func , 0 , 0 );
-  // mkRealPath( replaceOrigin("$ORIGIN/../where/ever", dirOfFile) )
-
-}//-----------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
 }
-}
-
-
-
-
