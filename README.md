@@ -152,5 +152,4 @@ absolute match in /var/adm/packages/openssl-solibs-3.5.5-x86_64-1: /etc/ssl/open
 absolute match in /var/adm/packages/openssl-3.5.5-x86_64-1: /etc/ssl/openssl.cnf
 ```
 
-For more information and a detailed overview visit the
-[wiki](https://bitbucket.org/a4z/sbbdep/wiki/Home).
+For more information and a detailed overview, visit the [wiki](https://a4z.github.io/sbbdep/).
